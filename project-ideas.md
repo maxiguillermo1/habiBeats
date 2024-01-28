@@ -1,6 +1,6 @@
-# Language Learning App
+# Project Ideas! 
 
-## Features
+## Language Learning App
 
 ### Feature 1: Discover Movies, Music, and Trends
 - **Description:** Explore a wide range of movies, music, and current trends in your target language. 
@@ -14,9 +14,7 @@
 - **Description:** Use Augmented Reality to scan products and items for instant translation.
 - **Benefits:** Practical language application in everyday scenarios.
 
-# Location-Based Social Media
-
-## Features
+## Location-Based Social Media
 
 ### Feature 1: Local Discovery through Photos
 - **Description:** View photos of interests, trends, and activities specific to your current location.
