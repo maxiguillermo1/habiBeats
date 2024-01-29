@@ -432,5 +432,28 @@
 - **Benefits:** Offers measurable progress indicators, which can motivate users to improve their skills.
 
 
+## Embedded Textbook AI Study Assistant
 
+### Feature 1: Textbook Content Extraction
 
+- **Description:**  Analyzes and extracts key information from textbooks and lecture materials to use as study data.
+- **Benefits:** Ensures that study aids are directly relevant to the course content.
+
+### Feature 2: Custom Study Guide Creation
+- **Description:** Generates tailored study guides and flashcards from textbook data for efficient review.
+- **Benefits:** Enhances study sessions by focusing on essential information and concepts.
+
+### Feature 3: Adaptive Practice Quiz Generation
+- **Description:** Creates practice quizzes based on extracted material to test comprehension of key topics.
+- **Benefits:** Provides immediate feedback and helps identify areas that require further study.
+
+### Feature 4: Simulated Practice Exams
+- **Description:** Constructs practice exams that simulate the format and difficulty of actual course exams.
+
+- **Benefits:** Prepares students for the structure and time constraints of real exams.
+
+### Feature 5: Project Proposal Development
+
+- **Description:** Proposes practice projects to apply learned concepts in practical scenarios.
+
+- **Benefits:** Encourages deeper understanding through application and reinforces learning through hands-on experience.
