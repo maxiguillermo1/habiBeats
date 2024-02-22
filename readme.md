@@ -1,4 +1,4 @@
-# Project Title
+# habiBeats 
 
 Short description of your project: what it does, what it's for, and why it's a useful endeavor.
 
