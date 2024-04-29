@@ -18,7 +18,9 @@ async function run() {
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-    await addUser("spiderman1610@gmail.com", "Buzzball", "Miles");
+    // await addUser("spiderman1610@gmail.com", "Buzzball", "Miles");
+    const users = await findUsers();
+    console.log(JSON.stringify(users, null, 2));
 
   } finally {
     // Ensures that the client will close when you finish/error
@@ -42,5 +44,14 @@ async function addUser(email, password, firstName) {
     const result = await users.insertOne(doc);
     console.log(`A document was inserted with the _id: ${result.insertedId}`);
 };
+
+
+async function findUsers(query = {}) {
+    const database = client.db("HabiBeatsApplicationData");
+    const users = database.collection("users");
+    return await users.find(query).toArray(); // Retrieve all users or by specific query
+};
+
+
 run().catch(console.dir);
 
