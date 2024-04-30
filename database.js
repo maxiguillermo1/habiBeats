@@ -17,7 +17,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-
+    // await addUser("spidergirl65@gmail.com", "SourMidori", "Gwen");
     // await addUser("spiderman1610@gmail.com", "Buzzball", "Miles");
     const users = await findUsers();
     console.log(JSON.stringify(users, null, 2));
