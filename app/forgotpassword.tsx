@@ -20,7 +20,7 @@ export default function ForgotPassword() {
       await sendPasswordResetEmail(auth, email);
       Alert.alert(
         "Success",
-        "Password reset email sent. Please check your inbox.",
+        "Password reset email sent. Please check your inbox to reset your password.",
         [{ text: "OK", onPress: () => router.push("/login-signup") }]
       );
     } catch (error) {
@@ -48,25 +48,6 @@ export default function ForgotPassword() {
     }
   };
 
-  // Custom TextInput component
-  const CustomTextInput = ({ value, onChangeText, ...props }: {
-    value: string;
-    onChangeText: (text: string) => void;
-    [key: string]: any;
-  }) => {
-    const placeholder = '******';
-    return (
-      <TextInput
-        {...props}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#e66cab"
-        style={[styles.input, value ? {} : styles.inputWithAsterisks]}
-      />
-    );
-  };
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -80,11 +61,14 @@ export default function ForgotPassword() {
           {/* Email input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
-            <CustomTextInput 
+            <TextInput 
               value={email} 
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              placeholder="Enter your email"
+              placeholderTextColor="#e66cab"
+              style={styles.input}
             />
           </View>
           
@@ -142,9 +126,6 @@ const styles = StyleSheet.create({
       paddingHorizontal: 15,
       fontSize: 10,
       color: '#000',
-    },
-    inputWithAsterisks: {
-      color: '#e66cab',
     },
     resetButton: {
       backgroundColor: "#e07ab1",
