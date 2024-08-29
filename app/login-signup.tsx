@@ -13,16 +13,24 @@ export default function Index() {
     const auth = getAuth(app);
     console.log("Attempting to sign in with email:", email);
 
+    // Check if email and password are provided
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Sign in successful:", user);
-      Alert.alert("Success", "You have successfully signed in!");
+      Alert.alert("Success", "You have successfully signed in!", [
+        { text: "OK", onPress: () => router.push("/profile") }
+      ]);
     } catch (error: unknown) {
       if (error instanceof Error) {
         const errorMessage = error.message;
         console.error("Sign in failed:", error.name, errorMessage);
-        Alert.alert("Error", errorMessage);
+        handleFirebaseErrors(error);
       } else {
         console.error("An unknown error occurred");
         Alert.alert("Error", "An unknown error occurred");
@@ -30,8 +38,29 @@ export default function Index() {
     }
   }
 
+  const handleFirebaseErrors = (error: Error) => {
+    switch (error.message) {
+      case "Firebase: Error (auth/invalid-email).":
+        Alert.alert("Error", "The email address is badly formatted.");
+        break;
+      case "Firebase: Error (auth/user-not-found).":
+        Alert.alert("Error", "No user found with this email.");
+        break;
+      case "Firebase: Error (auth/wrong-password).":
+        Alert.alert("Error", "Incorrect password. Please try again.");
+        break;
+      default:
+        Alert.alert("Error", error.message);
+        break;
+    }
+  };
+
   const handleSignUp = () => {
     router.push("/signup");
+  };
+
+  const handleForgotPassword = () => {
+    router.push("/forgotpassword");
   };
 
   return (
@@ -70,7 +99,7 @@ export default function Index() {
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
         <View style={styles.bottomLinks}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleForgotPassword}>
             <Text style={styles.forgotPassword}>Forgot Password</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleSignUp}>

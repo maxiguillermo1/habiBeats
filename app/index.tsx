@@ -9,11 +9,18 @@ export default function Index() {
     router.push("/login-signup");
   };
 
+  const handleProfilePress = () => {
+    router.push("/profile");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <TouchableOpacity style={styles.button} onPress={handlePress}>
           <Text style={styles.buttonText}>HabiBeats</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.profileButton]} onPress={handleProfilePress}>
+          <Text style={styles.buttonText}>Profile</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -35,6 +42,10 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 25,
     alignItems: "center",
+    marginBottom: 20,
+  },
+  profileButton: {
+    backgroundColor: "#4a90e2",
   },
   buttonText: {
     color: "white",
