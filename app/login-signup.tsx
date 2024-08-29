@@ -4,16 +4,38 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
 
-export default function Index() {
+// Custom TextInput component
+const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...props }: {
+  value: string;
+  onChangeText: (text: string) => void;
+  secureTextEntry?: boolean;
+  [key: string]: any;
+}) => {
+  const placeholder = '******';
+  return (
+    <TextInput
+      {...props}
+      value={value}
+      onChangeText={onChangeText}
+      secureTextEntry={secureTextEntry}
+      placeholder={placeholder}
+      placeholderTextColor="#e66cab"
+      style={[styles.input, value ? {} : styles.inputWithAsterisks]}
+    />
+  );
+};
+
+export default function LoginSignup() {
+  // State management
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
+  // Authentication functions
   async function signIn() {
     const auth = getAuth(app);
     console.log("Attempting to sign in with email:", email);
 
-    // Check if email and password are provided
     if (!email || !password) {
       Alert.alert("Error", "Please enter both email and password.");
       return;
@@ -28,8 +50,7 @@ export default function Index() {
       ]);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        const errorMessage = error.message;
-        console.error("Sign in failed:", error.name, errorMessage);
+        console.error("Sign in failed:", error.name, error.message);
         handleFirebaseErrors(error);
       } else {
         console.error("An unknown error occurred");
@@ -55,6 +76,7 @@ export default function Index() {
     }
   };
 
+  // Navigation functions
   const handleSignUp = () => {
     router.push("/signup");
   };
@@ -63,48 +85,62 @@ export default function Index() {
     router.push("/forgotpassword");
   };
 
+  // UI Render
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>HabiBeats</Text>
-        <Image
-          source={require('../assets/images/habibeats-logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Email</Text>
-          <TextInput
-            style={[styles.input, styles.boldText]}
-            placeholder="Enter your email"
-            placeholderTextColor="#E0E0E0"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>HabiBeats</Text>
+          <Image
+            source={require('../assets/images/habibeats-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
           />
         </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Password</Text>
-          <TextInput
-            style={[styles.input, styles.boldText]}
-            placeholder="Enter your password"
-            placeholderTextColor="#E0E0E0"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-        <TouchableOpacity style={styles.button} onPress={signIn}>
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
-        <View style={styles.bottomLinks}>
-          <TouchableOpacity onPress={handleForgotPassword}>
-            <Text style={styles.forgotPassword}>Forgot Password</Text>
+
+        {/* Form */}
+        <View style={styles.formContainer}>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <CustomTextInput 
+              value={email} 
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <CustomTextInput 
+              value={password} 
+              onChangeText={setPassword} 
+              secureTextEntry 
+            />
+          </View>
+
+          {/* Sign In Button */}
+          <TouchableOpacity 
+            style={styles.signInButton} 
+            onPress={signIn}
+          >
+            <Text style={styles.signInButtonText}>
+              sign in
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSignUp}>
-            <Text style={styles.signUp}>Sign Up</Text>
-          </TouchableOpacity>
+
+          {/* Bottom Links */}
+          <View style={styles.bottomLinks}>
+            <TouchableOpacity onPress={handleForgotPassword}>
+              <Text style={[styles.forgotPassword, styles.boldText]}>forgot password</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSignUp}>
+              <Text style={[styles.signUp, styles.boldText]}>sign up</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -118,53 +154,62 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
+    paddingHorizontal: 65,
+    paddingTop: 70,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 0.5,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 40,
+    width: 205,
+    height: 205,
+  },
+  formContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   inputContainer: {
-    width: "100%",
     marginBottom: 15,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 12,
     marginBottom: 5,
-    color: '#000',
+    fontWeight: 'bold',
   },
   input: {
     width: "100%",
-    height: 50,
+    height: 36,
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    fontSize: 16,
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    fontSize: 10,
+    color: '#000',
   },
-  boldText: {
-    fontWeight: 'bold',
+  inputWithAsterisks: {
+    color: '#e66cab',
   },
-  button: {
-    backgroundColor: "#e66cab",
-    padding: 15,
+  signInButton: {
+    backgroundColor: "#e07ab1",
+    padding: 10,
     borderRadius: 25,
     width: "100%",
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 20,
   },
-  buttonText: {
+  signInButtonText: {
     color: "white",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "500",
+    textTransform: 'lowercase',
   },
   bottomLinks: {
     flexDirection: 'row',
@@ -174,10 +219,13 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     color: '#A0A0A0',
-    fontSize: 14,
+    fontSize: 12,
   },
   signUp: {
     color: '#FFA500',
-    fontSize: 14,
+    fontSize: 12,
+  },
+  boldText: {
+    fontWeight: 'bold',
   },
 });

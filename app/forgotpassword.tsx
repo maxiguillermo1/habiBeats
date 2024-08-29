@@ -47,83 +47,114 @@ export default function ForgotPassword() {
     }
   };
 
+  // Custom TextInput component
+  const CustomTextInput = ({ value, onChangeText, ...props }: {
+    value: string;
+    onChangeText: (text: string) => void;
+    [key: string]: any;
+  }) => {
+    const placeholder = '******';
+    return (
+      <TextInput
+        {...props}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#e66cab"
+        style={[styles.input, value ? {} : styles.inputWithAsterisks]}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Back button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backButtonText}>back</Text>
+      </TouchableOpacity>
+
       <View style={styles.content}>
-        <Text style={styles.title}>Forgot Password</Text>
+        {/* Email input */}
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#E0E0E0"
-            value={email}
+          <CustomTextInput 
+            value={email} 
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
         </View>
-        <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-          <Text style={styles.buttonText}>Reset Password</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/login-signup")}>
-          <Text style={styles.backToLogin}>Back to Login</Text>
+        
+        {/* Reset Password button */}
+        <TouchableOpacity 
+          style={styles.resetButton} 
+          onPress={handleResetPassword}
+        >
+          <Text style={styles.resetButtonText}>
+            reset password
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  inputContainer: {
-    width: "100%",
-    marginBottom: 15,
-  },
-  inputLabel: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: '#000',
-  },
-  input: {
-    width: "100%",
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#e66cab",
-    padding: 15,
-    borderRadius: 25,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 15,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  backToLogin: {
-    color: '#A0A0A0',
-    fontSize: 14,
-    marginTop: 20,
-  },
-});
+    container: {
+      flex: 1,
+      backgroundColor: 'white',
+    },
+    backButton: {
+      position: 'absolute',
+      top: 30,
+      left: 30,
+      zIndex: 1,
+    },
+    backButtonText: {
+      fontSize: 14,
+      color: '#f4a261',
+      fontWeight: 'bold',
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 65,
+      paddingTop: 150,  // Reduced padding to move content closer to the top
+      paddingBottom: 20,
+      justifyContent: 'flex-start',  // Ensure content aligns at the top
+    },
+    inputContainer: {
+      marginBottom: 15,
+    },
+    inputLabel: {
+      fontSize: 12,
+      marginBottom: 5,
+      fontWeight: 'bold',
+    },
+    input: {
+      width: "100%",
+      height: 36,
+      borderWidth: 1,
+      borderColor: "#E0E0E0",
+      borderRadius: 18,
+      paddingHorizontal: 15,
+      fontSize: 10,
+      color: '#000',
+    },
+    inputWithAsterisks: {
+      color: '#e66cab',
+    },
+    resetButton: {
+      backgroundColor: "#e07ab1",
+      padding: 10,
+      borderRadius: 25,
+      width: "100%",
+      alignItems: "center",
+      marginTop: 10,  // Reduced margin to bring button closer to the top
+    },
+    resetButtonText: {
+      color: "white",
+      fontSize: 12,
+      fontWeight: "500",
+      textTransform: 'lowercase',
+    },
+  });
+  

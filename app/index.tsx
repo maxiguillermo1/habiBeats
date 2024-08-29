@@ -1,28 +1,24 @@
 import React from "react";
-import { Text, View, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
-import { useRouter } from "expo-router";
+import { Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { useRouter, Link } from "expo-router";
 
 export default function Index() {
   const router = useRouter();
-
-  const handlePress = () => {
-    router.push("/login-signup");
-  };
-
-  const handleProfilePress = () => {
-    router.push("/profile");
+  const navigateTo = (route: string) => {
+    router.push(route as never);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <TouchableOpacity style={styles.button} onPress={handlePress}>
-          <Text style={styles.buttonText}>HabiBeats</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.profileButton]} onPress={handleProfilePress}>
-          <Text style={styles.buttonText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/login-signup")}>
+        <Text style={styles.buttonText}>HabiBeats</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/profile")}>
+        <Text style={styles.buttonText}>Profile</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/events")}>
+        <Text style={styles.buttonText}>Events</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -30,26 +26,18 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-  },
-  content: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: 'white',
   },
   button: {
     backgroundColor: "#e66cab",
-    padding: 20,
-    borderRadius: 25,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  profileButton: {
-    backgroundColor: "#4a90e2",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
   },
   buttonText: {
     color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 18,
   },
 });
