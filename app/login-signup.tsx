@@ -3,6 +3,7 @@ import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Imag
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
+import { Stack } from 'expo-router';
 
 // Custom TextInput component
 const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...props }: {
@@ -87,63 +88,66 @@ export default function LoginSignup() {
 
   // UI Render
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>HabiBeats</Text>
-          <Image
-            source={require('../assets/images/habibeats-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Form */}
-        <View style={styles.formContainer}>
-          {/* Email Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <CustomTextInput 
-              value={email} 
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>HabiBeats</Text>
+            <Image
+              source={require('../assets/images/habibeats-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
           </View>
 
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <CustomTextInput 
-              value={password} 
-              onChangeText={setPassword} 
-              secureTextEntry 
-            />
-          </View>
+          {/* Form */}
+          <View style={styles.formContainer}>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <CustomTextInput 
+                value={email} 
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-          {/* Sign In Button */}
-          <TouchableOpacity 
-            style={styles.signInButton} 
-            onPress={signIn}
-          >
-            <Text style={styles.signInButtonText}>
-              sign in
-            </Text>
-          </TouchableOpacity>
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <CustomTextInput 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry 
+              />
+            </View>
 
-          {/* Bottom Links */}
-          <View style={styles.bottomLinks}>
-            <TouchableOpacity onPress={handleForgotPassword}>
-              <Text style={[styles.forgotPassword, styles.boldText]}>forgot password</Text>
+            {/* Sign In Button */}
+            <TouchableOpacity 
+              style={styles.signInButton} 
+              onPress={signIn}
+            >
+              <Text style={styles.signInButtonText}>
+                sign in
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSignUp}>
-              <Text style={[styles.signUp, styles.boldText]}>sign up</Text>
-            </TouchableOpacity>
+
+            {/* Bottom Links */}
+            <View style={styles.bottomLinks}>
+              <TouchableOpacity onPress={handleForgotPassword}>
+                <Text style={[styles.forgotPassword, styles.boldText]}>forgot password</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSignUp}>
+                <Text style={[styles.signUp, styles.boldText]}>sign up</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -169,8 +173,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logo: {
-    width: 205,
-    height: 205,
+    width: 225,
+    height: 225,
   },
   formContainer: {
     flex: 1,

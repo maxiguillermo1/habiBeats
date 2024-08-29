@@ -3,6 +3,7 @@ import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Aler
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
+import { Stack } from 'expo-router';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -67,35 +68,38 @@ export default function ForgotPassword() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>back</Text>
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        {/* Email input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Email</Text>
-          <CustomTextInput 
-            value={email} 
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        
-        {/* Reset Password button */}
-        <TouchableOpacity 
-          style={styles.resetButton} 
-          onPress={handleResetPassword}
-        >
-          <Text style={styles.resetButtonText}>
-            reset password
-          </Text>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        {/* Back button */}
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>back</Text>
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+
+        <View style={styles.content}>
+          {/* Email input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <CustomTextInput 
+              value={email} 
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          
+          {/* Reset Password button */}
+          <TouchableOpacity 
+            style={styles.resetButton} 
+            onPress={handleResetPassword}
+          >
+            <Text style={styles.resetButtonText}>
+              reset password
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 const styles = StyleSheet.create({
@@ -104,11 +108,11 @@ const styles = StyleSheet.create({
       backgroundColor: 'white',
     },
     backButton: {
-      position: 'absolute',
-      top: 30,
-      left: 30,
-      zIndex: 1,
-    },
+        position: 'absolute',
+        top: 80,
+        left: 30,
+        zIndex: 1,
+      },
     backButtonText: {
       fontSize: 14,
       color: '#f4a261',
@@ -157,4 +161,3 @@ const styles = StyleSheet.create({
       textTransform: 'lowercase',
     },
   });
-  

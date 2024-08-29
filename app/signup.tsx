@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert } from "react-native";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 
 // Custom TextInput component
 const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...props }: {
@@ -66,66 +66,69 @@ export default function SignUp() {
 
   // UI component
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>back</Text>
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        {/* First Name input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>First Name</Text>
-          <CustomTextInput value={firstName} onChangeText={setFirstName} />
-        </View>
-        {/* Last Name input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Last Name</Text>
-          <CustomTextInput value={lastName} onChangeText={setLastName} />
-        </View>
-        {/* Email input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Email</Text>
-          <CustomTextInput 
-            value={email} 
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        {/* Password input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Password</Text>
-          <CustomTextInput value={password} onChangeText={setPassword} secureTextEntry />
-        </View>
-        {/* Confirm Password input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Re-enter Password</Text>
-          <CustomTextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
-        </View>
-        {/* Sign Up button */}
-        <TouchableOpacity 
-          style={{
-            backgroundColor: "#e07ab1", // Soft pink color
-            padding: 10, // Reduced padding to keep it narrow
-            borderRadius: 25, // Rounded corners
-            width: "100%", // Full width to match other buttons
-            alignItems: "center",
-            marginTop: 20,
-          }} 
-          onPress={handleSignUp}
-        >
-          <Text style={{
-            color: "white",
-            fontSize: 12, // Slightly reduced font size
-            fontWeight: "500",
-            textTransform: 'lowercase',
-          }}>
-            sign up
-          </Text>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        {/* Back button */}
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>back</Text>
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+
+        <View style={styles.content}>
+          {/* First Name input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>First Name</Text>
+            <CustomTextInput value={firstName} onChangeText={setFirstName} />
+          </View>
+          {/* Last Name input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Last Name</Text>
+            <CustomTextInput value={lastName} onChangeText={setLastName} />
+          </View>
+          {/* Email input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <CustomTextInput 
+              value={email} 
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          {/* Password input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <CustomTextInput value={password} onChangeText={setPassword} secureTextEntry />
+          </View>
+          {/* Confirm Password input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Re-enter Password</Text>
+            <CustomTextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+          </View>
+          {/* Sign Up button */}
+          <TouchableOpacity 
+            style={{
+              backgroundColor: "#e07ab1", // Soft pink color
+              padding: 10, // Reduced padding to keep it narrow
+              borderRadius: 25, // Rounded corners
+              width: "100%", // Full width to match other buttons
+              alignItems: "center",
+              marginTop: 20,
+            }} 
+            onPress={handleSignUp}
+          >
+            <Text style={{
+              color: "white",
+              fontSize: 12, // Slightly reduced font size
+              fontWeight: "500",
+              textTransform: 'lowercase',
+            }}>
+              sign up
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 30,
+    top: 80,
     left: 30,
     zIndex: 1,
   },
