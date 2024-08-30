@@ -4,13 +4,13 @@ import TopNavBar from '../components/TopNavBar';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 
-const Events = () => {
+const MyEvents = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
       <View style={styles.content}>
-        {/* Content for events would go here */}
+        {/* Content for my events page will go here */}
       </View>
       <BottomNavBar />
     </SafeAreaView>
@@ -27,4 +27,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Events;
+export default MyEvents;

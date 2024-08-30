@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Make sure to install @expo/vector-icons if not already installed
 import { useRouter } from 'expo-router';
+import BottomNavBar from '../components/BottomNavBar';
 
 export default function Profile() {
   const router = useRouter();
@@ -74,21 +75,8 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      {/* Navigation buttons */}
-      <View style={styles.navigationContainer}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navButtonText}>Event</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navButtonText}>Messages</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navButtonText}>Match</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navButton, styles.activeNavButton]}>
-          <Text style={[styles.navButtonText, styles.activeNavButtonText]}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom Navigation Bar */}
+      <BottomNavBar />
     </SafeAreaView>
   );
 }
@@ -101,6 +89,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 60, // Add padding to account for the BottomNavBar
   },
   header: {
     flexDirection: 'row',
@@ -159,31 +148,5 @@ const styles = StyleSheet.create({
   imageInputText: {
     fontSize: 40,
     color: '#999',
-  },
-  navigationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: 'white',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  navButton: {
-    padding: 12,
-  },
-  navButtonText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  activeNavButton: {
-    backgroundColor: '#e66cab',
-    borderRadius: 5,
-  },
-  activeNavButtonText: {
-    color: 'white',
   },
 });

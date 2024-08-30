@@ -4,13 +4,13 @@ import TopNavBar from '../components/TopNavBar';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 
-const Events = () => {
+const Trending = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
       <View style={styles.content}>
-        {/* Content for events would go here */}
+        {/* Content for trending page will go here */}
       </View>
       <BottomNavBar />
     </SafeAreaView>
@@ -27,4 +27,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Events;
+export default Trending;

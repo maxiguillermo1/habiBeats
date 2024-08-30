@@ -19,6 +19,21 @@ export default function Index() {
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/events")}>
         <Text style={styles.buttonText}>Events</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/messages")}>
+        <Text style={styles.buttonText}>Messages</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/match")}>
+        <Text style={styles.buttonText}>Match</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/myevents")}>
+        <Text style={styles.buttonText}>My Events</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/search")}>
+        <Text style={styles.buttonText}>Search</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/trending")}>
+        <Text style={styles.buttonText}>Trending</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
