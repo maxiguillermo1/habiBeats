@@ -1,23 +1,54 @@
 // Import necessary components and hooks from React and React Native
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Make sure to install @expo/vector-icons if not already installed
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomNavBar from '../components/BottomNavBar';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { app } from '../firebaseConfig';
 
 export default function Profile() {
   const router = useRouter();
-  // Placeholder data - replace with actual user data
-  const user = {
-    name: 'Miles Morales',
-    location: 'Brooklyn, New York',
-    profilePicture: 'https://example.com/miles-morales.jpg', // Replace with actual image URL
-  };
+  const [user, setUser] = useState({
+    name: '',
+    location: '',
+    profilePicture: '',
+  });
 
   // State hooks for managing the editable fields
   const [tuneOfMonth, setTuneOfMonth] = useState('');
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [listenTo, setListenTo] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const currentUser = auth.currentUser;
+
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+              name: `${userData.firstName} ${userData.lastName}`,
+              location: userData.location || 'Location not set',
+              profilePicture: userData.profilePicture || '',
+            });
+            setTuneOfMonth(userData.tuneOfMonth || '');
+            setFavoritePerformance(userData.favoritePerformance || '');
+            setListenTo(userData.listenTo || '');
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleSettingsPress = () => {
     router.push('/profilesettings');
