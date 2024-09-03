@@ -34,13 +34,15 @@ export default function SignUp() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
   const router = useRouter();
 
   // Function to handle the sign-up process
   const handleSignUp = async () => {
     // Check if passwords match
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
@@ -50,18 +52,38 @@ export default function SignUp() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Sign up successful:", user);
-      Alert.alert("Success", "You have successfully signed up!");
-      router.push("/login-signup");
+      
+      {/* TODO: POP UP SUCCESS MESSAGE*/}
+      setSuccessMessage("You have successfully signed up!");
+      setTimeout(() => {
+        setSuccessMessage("");
+        router.push("/login-signup");
+      }, 2000); // wait 2 seconds before redirecting
     } catch (error) {
       // Handle sign-up errors
       if (error instanceof Error) {
         console.error("Sign up failed:", error.message);
-        Alert.alert("Error", error.message);
+
+        // checking for specific error messages
+        if (error.message.includes("auth/weak-password")) {
+          setErrorMessage("Password should be at least 6 characters long. Please try again.");
+        } else if (error.message.includes("auth/invalid-email")) {
+          setErrorMessage("Please enter a valid email address. Please try again.");
+        } else if (error.message.includes("auth/email-already-in-use")) {
+          setErrorMessage("An account with this email already exists. Please log in or try a different email.");
+        } else {
+          setErrorMessage(error.message);
+        }
       } else {
         console.error("An unknown error occurred");
-        Alert.alert("Error", "An unknown error occurred");
+        setErrorMessage("An unknown error occurred");
       }
     }
+  };
+
+  // Function to clear error message when user re-enters form
+  const clearErrorMessage = () => {
+    setErrorMessage("");
   };
 
   // UI component
@@ -78,19 +100,19 @@ export default function SignUp() {
           {/* First Name input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>First Name</Text>
-            <CustomTextInput value={firstName} onChangeText={setFirstName} />
+            <CustomTextInput value={firstName} onChangeText={(text) => { setFirstName(text); clearErrorMessage(); }} />
           </View>
           {/* Last Name input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Last Name</Text>
-            <CustomTextInput value={lastName} onChangeText={setLastName} />
+            <CustomTextInput value={lastName} onChangeText={(text) => { setLastName(text); clearErrorMessage(); }} />
           </View>
           {/* Email input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <CustomTextInput 
               value={email} 
-              onChangeText={setEmail}
+              onChangeText={(text) => { setEmail(text); clearErrorMessage(); }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -98,13 +120,15 @@ export default function SignUp() {
           {/* Password input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <CustomTextInput value={password} onChangeText={setPassword} secureTextEntry />
+            <CustomTextInput value={password} onChangeText={(text) => { setPassword(text); clearErrorMessage(); }} secureTextEntry />
           </View>
           {/* Confirm Password input */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Re-enter Password</Text>
-            <CustomTextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+            <CustomTextInput value={confirmPassword} onChangeText={(text) => { setConfirmPassword(text); clearErrorMessage(); }} secureTextEntry />
           </View>
+          {/* Error message */}
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
           {/* Sign Up button */}
           <TouchableOpacity 
             style={{
@@ -189,5 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     textTransform: 'lowercase',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: 'left',
   },
 });

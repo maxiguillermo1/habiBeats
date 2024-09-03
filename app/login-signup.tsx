@@ -30,6 +30,7 @@ export default function LoginSignup() {
   // State management
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
   // Authentication functions
@@ -46,6 +47,9 @@ export default function LoginSignup() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Sign in successful:", user);
+
+      setErrorMessage(""); // Clear any existing error message
+
       Alert.alert("Success", "You have successfully signed in!", [
         { text: "OK", onPress: () => router.push("/profile") }
       ]);
@@ -59,17 +63,14 @@ export default function LoginSignup() {
       }
     }
   }
-
+  // Firebase Log Error Handlings
   const handleFirebaseErrors = (error: Error) => {
     switch (error.message) {
-      case "Firebase: Error (auth/invalid-email).":
-        Alert.alert("Error", "The email address is badly formatted.");
-        break;
       case "Firebase: Error (auth/user-not-found).":
         Alert.alert("Error", "No user found with this email.");
         break;
-      case "Firebase: Error (auth/wrong-password).":
-        Alert.alert("Error", "Incorrect password. Please try again.");
+      case "Firebase: Error (auth/invalid-credential).":
+        setErrorMessage("Incorrect email or password. Please try again.");
         break;
       default:
         Alert.alert("Error", error.message);
@@ -109,10 +110,14 @@ export default function LoginSignup() {
               <Text style={styles.inputLabel}>Email</Text>
               <CustomTextInput 
                 value={email} 
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setErrorMessage("");
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
             </View>
 
             {/* Password Input */}
@@ -231,5 +236,14 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold',
+  },
+  // error text styling
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: 'left',
+    padding: 5,
+    borderRadius: 5,
   },
 });

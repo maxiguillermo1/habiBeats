@@ -66,7 +66,7 @@ export default function ForgotPassword() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="Enter your email"
+              placeholder="******"
               placeholderTextColor="#e66cab"
               style={styles.input}
             />
