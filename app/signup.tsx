@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert } from "react-native";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 
@@ -47,13 +48,28 @@ export default function SignUp() {
     }
 
     const auth = getAuth(app);
+    const db = getFirestore(app);
     try {
       // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // Create display name from first and last name
+      const displayName = `${firstName} ${lastName}`;
+      
+      // Update user profile with display name in Firebase Auth
+      await updateProfile(user, { displayName });
+      
+      // Save user data to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        firstName: firstName,
+        lastName: lastName
+      });
+      
       console.log("Sign up successful:", user);
       
-      {/* TODO: POP UP SUCCESS MESSAGE*/}
       setSuccessMessage("You have successfully signed up!");
       setTimeout(() => {
         setSuccessMessage("");
