@@ -5,9 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { useAuth } from '../hooks/useAuth';
 
 // Define the ProfileSettings component
 export default function ProfileSettings() {
+  // Get the user and userData from the useAuth hook
+  const { user, userData } = useAuth();
   // Initialize router for navigation
   const router = useRouter();
   // Get initial image values from route params
@@ -20,8 +23,16 @@ export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState<string>(initialProfileImage as string);
   const [favoritePerformanceImage, setFavoritePerformanceImage] = useState(initialFavoritePerformanceImage as string | null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [name, setName] = useState('Miles Morales');
-  const [location, setLocation] = useState('Brooklyn, New York');
+  const [name, setName] = useState(''); // initialize the name state with an empty string instead of trying to access userData immediately
+  const [location, setLocation] = useState(userData?.location || 'Location not found');
+  useEffect(() => {
+    if (userData) {
+      // Combine firstName and lastName
+      setName(`${userData.firstName} ${userData.lastName}`);
+      setLocation(userData.location || 'Location not found');
+      // Set other state variables based on userData
+    }
+  }, [userData]);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
