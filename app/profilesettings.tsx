@@ -1,11 +1,15 @@
 // Import necessary dependencies
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, Switch, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../hooks/useAuth';
+import { db } from '../firebaseConfig';
+import { doc, updateDoc } from 'firebase/firestore';
+
+
 
 // Define the ProfileSettings component
 export default function ProfileSettings() {
@@ -23,22 +27,24 @@ export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState<string>(initialProfileImage as string);
   const [favoritePerformanceImage, setFavoritePerformanceImage] = useState(initialFavoritePerformanceImage as string | null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [name, setName] = useState(''); // initialize the name state with an empty string instead of trying to access userData immediately
-  const [location, setLocation] = useState(userData?.location || 'Location not found');
-  useEffect(() => {
-    if (userData) {
-      // Combine firstName and lastName
-      setName(`${userData.firstName} ${userData.lastName}`);
-      setLocation(userData.location || 'Location not found');
-      // Set other state variables based on userData
-    }
-  }, [userData]);
+  const [name, setName] = useState('Name not set');
+  const [location, setLocation] = useState('Location not set');
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [tempName, setTempName] = useState(name);
   const [tempLocation, setTempLocation] = useState(location);
+  const googlePlacesRef = useRef(null);
 
+  useEffect(() => {
+    if (userData) {
+      // Combine firstName and lastName
+      setName(`${userData.firstName} ${userData.lastName}`);
+      setLocation(userData.location || 'Location not set');
+      // Set other state variables based on userData
+    }
+  }, [userData]);
+  
   // Function to handle back button press
   const handleBackPress = () => {
     router.back();
@@ -88,16 +94,49 @@ export default function ProfileSettings() {
     setHasChanges(true);
   };
 
-  const handleSaveLocationChange = (data: any, details: any) => {
+  const handleSaveLocationChange = async (data: any, details: any) => {
+    console.log('handleSaveLocationChange called');
+    console.log('data:', data);
+    console.log('details:', details);
     if (details) {
-      setTempLocation(details.formatted_address);
+      const newLocation = details.formatted_address;
+      setTempLocation(newLocation);
+      setLocation(newLocation);
+      setIsEditingLocation(false);
+      setHasChanges(true);
+
+      // Save the new location to Firestore
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+          await updateDoc(userDocRef, {
+            location: newLocation
+          });
+          console.log('Location updated successfully in Firestore');
+        } catch (error) {
+          console.error('Error updating location in Firestore:', error);
+        }
+      }
     }
   };
 
-  const handleSaveLocation = () => {
+  const handleSaveLocation = async () => {
     setLocation(tempLocation);
     setIsEditingLocation(false);
     setHasChanges(true);
+
+    // Save the new location to Firestore
+    if (user) {
+      const userDocRef = doc(db, 'users', user.uid);
+      try {
+        await updateDoc(userDocRef, {
+          location: tempLocation
+        });
+        console.log('Location updated successfully in Firestore');
+      } catch (error) {
+        console.error('Error updating location in Firestore:', error);
+      }
+    }
   };
 
   // Render the component
@@ -105,69 +144,67 @@ export default function ProfileSettings() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Back button */}
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>back</Text>
-          </TouchableOpacity>
-          
-          {/* Profile section */}
-          <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={{ uri: profileImage }}
-                style={styles.profilePicture}
+        {/* Back button */}
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>back</Text>
+        </TouchableOpacity>
+        
+        {/* Profile section */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{ uri: profileImage }}
+              style={styles.profilePicture}
+            />
+            <TouchableOpacity style={styles.editButton} onPress={handleEditProfilePicture}>
+              <Ionicons name="pencil" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          {isEditingName ? (
+            <View style={styles.editContainer}>
+              <TextInput
+                style={styles.editInput}
+                value={tempName}
+                onChangeText={setTempName}
               />
-              <TouchableOpacity style={styles.editButton} onPress={handleEditProfilePicture}>
-                <Ionicons name="pencil" size={20} color="#fff" />
+              <TouchableOpacity style={styles.editButton} onPress={handleSaveNameChange}>
+                <Text style={styles.editButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
-            {isEditingName ? (
-              <View style={styles.editContainer}>
-                <TextInput
-                  style={styles.editInput}
-                  value={tempName}
-                  onChangeText={setTempName}
-                />
-                <TouchableOpacity style={styles.editButton} onPress={handleSaveNameChange}>
-                  <Text style={styles.editButtonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Text style={styles.nameInput}>{name}</Text>
-            )}
-            {isEditingLocation ? (
-              <View style={styles.editContainer}>
-                <GooglePlacesAutocomplete
-                  placeholder='Search for a location'
-                  onPress={handleSaveLocationChange}
-                  query={{
-                    key: 'YOUR_GOOGLE_MAPS_API_KEY',
-                    language: 'en',
-                  }}
-                  styles={{
-                    container: styles.googleAutocompleteContainer,
-                    textInputContainer: styles.googleAutocompleteInputContainer,
-                    textInput: styles.googleAutocompleteInput,
-                  }}
-                  renderRightButton={() => (
-                    <View style={styles.buttonContainer}>
-                      <TouchableOpacity style={styles.searchButton} onPress={() => {}}>
-                        <Ionicons name="search" size={24} color="#fff" />
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.saveButton} onPress={handleSaveLocation}>
-                        <Text style={styles.saveButtonText}>Save</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                />
-              </View>
-            ) : (
-              <Text style={styles.locationInput}>{location}</Text>
-            )}
-          </View>
+          ) : (
+            <Text style={styles.nameInput}>{name}</Text>
+          )}
+          {isEditingLocation ? (
+            <View style={styles.editContainer}>
+              <GooglePlacesAutocomplete
+                ref={googlePlacesRef}
+                placeholder='Search for a city or town'
+                onPress={handleSaveLocationChange}
+                query={{
+                  key: 'AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc',
+                  language: 'en',
+                  types: '(cities)',
+                }}
+                styles={{
+                  container: styles.googleAutocompleteContainer,
+                  textInputContainer: styles.googleAutocompleteInputContainer,
+                  textInput: styles.googleAutocompleteInput,
+                  listView: styles.googleAutocompleteListView,
+                }}
+                fetchDetails={true}
+                onFail={(error) => console.error(error)}
+                onNotFound={() => console.log('no results')}
+                filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']}
+                debounce={200}
+              />
+            </View>
+          ) : (
+            <Text style={styles.locationInput}>{location}</Text>
+          )}
+        </View>
 
-          {/* Settings section */}
+        {/* Settings section */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.settingsSection}>
             {/* Notifications setting */}
             <View style={styles.settingItem}>
@@ -399,6 +436,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  googleAutocompleteListView: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: 'row',

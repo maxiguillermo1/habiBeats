@@ -20,12 +20,11 @@ export function useAuth() {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       
-      console.log("firebaseUser", firebaseUser);
       if (firebaseUser) { // if the user is logged in
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const unsubscribeDoc = onSnapshot(userDocRef, (docSnapshot) => {
           if (docSnapshot.exists()) {
-            console.log("docSnapshot", docSnapshot.data());
+            
             setUserData(docSnapshot.data() as UserData);
           } else {
             console.log("docSnapshot does not exist");
