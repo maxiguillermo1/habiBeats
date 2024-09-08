@@ -1,6 +1,6 @@
 // Import necessary dependencies
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, Switch, TouchableOpacity, TextInput, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, Switch, TouchableOpacity, TextInput, Modal, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,6 +8,7 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
+import { getAuth, signOut } from 'firebase/auth';
 
 
 
@@ -84,14 +85,58 @@ export default function ProfileSettings() {
 
   // Function to handle logout
   const handleLogout = () => {
-    // Add any logout logic here (e.g., clearing user session)
-    router.replace('/login-signup');
+    // R (09/06/2024) - Added a Popup Alert to Confirm Logout START
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "OK", 
+          onPress: async () => {
+            const auth = getAuth();
+            try {
+              await signOut(auth);
+              console.log("User signed out successfully");
+              router.replace('/login-signup');
+            } catch (error) {
+              console.error("Error signing out: ", error);
+            }
+          }
+        }
+      ]
+    );
   };
+  // R (09/06/2024) - Added a Popup Alert to Confirm Logout END
 
-  const handleSaveNameChange = () => {
+  const handleSaveNameChange = async () => {
     setName(tempName);
     setIsEditingName(false);
     setHasChanges(true);
+
+    // Save the new changed display name to Firestore
+    if (user) { // if user is logged in 
+      const userDocRef = doc(db, 'users', user.uid);
+      const nameParts = tempName.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ');
+      // try to update the name in Firestore
+      try {
+        await updateDoc(userDocRef, {
+          firstName: firstName,
+          lastName: lastName,
+          displayName: tempName
+        });
+        console.log('Display name updated successfully in Firestore');
+        // Update the name in profile.tsx
+        router.setParams({ updatedName: tempName });
+      } catch (error) {
+        console.error('Error updating display name in Firestore:', error);
+      }
+    }
   };
 
   const handleSaveLocationChange = async (data: any, details: any) => {
@@ -360,16 +405,16 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginTop: 20,
     marginHorizontal: 20,
-    backgroundColor: '#e07ab1',
-    padding: 10,
+    backgroundColor: '#e66cab',
+    padding: 15,
     borderRadius: 25,
     alignItems: 'center',
   },
   logoutButtonText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'lowercase',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   modalContainer: {
     flex: 1,
