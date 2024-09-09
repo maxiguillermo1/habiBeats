@@ -4,15 +4,14 @@ import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacit
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import BottomNavBar from '../components/BottomNavBar';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { app } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
-    name: '',
-    location: '',
+    name: 'Name not set',
+    location: 'Location not set',
     profilePicture: '',
   });
 
@@ -22,32 +21,32 @@ export default function Profile() {
   const [listenTo, setListenTo] = useState('');
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      const currentUser = auth.currentUser;
+    const currentUser = auth.currentUser;
 
-      if (currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setUser({
-              name: `${userData.firstName} ${userData.lastName}`,
-              location: userData.location || 'Location not set',
-              profilePicture: userData.profilePicture || '',
-            });
-            setTuneOfMonth(userData.tuneOfMonth || '');
-            setFavoritePerformance(userData.favoritePerformance || '');
-            setListenTo(userData.listenTo || '');
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+    if (currentUser) {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      
+
+      // listens for changes to the user document and updates the states
+      const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const userData = docSnapshot.data();
+          setUser({
+            name: `${userData.firstName} ${userData.lastName}`,
+            location: userData.location || 'Location not set',
+            profilePicture: userData.profilePicture || '',
+          });
+          setTuneOfMonth(userData.tuneOfMonth || '');
+          setFavoritePerformance(userData.favoritePerformance || '');
+          setListenTo(userData.listenTo || '');
         }
-      }
-    };
+      }, (error) => {
+        console.error('Error fetching user data:', error);
+      });
 
-    fetchUserData();
+      // Cleanup function to unsubscribe when component unmounts
+      return () => unsubscribe();
+    }
   }, []);
 
   const handleSettingsPress = () => {
