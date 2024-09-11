@@ -213,7 +213,7 @@ export default function ProfileSettings() {
                 onChangeText={setTempName}
               />
               <TouchableOpacity style={styles.editButton} onPress={handleSaveNameChange}>
-                <Text style={styles.editButtonText}>Save</Text>
+                <Ionicons name="save-outline" size={25} color="white" />
               </TouchableOpacity>
             </View>
           ) : (
@@ -370,8 +370,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#e66cab',
     borderRadius: 15,
-    width: 30,
-    height: 30,
+    width: 35,
+    height: 35,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -451,12 +451,12 @@ const styles = StyleSheet.create({
   },
   editInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     borderWidth: 1,
     borderColor: '#e66cab',
     borderRadius: 8,
     padding: 6,
-    marginRight: 5,
+    marginRight: 40,
   },
   editButtonText: {
     color: 'white',

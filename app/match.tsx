@@ -1,20 +1,197 @@
-import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Dimensions, Animated } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const Match = () => {
+  // State to control the visibility of the match modal
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [likeButtonColor, setLikeButtonColor] = useState('#1E1E1E');
+  const [dislikeButtonColor, setDislikeButtonColor] = useState('#1E1E1E');
+  const router = useRouter();
+  const scaleValue = useRef(new Animated.Value(0)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
+  // Handler for when the heart button is pressed
+  const handleHeartPress = () => {
+    setLikeButtonColor('#e66cab'); // Change to pink
+    setShowMatchModal(true);
+    animateModal(true);
+  };
+
+  // Handler for when the message button is pressed in the modal
+  const handleMessagePress = () => {
+    // Navigate to messages screen
+    router.push('/messages');
+  };
+
+  // Handler for when the message icon button is pressed on the top right
+  const handleMessageIconPress = () => {
+    // Navigate to messages screen
+    router.push('/messages');
+  };
+
+  // Update the animateModal function
+  const animateModal = (visible: boolean) => {
+    Animated.parallel([
+      Animated.spring(scaleValue, {
+        toValue: visible ? 1 : 0,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityValue, {
+        toValue: visible ? 1 : 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  useEffect(() => {
+    if (!showMatchModal) {
+      setLikeButtonColor('#1E1E1E'); // Change back to original color
+    }
+  }, [showMatchModal]);
+
+  const handleClosePress = () => {
+    setDislikeButtonColor('#ff964f'); // Change to orange
+    // Here you would typically load the next user profile
+    // For this example, we'll use a timeout to simulate that
+    setTimeout(() => {
+      setDislikeButtonColor('#1E1E1E'); // Change back to original color
+    }, 1000); // Adjust this time as needed
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.content}>
-        {/* Content will be added here later */}
+      <ScrollView style={styles.content}>
+        {/* Header section with profile picture and name */}
+        <View style={styles.header}>
+          <Image
+            source={{ uri: 'https://example.com/profile-pic.jpg' }}
+            style={styles.profilePic}
+          />
+          <Text style={styles.name}>Owen Stacy</Text>
+        </View>
+        
+        {/* Tune of the month section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tune of the month</Text>
+          <View style={styles.tuneContainer}>
+            <Image
+              source={{ uri: 'https://example.com/album-cover.jpg' }}
+              style={styles.albumCover}
+            />
+            <View style={styles.tuneInfo}>
+              <Text style={styles.tuneTitle}>Just Give Them All Some Fir (Remix)</Text>
+              <Text style={styles.tuneArtist}>by Steve Aoki & Linkin Park</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Favorite performance section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>My favorite performance (so far)</Text>
+          <Image
+            source={{ uri: 'https://example.com/performance-pic.jpg' }}
+            style={styles.performancePic}
+          />
+        </View>
+        
+        {/* Music listening reason section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>I listen to music to</Text>
+          <Text style={styles.musicReason}>Forget about it all and to lose myself during New York City</Text>
+        </View>
+      </ScrollView>
+      
+      {/* Action buttons (like and dislike) */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.dislikeButton]} 
+          onPress={handleClosePress}
+        >
+          <Ionicons name="close" size={50} color={dislikeButtonColor} />
+        </TouchableOpacity>
+        <View style={styles.spacer} />
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.likeButton]} 
+          onPress={handleHeartPress}
+        >
+          <Ionicons name="heart" size={40} color={likeButtonColor} />
+        </TouchableOpacity>
       </View>
+
+      {/* Message icon button on the top right */}
+      <TouchableOpacity 
+        style={styles.messageIcon} 
+        onPress={handleMessageIconPress}
+      >
+        <Ionicons name="chatbubble-ellipses-outline" size={35} color="#1E1E1E" />
+      </TouchableOpacity>
+
+      {/* Match modal */}
+      <Modal
+        transparent={true}
+        visible={showMatchModal}
+        onRequestClose={() => {
+          animateModal(false);
+          setShowMatchModal(false);
+        }}
+      >
+        <Animated.View 
+          style={[
+            styles.modalContainer,
+            {
+              opacity: opacityValue,
+            }
+          ]}
+        >
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleValue }],
+              }
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setShowMatchModal(false)}>
+                <Ionicons name="close" size={50} color="#1E1E1E" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.messageButton} 
+                onPress={() => {
+                  setShowMatchModal(false);
+                  router.push('/messages');
+                }}
+              >
+                <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.profilePicContainer}>
+              <Image
+                source={{ uri: 'https://example.com/placeholder-profile.png' }}
+                style={styles.profilePic}
+              />
+              <Image
+                source={{ uri: 'https://example.com/placeholder-profile.png' }}
+                style={styles.profilePic}
+              />
+            </View>
+            <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
+      {/* Bottom navigation bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -22,6 +199,149 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profilePic: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  tuneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  albumCover: {
+    width: 50,
+    height: 50,
+    borderRadius: 5,
+  },
+  tuneInfo: {
+    marginLeft: 10,
+  },
+  tuneTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  tuneArtist: {
+    fontSize: 12,
+    color: '#666',
+  },
+  performancePic: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  musicReason: {
+    fontSize: 14,
+    color: '#333',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    position: 'absolute',
+    bottom: 90,
+    left: 0,
+    right: 0,
+  },
+  actionButton: {
+    padding: 15,
+    borderRadius: 35,
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dislikeButton: {
+    position: 'absolute',
+    left: 20,
+    bottom: 30,
+  },
+  likeButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 30,
+  },
+  spacer: {
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#ff964f',
+    padding: 20,
+    borderRadius: 40,
+    alignItems: 'center',
+    width: '90%',
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 200,
+  },
+  modalTitle: {
+    fontSize: 38, // Increased font size
+    fontWeight: '800', // Made font thicker
+    marginTop: 'auto',
+    marginBottom: 300,
+    color:'#1E1E1E',
+  },
+  messageButton: {
+    padding: 10,
+  },
+  closeButton: {
+    padding: 10,
+  },
+  profilePicContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backgroundDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    opacity: 0.2,
+  },
+  decorationItem: {
+    margin: 10,
+  },
+  messageIcon: {
+    position: 'absolute',
+    top: 63,
+    right: 20,
+    padding: 10,
   },
 });
 
