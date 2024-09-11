@@ -10,8 +10,11 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/login-signup")}>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/landing")}>
         <Text style={styles.buttonText}>HabiBeats</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/login-signup")}>
+        <Text style={styles.buttonText}>LogIn</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/profile")}>
         <Text style={styles.buttonText}>Profile</Text>
@@ -44,6 +47,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: 'white',
+  },
+  habiBeatsButton: {
+    backgroundColor: "#ff69b4",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  habiBeatsButtonText: {
+    color: "white",
+    fontSize: 24,
+    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#e66cab",

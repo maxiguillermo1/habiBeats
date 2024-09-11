@@ -1,18 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
 import { Stack } from 'expo-router';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 
 // Custom TextInput component
-const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...props }: {
+const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
+  placeholder: string;
   [key: string]: any;
 }) => {
-  const placeholder = '******';
   return (
     <TextInput
       {...props}
@@ -20,8 +21,8 @@ const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...prop
       onChangeText={onChangeText}
       secureTextEntry={secureTextEntry}
       placeholder={placeholder}
-      placeholderTextColor="#e66cab"
-      style={[styles.input, value ? {} : styles.inputWithAsterisks]}
+      placeholderTextColor="#A0A0A0"
+      style={styles.input}
     />
   );
 };
@@ -32,6 +33,57 @@ export default function LoginSignup() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+
+  // START of Animated Flow
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(50);
+  const formOpacity = useSharedValue(0);
+  const formTranslateY = useSharedValue(50);
+  const buttonOpacity = useSharedValue(0);
+  const buttonTranslateY = useSharedValue(50);
+  const linksOpacity = useSharedValue(0);
+  const linksTranslateY = useSharedValue(50);
+
+  useEffect(() => {
+    titleOpacity.value = withSpring(1);
+    titleTranslateY.value = withSpring(0);
+    formOpacity.value = withDelay(150, withSpring(1));
+    formTranslateY.value = withDelay(150, withSpring(0));
+    buttonOpacity.value = withDelay(300, withSpring(1));
+    buttonTranslateY.value = withDelay(300, withSpring(0));
+    linksOpacity.value = withDelay(450, withSpring(1));
+    linksTranslateY.value = withDelay(450, withSpring(0));
+  }, []);
+
+  const animatedTitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: titleOpacity.value,
+      transform: [{ translateY: titleTranslateY.value }],
+    };
+  });
+
+  const animatedFormStyle = useAnimatedStyle(() => {
+    return {
+      opacity: formOpacity.value,
+      transform: [{ translateY: formTranslateY.value }],
+    };
+  });
+
+  const animatedButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: buttonOpacity.value,
+      transform: [{ translateY: buttonTranslateY.value }],
+    };
+  });
+
+  const animatedLinksStyle = useAnimatedStyle(() => {
+    return {
+      opacity: linksOpacity.value,
+      transform: [{ translateY: linksTranslateY.value }],
+    };
+  });
+
+  // END of Animated Flow
 
   // Authentication functions
   async function signIn() {
@@ -87,24 +139,31 @@ export default function LoginSignup() {
     router.push("/forgotpassword");
   };
 
+  const handleBackPress = () => {
+    router.push("/landing");
+  };
+
   // UI Render
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>back</Text>
+        </TouchableOpacity>
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.headerContainer}>
+          <Animated.View style={[styles.headerContainer, animatedTitleStyle]}>
             <Text style={styles.title}>HabiBeats</Text>
-            <Image
+            {/* <Image
               source={require('../assets/images/habibeats-logo.png')}
               style={styles.logo}
               resizeMode="contain"
-            />
-          </View>
+            /> */}
+          </Animated.View>
 
           {/* Form */}
-          <View style={styles.formContainer}>
+          <Animated.View style={[styles.formContainer, animatedFormStyle]}>
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email</Text>
@@ -116,6 +175,7 @@ export default function LoginSignup() {
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                placeholder="enter your email"
               />
               {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
             </View>
@@ -127,29 +187,32 @@ export default function LoginSignup() {
                 value={password} 
                 onChangeText={setPassword} 
                 secureTextEntry 
+                placeholder="enter your password"
               />
             </View>
 
             {/* Sign In Button */}
-            <TouchableOpacity 
-              style={styles.signInButton} 
-              onPress={signIn}
-            >
-              <Text style={styles.signInButtonText}>
-                sign in
-              </Text>
-            </TouchableOpacity>
+            <Animated.View style={animatedButtonStyle}>
+              <TouchableOpacity 
+                style={styles.signInButton} 
+                onPress={signIn}
+              >
+                <Text style={styles.signInButtonText}>
+                  sign in
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Bottom Links */}
-            <View style={styles.bottomLinks}>
+            <Animated.View style={[styles.bottomLinks, animatedLinksStyle]}>
               <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={[styles.forgotPassword, styles.boldText]}>forgot password</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSignUp}>
                 <Text style={[styles.signUp, styles.boldText]}>sign up</Text>
               </TouchableOpacity>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </View>
       </SafeAreaView>
     </>
@@ -196,15 +259,11 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 36,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 18,
-    paddingHorizontal: 15,
-    fontSize: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingHorizontal: 5,
+    fontSize: 14,
     color: '#000',
-  },
-  inputWithAsterisks: {
-    color: '#e66cab',
   },
   signInButton: {
     backgroundColor: "#e07ab1",
@@ -213,18 +272,18 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginTop: 20,
+    marginBottom: 20,
   },
   signInButtonText: {
     color: "white",
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "600",
     textTransform: 'lowercase',
   },
   bottomLinks: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: 20,
   },
   forgotPassword: {
     color: '#A0A0A0',
@@ -232,7 +291,7 @@ const styles = StyleSheet.create({
   },
   signUp: {
     color: '#FFA500',
-    fontSize: 12,
+    fontSize: 15,
   },
   boldText: {
     fontWeight: 'bold',
@@ -245,5 +304,16 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     padding: 5,
     borderRadius: 5,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 80,
+    left: 30,
+    zIndex: 1,
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: '#f4a261',
+    fontWeight: 'bold',
   },
 });
