@@ -33,13 +33,23 @@ const transporter = nodemailer.createTransport({
 });
 
 exports.sendOTP = functions.https.onCall(async (data, context) => {
-  const { email, otp } = data;
+  const { email, otp, isEmailChange } = data;
+
+  let subject, text;
+
+  if (isEmailChange) {
+    subject = 'Email Change OTP';
+    text = `Your OTP for email change is: ${otp}. If you didn't request this change, please ignore this email.`;
+  } else {
+    subject = 'Password Reset OTP';
+    text = `Your OTP for password reset is: ${otp}`;
+  }
 
   const mailOptions = {
-    from: 'your-email@gmail.com',
+    from: 'habibeatsteam@gmail.com',
     to: email,
-    subject: 'Password Reset OTP',
-    text: `Your OTP for password reset is: ${otp}`
+    subject: subject,
+    text: text
   };
 
   try {

@@ -6,11 +6,10 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebaseConfig';
-import { doc, updateDoc } from 'firebase/firestore';
-import { getAuth, signOut } from 'firebase/auth';
-
-
+import { app, db, auth } from '../firebaseConfig';
+import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { getAuth, signOut, updateEmail, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Define the ProfileSettings component
 export default function ProfileSettings() {
@@ -28,7 +27,7 @@ export default function ProfileSettings() {
   const [profileImage, setProfileImage] = useState<string>(initialProfileImage as string);
   const [favoritePerformanceImage, setFavoritePerformanceImage] = useState(initialFavoritePerformanceImage as string | null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [name, setName] = useState('Name not set');
+  const [name, setName] = useState('');
   const [location, setLocation] = useState('Location not set');
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -36,6 +35,18 @@ export default function ProfileSettings() {
   const [tempName, setTempName] = useState(name);
   const [tempLocation, setTempLocation] = useState(location);
   const googlePlacesRef = useRef(null);
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordChangeError, setPasswordChangeError] = useState('');
+  const [emailChangeError, setEmailChangeError] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [confirmNewEmail, setConfirmNewEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
   useEffect(() => {
     if (userData) {
@@ -184,6 +195,140 @@ export default function ProfileSettings() {
     }
   };
 
+  const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  };
+
+  const sendEmailChangeOTP = async (email: string) => {
+    const otpCode = generateOTP();
+    const timestamp = Timestamp.now();
+
+    try {
+      await addDoc(collection(db, "email_change_requests"), {
+        email: email,
+        otp: otpCode,
+        timestamp: timestamp,
+        used: false,
+        userId: auth.currentUser?.uid
+      });
+
+      const functions = getFunctions();
+      const sendOTPFunc = httpsCallable(functions, 'sendOTP');
+      await sendOTPFunc({ email, otp: otpCode, isEmailChange: true });
+
+      Alert.alert("OTP Sent", `An OTP has been sent to your current email address. Please enter the OTP to verify your email change.`);
+      setOtpSent(true);
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      Alert.alert("Error", "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    setEmailChangeError('');
+    if (!auth.currentUser) return;
+
+    if (!otpSent) {
+      if (newEmail !== confirmNewEmail) {
+        setEmailChangeError('New email addresses do not match.');
+        return;
+      }
+      // Send OTP to the current email
+      await sendEmailChangeOTP(auth.currentUser.email!);
+      return;
+    }
+
+    if (!otp) {
+      setEmailChangeError('Please enter the OTP.');
+      return;
+    }
+
+    // Verify OTP
+    const q = query(collection(db, 'email_change_requests'),
+      where('email', '==', auth.currentUser.email),
+      where('otp', '==', otp),
+      where('used', '==', false)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      setEmailChangeError('Invalid OTP. Please try again.');
+      return;
+    }
+
+    const otpDoc = snapshot.docs[0];
+    const otpData = otpDoc.data();
+
+    // Check if OTP is expired (15 minutes)
+    const now = Timestamp.now();
+    const expirationTime = 15 * 60 * 1000; // 15 minutes
+    if (now.toMillis() - otpData.timestamp.toMillis() > expirationTime) {
+      setEmailChangeError('OTP has expired. Please request a new one.');
+      return;
+    }
+
+    try {
+      // Send verification email to the new email address
+      await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+
+      // Mark OTP as used
+      await updateDoc(otpDoc.ref, { used: true });
+
+      Alert.alert(
+        'Verification Email Sent',
+        'A verification link has been sent to your new email address. Please check your new email and click on the link to complete the email change process.',
+        [{ text: 'OK', onPress: () => {
+          setIsChangingEmail(false);
+          setNewEmail('');
+          setConfirmNewEmail('');
+          setOtp('');
+          setOtpSent(false);
+        }}]
+      );
+    } catch (error) {
+      console.error('Error updating email:', error);
+      setEmailChangeError('Failed to send verification email. Please try again.');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordChangeError('');
+    const auth = getAuth();
+    if (!auth.currentUser) return;
+
+    if (!currentPassword) {
+      setPasswordChangeError('Please enter your current password.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordChangeError('New passwords do not match.');
+      return;
+    }
+
+    try {
+      // Re-authenticate the user
+      await signInWithEmailAndPassword(auth, auth.currentUser.email!, currentPassword);
+
+      // Update the password
+      await updatePassword(auth.currentUser, newPassword);
+
+      Alert.alert('Success', 'Your password has been changed successfully.');
+      setIsChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      if (error.code === 'auth/wrong-password') {
+        setPasswordChangeError('Current password is incorrect. Please try again.');
+      } else {
+        setPasswordChangeError('Failed to change password. Please try again later.');
+      }
+    }
+  };
+
   // Render the component
   return (
     <>
@@ -317,12 +462,126 @@ export default function ProfileSettings() {
               <TouchableOpacity style={styles.modalOption} onPress={() => { setIsEditingName(true); setModalVisible(false); }}>
                 <Text style={styles.modalOptionText}>Change Display Name</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.modalOption} onPress={() => { setIsChangingEmail(true); setModalVisible(false); }}>
+                <Text style={styles.modalOptionText}>Change Email</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalOption} onPress={() => { setIsChangingPassword(true); setModalVisible(false); }}>
+                <Text style={styles.modalOptionText}>Change Password</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.modalOption} onPress={() => setModalVisible(false)}>
                 <Text style={styles.modalOptionText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
+
+        {/* Email change modal */}
+        <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isChangingEmail}
+        onRequestClose={() => setIsChangingEmail(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Email</Text>
+            {!otpSent ? (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="New Email"
+                  value={newEmail}
+                  onChangeText={setNewEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm New Email"
+                  value={confirmNewEmail}
+                  onChangeText={setConfirmNewEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity style={styles.button} onPress={handleChangeEmail}>
+                  <Text style={styles.buttonText}>Send OTP</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="number-pad"
+                />
+                <TouchableOpacity style={styles.button} onPress={handleChangeEmail}>
+                  <Text style={styles.buttonText}>Verify OTP</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {emailChangeError ? <Text style={styles.errorText}>{emailChangeError}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={() => {
+              setIsChangingEmail(false);
+              setOtpSent(false);
+              setOtp('');
+              setNewEmail('');
+              setConfirmNewEmail('');
+              setEmailChangeError('');
+            }}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Password Change Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isChangingPassword}
+        onRequestClose={() => setIsChangingPassword(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Current Password"
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="New Password"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm New Password"
+              value={confirmNewPassword}
+              onChangeText={setConfirmNewPassword}
+              secureTextEntry
+            />
+            {passwordChangeError ? <Text style={styles.errorText}>{passwordChangeError}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
+              <Text style={styles.buttonText}>Change Password</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => {
+              setIsChangingPassword(false);
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmNewPassword('');
+              setPasswordChangeError('');
+            }}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       </SafeAreaView>
     </>
   );
@@ -509,5 +768,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#e66cab',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#e66cab',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
 });
