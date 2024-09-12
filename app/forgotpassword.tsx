@@ -1,19 +1,89 @@
-import React, { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
 import { Stack } from 'expo-router';
 import { getFirestore, collection, addDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState("email"); // "email" or "otp"
+  const [message, setMessage] = useState(""); // New state for the message
   const router = useRouter();
   const db = getFirestore(app);
+
+  // Animation values
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(50);
+  const subtitleOpacity = useSharedValue(0);
+  const subtitleTranslateY = useSharedValue(50);
+  const backButtonOpacity = useSharedValue(0);
+  const backButtonTranslateY = useSharedValue(50);
+  const emailInputOpacity = useSharedValue(0);
+  const emailInputTranslateY = useSharedValue(50);
+  const resetButtonOpacity = useSharedValue(0);
+  const resetButtonTranslateY = useSharedValue(50);
+  const otpInputOpacity = useSharedValue(0);
+  const otpInputTranslateY = useSharedValue(50);
+  const newPasswordInputOpacity = useSharedValue(0);
+  const newPasswordInputTranslateY = useSharedValue(50);
+
+  useEffect(() => {
+    titleOpacity.value = withSpring(1);
+    titleTranslateY.value = withSpring(0);
+    subtitleOpacity.value = withDelay(150, withSpring(1));
+    subtitleTranslateY.value = withDelay(150, withSpring(0));
+    backButtonOpacity.value = withDelay(300, withSpring(1));
+    backButtonTranslateY.value = withDelay(300, withSpring(0));
+    emailInputOpacity.value = withDelay(450, withSpring(1));
+    emailInputTranslateY.value = withDelay(450, withSpring(0));
+    resetButtonOpacity.value = withDelay(600, withSpring(1));
+    resetButtonTranslateY.value = withDelay(600, withSpring(0));
+    otpInputOpacity.value = withDelay(450, withSpring(1));
+    otpInputTranslateY.value = withDelay(450, withSpring(0));
+    newPasswordInputOpacity.value = withDelay(600, withSpring(1));
+    newPasswordInputTranslateY.value = withDelay(600, withSpring(0));
+  }, []);
+
+  const animatedTitleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslateY.value }],
+  }));
+
+  const animatedSubtitleStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value,
+    transform: [{ translateY: subtitleTranslateY.value }],
+  }));
+
+  const animatedBackButtonStyle = useAnimatedStyle(() => ({
+    opacity: backButtonOpacity.value,
+    transform: [{ translateY: backButtonTranslateY.value }],
+  }));
+
+  const animatedEmailInputStyle = useAnimatedStyle(() => ({
+    opacity: emailInputOpacity.value,
+    transform: [{ translateY: emailInputTranslateY.value }],
+  }));
+
+  const animatedResetButtonStyle = useAnimatedStyle(() => ({
+    opacity: resetButtonOpacity.value,
+    transform: [{ translateY: resetButtonTranslateY.value }],
+  }));
+
+  const animatedOtpInputStyle = useAnimatedStyle(() => ({
+    opacity: otpInputOpacity.value,
+    transform: [{ translateY: otpInputTranslateY.value }],
+  }));
+
+  const animatedNewPasswordInputStyle = useAnimatedStyle(() => ({
+    opacity: newPasswordInputOpacity.value,
+    transform: [{ translateY: newPasswordInputTranslateY.value }],
+  }));
 
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
@@ -35,50 +105,48 @@ export default function ForgotPassword() {
       const sendOTPFunc = httpsCallable(functions, 'sendOTP');
       await sendOTPFunc({ email, otp: otpCode });
 
-      Alert.alert("OTP Sent", `An OTP has been sent to ${email}. Please check your email.`);
+      setMessage(`Recovery code sent to ${email}.\n\nEnter code to reset password.`);
+      setStep("otp");
     } catch (error) {
       console.error("Error sending OTP:", error);
-      Alert.alert("Error", "Failed to send OTP. Please try again.");
+      setMessage("Failed to send OTP. Please try again.");
     }
   };
 
   const handleSendOTP = async () => {
     if (!email) {
-      Alert.alert("Error", "Please enter your email address.");
+      setMessage("Please enter your email address.");
       return;
     }
 
+    Keyboard.dismiss();  // Dismiss the keyboard
+
     try {
       await sendPasswordResetOTP(email);
-      router.push({
-        pathname: "/forgotpassword-confirmation",
-        params: { email: email }
-      });
     } catch (error) {
       console.error("Failed to send OTP:", error);
-      Alert.alert("Error", "Failed to send OTP. Please try again.");
+      setMessage("Failed to send OTP. Please try again.");
     }
   };
 
   const verifyOTPAndResetPassword = async () => {
     if (!email || !otp || !newPassword) {
-      Alert.alert("Error", "Please fill in all fields.");
+      setMessage("Please fill in all fields.");
       return;
     }
+
+    Keyboard.dismiss();  // Dismiss the keyboard
 
     try {
       const functions = getFunctions(app);
       const resetPasswordFunc = httpsCallable(functions, 'resetPassword');
       const result = await resetPasswordFunc({ email, otp, newPassword });
       
-      Alert.alert(
-        "Success", 
-        "Your password has been reset successfully.",
-        [{ text: "OK", onPress: () => router.replace("/login-signup") }]
-      );
+      setMessage("Your password has been reset successfully.");
+      setTimeout(() => router.replace("/login-signup"), 2000);
     } catch (error) {
       console.error("Error resetting password:", error);
-      Alert.alert("Error", "Failed to reset password. Please try again.");
+      setMessage("Failed to reset password. Please try again.");
     }
   };
 
@@ -87,59 +155,77 @@ export default function ForgotPassword() {
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>back</Text>
-          </TouchableOpacity>
+          <Animated.View style={[styles.backButton, animatedBackButtonStyle]}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>back</Text>
+            </TouchableOpacity>
+          </Animated.View>
+          
+          <Animated.View style={[styles.titleContainer, animatedTitleStyle]}>
+            <Text style={styles.title}>HabiBeats</Text>
+          </Animated.View>
+          
+          <Animated.View style={[styles.subtitleContainer, animatedSubtitleStyle]}>
+            <Text style={[styles.subtitle, styles.boldText]}>Account Recovery</Text>
+          </Animated.View>
           
           {step === "email" ? (
             <>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"  // Disable capitalization
-                  style={styles.input}
-                />
-              </View>
-              <TouchableOpacity 
-                style={styles.resetButton} 
-                onPress={handleSendOTP}
-              >
-                <Text style={styles.resetButtonText}>
-                  reset password
-                </Text>
-              </TouchableOpacity>
+              <Animated.View style={[styles.formContainer, animatedEmailInputStyle]}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={[styles.input, styles.smallerText]}
+                  />
+                </View>
+                <Animated.View style={animatedResetButtonStyle}>
+                  <TouchableOpacity 
+                    style={styles.resetButton} 
+                    onPress={handleSendOTP}
+                  >
+                    <Text style={styles.resetButtonText}>
+                      Send Recovery OTP Code
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+                {message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
+              </Animated.View>
             </>
           ) : (
             <>
-              <TextInput
-                value={otp}
-                onChangeText={setOtp}
-                placeholder="Enter OTP"
-                keyboardType="number-pad"
-                style={styles.input}
-              />
-              <TextInput
-                value={newPassword}
-                onChangeText={setNewPassword}
-                placeholder="Enter new password"
-                secureTextEntry
-                style={styles.input}
-              />
-              <TouchableOpacity 
-                style={styles.resetButton} 
-                onPress={verifyOTPAndResetPassword}
-              >
-                <Text style={styles.resetButtonText}>
-                  Reset Password
-                </Text>
-              </TouchableOpacity>
+              <Animated.View style={animatedOtpInputStyle}>
+                <TextInput
+                  value={otp}
+                  onChangeText={setOtp}
+                  placeholder="Enter OTP"
+                  keyboardType="number-pad"
+                  style={styles.input}
+                />
+              </Animated.View>
+              <Animated.View style={animatedNewPasswordInputStyle}>
+                <TextInput
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Enter new password"
+                  secureTextEntry
+                  style={styles.input}
+                />
+              </Animated.View>
+              <Animated.View style={animatedResetButtonStyle}>
+                <TouchableOpacity 
+                  style={styles.resetButton} 
+                  onPress={verifyOTPAndResetPassword}
+                >
+                  <Text style={styles.resetButtonText}>
+                    Reset Password
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+              {message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
             </>
           )}
         </View>
@@ -151,7 +237,7 @@ export default function ForgotPassword() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   backButton: {
     position: 'absolute',
@@ -161,7 +247,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#f4a261',
+    color: '#0e1514',
     fontWeight: 'bold',
   },
   content: {
@@ -171,38 +257,68 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     justifyContent: 'flex-start',
   },
+  titleContainer: {
+    marginBottom: 50,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#37bdd5',
+    marginBottom: 20,
+    textAlign: 'center',
+    width: '100%',
+  },
+  subtitleContainer: {
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#0e1514',
+    textAlign: 'center',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    paddingTop: 20,
+  },
   inputContainer: {
     marginBottom: 15,
   },
-  inputLabel: {
-    fontSize: 12,
-    marginBottom: 15,  // Increased margin to add more spacing
-    fontWeight: 'bold',
-  },
   input: {
     width: "100%",
-    height: 36,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 18,
-    paddingHorizontal: 15,
-    fontSize: 10,
-    color: '#000',
+    height: 40,
+    borderWidth: 0,
+    paddingHorizontal: 10,
+    color: '#808080',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  smallerText: {
+    fontSize: 12,
   },
   resetButton: {
-    backgroundColor: "#e07ab1",
-    padding: 10,
-    borderRadius: 25,
+    backgroundColor: "#37bdd5",
+    padding: 15,
+    borderRadius: 15,
     width: "100%",
     alignItems: "center",
-    marginTop: 10,
+    marginTop:5,
+    marginBottom: 20,
   },
   resetButtonText: {
     color: "white",
-    fontSize: 12,
-    fontWeight: "500",
-    textTransform: 'lowercase',
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  message: {
+    color: '#0e1514',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
   },
 });
-
-

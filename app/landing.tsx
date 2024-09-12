@@ -77,7 +77,7 @@ export default function Landing() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   content: {
     flex: 1,
@@ -89,21 +89,21 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#e07ab1',
+    color: '#37bdd5',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 18,
-    color: '#f4a261',
+    color: '#0e1514',
     textAlign: 'center',
   },
   continueButton: {
-    backgroundColor: '#e07ab1',
+    backgroundColor: '#37bdd5',
     paddingVertical: 15,
     paddingHorizontal: 30,
-    borderRadius: 25,
+    borderRadius: 15,
     marginBottom: 30,
     marginHorizontal: 20,
     alignItems: 'center',
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#f4a261',
+    color: '#0e1514',
     fontWeight: 'bold',
   },
 });

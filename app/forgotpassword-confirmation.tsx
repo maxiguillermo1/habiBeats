@@ -1,3 +1,4 @@
+// Forgot Password Confirmation
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
@@ -118,6 +119,8 @@ export default function ForgotPasswordConfirm() {
             </>
           ) : (
             <>
+              <View style={styles.spacer} />
+              
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>New Password</Text>
                 <TextInput 
@@ -237,8 +240,7 @@ const styles = StyleSheet.create({
   
   // Add this new style for spacing
   spacer: {
-    height: 20, // Adjust this value to increase or decrease spacing
+    height: 40, // Increased from 20 to 40 to add more spacing
   },
   
 });
-

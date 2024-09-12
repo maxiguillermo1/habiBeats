@@ -21,8 +21,8 @@ const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeho
       onChangeText={onChangeText}
       secureTextEntry={secureTextEntry}
       placeholder={placeholder}
-      placeholderTextColor="#A0A0A0"
-      style={styles.input}
+      placeholderTextColor="#C0C0C0"
+      style={[styles.input, styles.smallerText]}
     />
   );
 };
@@ -32,11 +32,14 @@ export default function LoginSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [emptyFieldsError, setEmptyFieldsError] = useState("");
   const router = useRouter();
 
   // START of Animated Flow
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
+  const subtitleOpacity = useSharedValue(0);
+  const subtitleTranslateY = useSharedValue(50);
   const formOpacity = useSharedValue(0);
   const formTranslateY = useSharedValue(50);
   const buttonOpacity = useSharedValue(0);
@@ -47,18 +50,27 @@ export default function LoginSignup() {
   useEffect(() => {
     titleOpacity.value = withSpring(1);
     titleTranslateY.value = withSpring(0);
-    formOpacity.value = withDelay(150, withSpring(1));
-    formTranslateY.value = withDelay(150, withSpring(0));
-    buttonOpacity.value = withDelay(300, withSpring(1));
-    buttonTranslateY.value = withDelay(300, withSpring(0));
-    linksOpacity.value = withDelay(450, withSpring(1));
-    linksTranslateY.value = withDelay(450, withSpring(0));
+    subtitleOpacity.value = withDelay(100, withSpring(1));
+    subtitleTranslateY.value = withDelay(100, withSpring(0));
+    formOpacity.value = withDelay(200, withSpring(1));
+    formTranslateY.value = withDelay(200, withSpring(0));
+    buttonOpacity.value = withDelay(350, withSpring(1));
+    buttonTranslateY.value = withDelay(350, withSpring(0));
+    linksOpacity.value = withDelay(500, withSpring(1));
+    linksTranslateY.value = withDelay(500, withSpring(0));
   }, []);
 
   const animatedTitleStyle = useAnimatedStyle(() => {
     return {
       opacity: titleOpacity.value,
       transform: [{ translateY: titleTranslateY.value }],
+    };
+  });
+
+  const animatedSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: subtitleOpacity.value,
+      transform: [{ translateY: subtitleTranslateY.value }],
     };
   });
 
@@ -91,7 +103,7 @@ export default function LoginSignup() {
     console.log("Attempting to sign in with email:", email);
 
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      setEmptyFieldsError("Please enter both email and password.");
       return;
     }
 
@@ -101,6 +113,7 @@ export default function LoginSignup() {
       console.log("Sign in successful:", user);
 
       setErrorMessage(""); // Clear any existing error message
+      setEmptyFieldsError(""); // Clear empty fields error
 
       Alert.alert("Success", "You have successfully signed in!", [
         { text: "OK", onPress: () => router.push("/profile") }
@@ -124,6 +137,9 @@ export default function LoginSignup() {
       case "Firebase: Error (auth/invalid-credential).":
         setErrorMessage("Incorrect email or password. Please try again.");
         break;
+      case "Firebase: Error (auth/invalid-email).":
+        setErrorMessage("Invalid email address. Please enter a valid email.");
+        break;
       default:
         Alert.alert("Error", error.message);
         break;
@@ -140,7 +156,7 @@ export default function LoginSignup() {
   };
 
   const handleBackPress = () => {
-    router.push("/landing");
+    router.back();
   };
 
   // UI Render
@@ -155,41 +171,43 @@ export default function LoginSignup() {
           {/* Header */}
           <Animated.View style={[styles.headerContainer, animatedTitleStyle]}>
             <Text style={styles.title}>HabiBeats</Text>
-            {/* <Image
-              source={require('../assets/images/habibeats-logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            /> */}
           </Animated.View>
 
           {/* Form */}
           <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+            <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>
+              <Text style={styles.boldText}>Sign In</Text>{'\n'}
+            </Animated.Text>
             {/* Email Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
               <CustomTextInput 
                 value={email} 
                 onChangeText={(text) => {
                   setEmail(text);
                   setErrorMessage("");
+                  setEmptyFieldsError("");
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholder="enter your email"
+                placeholder="email"
               />
               {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
             </View>
 
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
               <CustomTextInput 
                 value={password} 
-                onChangeText={setPassword} 
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setEmptyFieldsError("");
+                }} 
                 secureTextEntry 
-                placeholder="enter your password"
+                placeholder="password"
               />
             </View>
+
+            {emptyFieldsError ? <Text style={styles.emptyFieldsErrorText}>{emptyFieldsError}</Text> : null}
 
             {/* Sign In Button */}
             <Animated.View style={animatedButtonStyle}>
@@ -198,7 +216,7 @@ export default function LoginSignup() {
                 onPress={signIn}
               >
                 <Text style={styles.signInButtonText}>
-                  sign in
+                  Sign In
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -208,12 +226,17 @@ export default function LoginSignup() {
               <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={[styles.forgotPassword, styles.boldText]}>forgot password</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleSignUp}>
-                <Text style={[styles.signUp, styles.boldText]}>sign up</Text>
-              </TouchableOpacity>
             </Animated.View>
           </Animated.View>
         </View>
+        
+        {/* Sign Up Button */}
+        <Animated.View style={[styles.signUpButtonContainer, animatedLinksStyle]}>
+          <Text style={styles.newHereText}>new here?</Text>
+          <TouchableOpacity onPress={handleSignUp} style={styles.signUpButton}>
+            <Text style={[styles.signUpButtonText, styles.boldText]}>Sign Up Now</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </SafeAreaView>
     </>
   );
@@ -222,23 +245,38 @@ export default function LoginSignup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 65,
+    paddingHorizontal: 55,
     paddingTop: 70,
     paddingBottom: 20,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 0.5,
+    marginBottom: 20,
+    width: '100%',  // Ensure the container takes full width
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#37bdd5',
     textAlign: 'center',
+    width: '100%',  // Ensure the text takes full width of its container
+  },
+  subtitle: {
+    fontSize: 18,
+    marginBottom: 15,
+    color: '#0e1514',
+    textAlign: 'center',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  normalText: {
+    fontWeight: 'normal',
   },
   logo: {
     width: 225,
@@ -246,29 +284,28 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 20,
   },
   inputContainer: {
     marginBottom: 15,
   },
-  inputLabel: {
-    fontSize: 12,
-    marginBottom: 5,
-    fontWeight: 'bold',
-  },
   input: {
     width: "100%",
-    height: 36,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-    paddingHorizontal: 5,
-    fontSize: 14,
-    color: '#000',
+    height: 40,
+    borderWidth: 0,
+    paddingHorizontal: 10,
+    color: '#808080',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  smallerText: {
+    fontSize: 12,
   },
   signInButton: {
-    backgroundColor: "#e07ab1",
-    padding: 10,
-    borderRadius: 25,
+    backgroundColor: "#37bdd5",
+    padding: 15,
+    borderRadius: 15,
     width: "100%",
     alignItems: "center",
     marginTop: 20,
@@ -278,31 +315,47 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 15,
     fontWeight: "600",
-    textTransform: 'lowercase',
   },
   bottomLinks: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     width: '100%',
   },
   forgotPassword: {
     color: '#A0A0A0',
     fontSize: 12,
   },
-  signUp: {
-    color: '#FFA500',
+  signUpButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 230,
+    left: 0,
+    right: 0,
+  },
+  signUpButton: {
+    backgroundColor: 'transparent',
+    marginLeft: 10,
+  },
+  signUpButtonText: {
+    color: '#fc6c85',
     fontSize: 15,
   },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  // error text styling
   errorText: {
     color: 'red',
-    fontSize: 12,
+    fontSize: 10,
     marginTop: 5,
     textAlign: 'left',
     padding: 5,
+    borderRadius: 5,
+  },
+  emptyFieldsErrorText: {
+    color: 'red',
+    fontSize: 10,
+    marginTop: 2,
+    textAlign: 'left',
+    paddingHorizontal: 5,
     borderRadius: 5,
   },
   backButton: {
@@ -313,7 +366,11 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#f4a261',
+    color: '#0e1514',
     fontWeight: 'bold',
+  },
+  newHereText: {
+    color: '#0e1514',
+    fontSize: 15,
   },
 });
