@@ -1,5 +1,6 @@
+// Login Signup
 import React, { useState, useEffect } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, ActivityIndicator } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
@@ -33,6 +34,7 @@ export default function LoginSignup() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [emptyFieldsError, setEmptyFieldsError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // START of Animated Flow
@@ -107,6 +109,8 @@ export default function LoginSignup() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -115,10 +119,13 @@ export default function LoginSignup() {
       setErrorMessage(""); // Clear any existing error message
       setEmptyFieldsError(""); // Clear empty fields error
 
-      Alert.alert("Success", "You have successfully signed in!", [
-        { text: "OK", onPress: () => router.push("/profile") }
-      ]);
+      // Delay the navigation to show the loading indicator
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/profile");
+      }, 2000); // 2 seconds delay, adjust as needed
     } catch (error: unknown) {
+      setIsLoading(false);
       if (error instanceof Error) {
         console.error("Sign in failed:", error.name, error.message);
         handleFirebaseErrors(error);
@@ -156,14 +163,14 @@ export default function LoginSignup() {
   };
 
   const handleBackPress = () => {
-    router.back();
+    router.push("/landing");
   };
 
   // UI Render
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Text style={styles.backButtonText}>back</Text>
         </TouchableOpacity>
@@ -214,10 +221,15 @@ export default function LoginSignup() {
               <TouchableOpacity 
                 style={styles.signInButton} 
                 onPress={signIn}
+                disabled={isLoading}
               >
-                <Text style={styles.signInButtonText}>
-                  Sign In
-                </Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.signInButtonText}>
+                    sign in
+                  </Text>
+                )}
               </TouchableOpacity>
             </Animated.View>
 
@@ -244,6 +256,10 @@ export default function LoginSignup() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#fff8f0',
+  },
+  safeArea: {
     flex: 1,
     backgroundColor: '#fff8f0',
   },
@@ -303,13 +319,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   signInButton: {
-    backgroundColor: "#37bdd5",
-    padding: 15,
-    borderRadius: 15,
-    width: "100%",
-    alignItems: "center",
+    backgroundColor: '#37bdd5',
+    paddingVertical: 12,
+    paddingHorizontal: 3,
+    borderRadius: 8,
     marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 30,
+    alignItems: 'center',
   },
   signInButtonText: {
     color: "white",

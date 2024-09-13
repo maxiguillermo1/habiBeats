@@ -1,3 +1,4 @@
+// Forgot Password
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
@@ -14,6 +15,7 @@ export default function ForgotPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState("email"); // "email" or "otp"
   const [message, setMessage] = useState(""); // New state for the message
+  const [showMessage, setShowMessage] = useState(true); // New state to control message visibility
   const router = useRouter();
   const db = getFirestore(app);
 
@@ -106,16 +108,19 @@ export default function ForgotPassword() {
       await sendOTPFunc({ email, otp: otpCode });
 
       setMessage(`Recovery code sent to ${email}.\n\nEnter code to reset password.`);
+      setShowMessage(true);
       setStep("otp");
     } catch (error) {
       console.error("Error sending OTP:", error);
       setMessage("Failed to send OTP. Please try again.");
+      setShowMessage(true);
     }
   };
 
   const handleSendOTP = async () => {
     if (!email) {
       setMessage("Please enter your email address.");
+      setShowMessage(true);
       return;
     }
 
@@ -126,12 +131,14 @@ export default function ForgotPassword() {
     } catch (error) {
       console.error("Failed to send OTP:", error);
       setMessage("Failed to send OTP. Please try again.");
+      setShowMessage(true);
     }
   };
 
   const verifyOTPAndResetPassword = async () => {
     if (!email || !otp || !newPassword) {
       setMessage("Please fill in all fields.");
+      setShowMessage(true);
       return;
     }
 
@@ -142,11 +149,13 @@ export default function ForgotPassword() {
       const resetPasswordFunc = httpsCallable(functions, 'resetPassword');
       const result = await resetPasswordFunc({ email, otp, newPassword });
       
-      setMessage("Your password has been reset successfully.");
+      setMessage("Your password has been reset successfully!");
+      setShowMessage(true);
       setTimeout(() => router.replace("/login-signup"), 2000);
     } catch (error) {
       console.error("Error resetting password:", error);
       setMessage("Failed to reset password. Please try again.");
+      setShowMessage(true);
     }
   };
 
@@ -156,7 +165,7 @@ export default function ForgotPassword() {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <Animated.View style={[styles.backButton, animatedBackButtonStyle]}>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => router.push("/login-signup")}>
               <Text style={styles.backButtonText}>back</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -192,7 +201,7 @@ export default function ForgotPassword() {
                     </Text>
                   </TouchableOpacity>
                 </Animated.View>
-                {message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
+                {showMessage && message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
               </Animated.View>
             </>
           ) : (
@@ -200,21 +209,26 @@ export default function ForgotPassword() {
               <Animated.View style={animatedOtpInputStyle}>
                 <TextInput
                   value={otp}
-                  onChangeText={setOtp}
-                  placeholder="Enter OTP"
+                  onChangeText={(text) => {
+                    setOtp(text);
+                    setShowMessage(false);
+                  }}
+                  placeholder="enter OTP code"
                   keyboardType="number-pad"
                   style={styles.input}
                 />
               </Animated.View>
+              <View style={styles.smallSpacer} />
               <Animated.View style={animatedNewPasswordInputStyle}>
                 <TextInput
                   value={newPassword}
                   onChangeText={setNewPassword}
-                  placeholder="Enter new password"
+                  placeholder="enter new password"
                   secureTextEntry
                   style={styles.input}
                 />
               </Animated.View>
+              <View style={styles.spacer} />
               <Animated.View style={animatedResetButtonStyle}>
                 <TouchableOpacity 
                   style={styles.resetButton} 
@@ -225,7 +239,7 @@ export default function ForgotPassword() {
                   </Text>
                 </TouchableOpacity>
               </Animated.View>
-              {message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
+              {showMessage && message ? <Text style={[styles.message, styles.smallerText]}>{message}</Text> : null}
             </>
           )}
         </View>
@@ -258,7 +272,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   titleContainer: {
-    marginBottom: 50,
+    marginBottom: 30,
     alignItems: 'center',
   },
   title: {
@@ -270,7 +284,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   subtitleContainer: {
-    marginBottom: 15,
+    marginBottom: 20,
     alignItems: 'center',
   },
   subtitle: {
@@ -320,5 +334,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,
+  },
+  spacer: {
+    height: 20,
+  },
+  smallSpacer: {
+    height: 10,
   },
 });

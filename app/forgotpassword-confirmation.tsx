@@ -132,6 +132,8 @@ export default function ForgotPasswordConfirm() {
                 />
               </View>
 
+              <View style={styles.spacer} />
+
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Confirm New Password</Text>
                 <TextInput 
@@ -143,6 +145,8 @@ export default function ForgotPasswordConfirm() {
                 />
               </View>
               
+              <View style={styles.spacer} />
+
               <TouchableOpacity 
                 style={styles.resetButton} 
                 onPress={resetPassword}
@@ -240,7 +244,7 @@ const styles = StyleSheet.create({
   
   // Add this new style for spacing
   spacer: {
-    height: 40, // Increased from 20 to 40 to add more spacing
+    height: 20, // Reduced from 40 to 20 to add more consistent spacing
   },
   
 });

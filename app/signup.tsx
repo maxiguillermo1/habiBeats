@@ -1,29 +1,29 @@
 // sign up page (user registration)
 
-import React, { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, Easing } from 'react-native-reanimated';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 // Custom TextInput component
-const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, ...props }: {
+const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
-  secureTextEntry?: boolean;
+  placeholder: string;
   [key: string]: any;
 }) => {
-  const placeholder = '******';
   return (
     <TextInput
       {...props}
       value={value}
       onChangeText={onChangeText}
-      secureTextEntry={secureTextEntry}
       placeholder={placeholder}
-      placeholderTextColor="#e66cab"
-      style={[styles.input, value ? {} : styles.inputWithAsterisks]}
+      placeholderTextColor="#C0C0C0"
+      style={[styles.input, styles.smallerText]}
     />
   );
 };
@@ -35,66 +35,174 @@ export default function SignUp() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [step, setStep] = useState<number>(1);
   const router = useRouter();
+
+  // Animated values
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(50);
+  const subtitleOpacity = useSharedValue(0);
+  const subtitleTranslateY = useSharedValue(50);
+  const formOpacity = useSharedValue(0);
+  const formTranslateY = useSharedValue(50);
+  const emailSubtitleOpacity = useSharedValue(0);
+  const emailSubtitleTranslateY = useSharedValue(50);
+  const emailInputOpacity = useSharedValue(0);
+  const emailInputTranslateY = useSharedValue(50);
+  const emailButtonOpacity = useSharedValue(0);
+  const emailButtonTranslateY = useSharedValue(50);
+  const dobSubtitleOpacity = useSharedValue(0);
+  const dobSubtitleTranslateY = useSharedValue(50);
+  const dobInputOpacity = useSharedValue(0);
+  const dobInputTranslateY = useSharedValue(50);
+  const dobButtonOpacity = useSharedValue(0);
+  const dobButtonTranslateY = useSharedValue(50);
+  const passwordSubtitleOpacity = useSharedValue(0);
+  const passwordSubtitleTranslateY = useSharedValue(50);
+  const passwordInputOpacity = useSharedValue(0);
+  const passwordInputTranslateY = useSharedValue(50);
+  const passwordButtonOpacity = useSharedValue(0);
+  const passwordButtonTranslateY = useSharedValue(50);
+
+  useEffect(() => {
+    titleOpacity.value = withSpring(1);
+    titleTranslateY.value = withSpring(0);
+    subtitleOpacity.value = withDelay(100, withSpring(1));
+    subtitleTranslateY.value = withDelay(100, withSpring(0));
+    formOpacity.value = withDelay(200, withSpring(1));
+    formTranslateY.value = withDelay(200, withSpring(0));
+  }, []);
+
+  useEffect(() => {
+    if (step === 2) {
+      emailSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      emailSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+      emailInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      emailInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      emailButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      emailButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    } else if (step === 3) {
+      dobSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      dobSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+      dobInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      dobInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      dobButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      dobButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    } else if (step === 4) {
+      passwordSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      passwordSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+      passwordInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      passwordInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      passwordButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      passwordButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    }
+  }, [step]);
+
+  const animatedTitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: titleOpacity.value,
+      transform: [{ translateY: titleTranslateY.value }],
+    };
+  });
+
+  const animatedSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: subtitleOpacity.value,
+      transform: [{ translateY: subtitleTranslateY.value }],
+    };
+  });
+
+  const animatedFormStyle = useAnimatedStyle(() => {
+    return {
+      opacity: formOpacity.value,
+      transform: [{ translateY: formTranslateY.value }],
+    };
+  });
+
+  const animatedEmailSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: emailSubtitleOpacity.value,
+      transform: [{ translateY: emailSubtitleTranslateY.value }],
+    };
+  });
+
+  const animatedEmailInputStyle = useAnimatedStyle(() => {
+    return {
+      opacity: emailInputOpacity.value,
+      transform: [{ translateY: emailInputTranslateY.value }],
+    };
+  });
+
+  const animatedEmailButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: emailButtonOpacity.value,
+      transform: [{ translateY: emailButtonTranslateY.value }],
+    };
+  });
+
+  const animatedDobSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: dobSubtitleOpacity.value,
+      transform: [{ translateY: dobSubtitleTranslateY.value }],
+    };
+  });
+
+  const animatedDobInputStyle = useAnimatedStyle(() => {
+    return {
+      opacity: dobInputOpacity.value,
+      transform: [{ translateY: dobInputTranslateY.value }],
+    };
+  });
+
+  const animatedDobButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: dobButtonOpacity.value,
+      transform: [{ translateY: dobButtonTranslateY.value }],
+    };
+  });
+
+  const animatedPasswordSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: passwordSubtitleOpacity.value,
+      transform: [{ translateY: passwordSubtitleTranslateY.value }],
+    };
+  });
+
+  const animatedPasswordInputStyle = useAnimatedStyle(() => {
+    return {
+      opacity: passwordInputOpacity.value,
+      transform: [{ translateY: passwordInputTranslateY.value }],
+    };
+  });
+
+  const animatedPasswordButtonStyle = useAnimatedStyle(() => {
+    return {
+      opacity: passwordButtonOpacity.value,
+      transform: [{ translateY: passwordButtonTranslateY.value }],
+    };
+  });
 
   // Function to handle the sign-up process
   const handleSignUp = async () => {
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
-
     const auth = getAuth(app);
-    const db = getFirestore(app);
-    try {
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Create display name from first and last name
-      const displayName = `${firstName} ${lastName}`;
-      
-      // Update user profile with display name in Firebase Auth
-      await updateProfile(user, { displayName });
-      
-      // Save user data to Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        firstName: firstName,
-        lastName: lastName
-      });
-      
-      console.log("Sign up successful:", user);
-      
-      setSuccessMessage("You have successfully signed up!");
-      setTimeout(() => {
-        setSuccessMessage("");
-        router.push("/login-signup");
-      }, 2000); // wait 2 seconds before redirecting
-    } catch (error) {
-      // Handle sign-up errors
-      if (error instanceof Error) {
-        console.error("Sign up failed:", error.message);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-        // checking for specific error messages
-        if (error.message.includes("auth/weak-password")) {
-          setErrorMessage("Password should be at least 6 characters long. Please try again.");
-        } else if (error.message.includes("auth/invalid-email")) {
-          setErrorMessage("Please enter a valid email address. Please try again.");
-        } else if (error.message.includes("auth/email-already-in-use")) {
-          setErrorMessage("An account with this email already exists. Please log in or try a different email.");
-        } else {
-          setErrorMessage(error.message);
-        }
-      } else {
-        console.error("An unknown error occurred");
-        setErrorMessage("An unknown error occurred");
-      }
-    }
+    await updateProfile(user, {
+      displayName: `${firstName} ${lastName}`
+    })
+
+    const db = getFirestore(app);
+    
+    await setDoc(doc(db, "users", user.uid), {
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
+    });
   };
 
   // Function to clear error message when user re-enters form
@@ -102,72 +210,157 @@ export default function SignUp() {
     setErrorMessage("");
   };
 
+  // Function to handle next step
+  const handleNextStep = () => {
+    if (step === 1) {
+      if (firstName && lastName) {
+        setStep(2);
+      } else {
+        setErrorMessage("Please enter both first and last name.");
+      }
+    } else if (step === 2) {
+      if (email) {
+        setStep(3);
+      } else {
+        setErrorMessage("Please enter your email.");
+      }
+    } else if (step === 3) {
+      if (dateOfBirth) {
+        setStep(4);
+      } else {
+        setErrorMessage("Please enter your date of birth.");
+      }
+    } else if (step === 4) {
+      if (password && confirmPassword) {
+        if (password === confirmPassword) {
+          handleSignUp();
+        } else {
+          setErrorMessage("Passwords do not match.");
+        }
+      } else {
+        setErrorMessage("Please enter and confirm your password.");
+      }
+    }
+  };
+
   // UI component
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container}>
-        {/* Back button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>back</Text>
-        </TouchableOpacity>
-
-        <View style={styles.content}>
-          {/* First Name input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>First Name</Text>
-            <CustomTextInput value={firstName} onChangeText={(text) => { setFirstName(text); clearErrorMessage(); }} />
-          </View>
-          {/* Last Name input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Last Name</Text>
-            <CustomTextInput value={lastName} onChangeText={(text) => { setLastName(text); clearErrorMessage(); }} />
-          </View>
-          {/* Email input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <CustomTextInput 
-              value={email} 
-              onChangeText={(text) => { setEmail(text); clearErrorMessage(); }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-          {/* Password input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <CustomTextInput value={password} onChangeText={(text) => { setPassword(text); clearErrorMessage(); }} secureTextEntry />
-          </View>
-          {/* Confirm Password input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Re-enter Password</Text>
-            <CustomTextInput value={confirmPassword} onChangeText={(text) => { setConfirmPassword(text); clearErrorMessage(); }} secureTextEntry />
-          </View>
-          {/* Error message */}
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-          {/* Sign Up button */}
-          <TouchableOpacity 
-            style={{
-              backgroundColor: "#e07ab1", // Soft pink color
-              padding: 10, // Reduced padding to keep it narrow
-              borderRadius: 25, // Rounded corners
-              width: "100%", // Full width to match other buttons
-              alignItems: "center",
-              marginTop: 20,
-            }} 
-            onPress={handleSignUp}
-          >
-            <Text style={{
-              color: "white",
-              fontSize: 12, // Slightly reduced font size
-              fontWeight: "500",
-              textTransform: 'lowercase',
-            }}>
-              sign up
-            </Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.container}>
+          {/* Back button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push("/login-signup")}>
+            <Text style={styles.backButtonText}>back</Text>
           </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+
+          <View style={styles.content}>
+            {step === 1 && (
+              <>
+                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
+                <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>what's your name ?</Animated.Text>
+                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                  {/* First Name input */}
+                  <View style={styles.inputContainer}>
+                    <CustomTextInput 
+                      value={firstName} 
+                      onChangeText={(text) => { setFirstName(text); clearErrorMessage(); }} 
+                      placeholder="first name"
+                    />
+                  </View>
+                  {/* Last Name input */}
+                  <View style={styles.inputContainer}>
+                    <CustomTextInput 
+                      value={lastName} 
+                      onChangeText={(text) => { setLastName(text); clearErrorMessage(); }} 
+                      placeholder="last name"
+                    />
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <TouchableOpacity 
+                    style={styles.button}
+                    onPress={handleNextStep}
+                  >
+                    <Text style={styles.buttonText}>
+                      continue
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
+                <Animated.Text style={[styles.subtitle, animatedEmailSubtitleStyle]}>what's your email ?</Animated.Text>
+                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                  {/* Email input */}
+                  <Animated.View style={[styles.inputContainer, animatedEmailInputStyle]}>
+                    <CustomTextInput 
+                      value={email} 
+                      onChangeText={(text) => { setEmail(text); clearErrorMessage(); }} 
+                      placeholder="email"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </Animated.View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <Animated.View style={animatedEmailButtonStyle}>
+                    <TouchableOpacity 
+                      style={styles.button}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.buttonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </Animated.View>
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
+                <Animated.Text style={[styles.subtitle, animatedDobSubtitleStyle]}>what's your date of birth ?</Animated.Text>
+                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                  {/* Date of Birth input */}
+                  <Animated.View style={[styles.inputContainer, animatedDobInputStyle]}>
+                    <DateTimePicker
+                      value={dateOfBirth}
+                      mode="date"
+                      display="spinner"
+                      onChange={(event, selectedDate) => {
+                        const currentDate = selectedDate || dateOfBirth;
+                        setDateOfBirth(currentDate);
+                        clearErrorMessage();
+                      }}
+                    />
+                  </Animated.View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <Animated.View style={animatedDobButtonStyle}>
+                    <TouchableOpacity 
+                      style={styles.button}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.buttonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </Animated.View>
+              </>
+            )}
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </>
   );
 }
@@ -176,7 +369,7 @@ export default function SignUp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   backButton: {
     position: 'absolute',
@@ -186,54 +379,76 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#f4a261',
-    fontWeight: 'bold', // Add this line
+    color: '#0e1514',
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
     paddingHorizontal: 65,
-    paddingTop: 100,
+    paddingTop: 120,
     paddingBottom: 20,
+    justifyContent: 'flex-start',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 50,
+    color: '#37bdd5',
+    textAlign: 'center',
+    width: '100%',  // Ensure the text takes full width of its container
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#0e1514',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: 'bold',
+  },
+  formContainer: {
+    width: '100%',
   },
   inputContainer: {
-    marginBottom: 15,
-  },
-  inputLabel: {
-    fontSize: 12,
-    marginBottom: 5,
-    fontWeight: 'bold',
+    marginBottom: 10,
   },
   input: {
     width: "100%",
-    height: 36, // Very slim height
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 18, // Half of the height for perfect roundness
-    paddingHorizontal: 15,
-    fontSize: 14,
-    color: '#000', // Add this line to ensure text is visible
+    height: 40,
+    borderWidth: 0,
+    paddingHorizontal: 10,
+    color: '#808080',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
   },
-  inputWithAsterisks: {
-    color: '#e66cab', // Changed to match the button color
+  smallerText: {
+    fontSize: 12,
   },
   button: {
-    backgroundColor: "#e66cab",
-    padding: 12,
-    borderRadius: 18, // Matched with input borderRadius
-    width: "100%",
-    alignItems: "center",
+    backgroundColor: '#37bdd5',
+    paddingVertical: 12,
+    paddingHorizontal: 3,
+    borderRadius: 8,
     marginTop: 20,
+    marginBottom: 30,
+    alignItems: 'center',
   },
   buttonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    textTransform: 'lowercase',
   },
   errorText: {
     color: 'red',
-    fontSize: 12,
-    marginTop: 5,
+    fontSize: 10,
+    marginTop: -5,
+    marginBottom: 5,
     textAlign: 'left',
+    paddingHorizontal: 5,
+    borderRadius: 5,
   },
+  workInProgress: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+  }
 });

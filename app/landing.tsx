@@ -1,3 +1,4 @@
+// Landing
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -63,7 +64,7 @@ export default function Landing() {
       </TouchableOpacity>
       <View style={styles.content}>
         <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-        <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>subtitle</Animated.Text>
+        <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>music connection paired successfully</Animated.Text>
       </View>
       <Animated.View style={animatedButtonStyle}>
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 18,
     color: '#0e1514',
