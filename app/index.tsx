@@ -25,6 +25,9 @@ export default function Index() {
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/messages")}>
         <Text style={styles.buttonText}>Messages</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/directmessage")}>
+        <Text style={styles.buttonText}>Direct Message</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/match")}>
         <Text style={styles.buttonText}>Match</Text>
       </TouchableOpacity>

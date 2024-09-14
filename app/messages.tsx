@@ -41,7 +41,7 @@ const Messages = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   scrollView: {
     flex: 1,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#FF69B4',
+    color: '#fba904',
   },
   messageItem: {
     flexDirection: 'row',

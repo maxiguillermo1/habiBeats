@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   },
   activeNavItem: {
     fontSize: 14,
-    color: '#FF69B4',
+    color: '#fc6c85',
     marginHorizontal: 20,
   },
   boldText: {

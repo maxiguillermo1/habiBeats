@@ -402,7 +402,7 @@ export default function ProfileSettings() {
               <Switch
                 value={notifications}
                 onValueChange={setNotifications}
-                trackColor={{ false: "#767577", true: "#e66cab" }}
+                trackColor={{ false: "#767577", true: "#79ce54" }}
                 thumbColor={notifications ? "#f4f3f4" : "#f4f3f4"}
               />
             </View>
@@ -412,7 +412,7 @@ export default function ProfileSettings() {
               <Switch
                 value={showLastName}
                 onValueChange={setShowLastName}
-                trackColor={{ false: "#767577", true: "#e66cab" }}
+                trackColor={{ false: "#767577", true: "#79ce54" }}
                 thumbColor={showLastName ? "#f4f3f4" : "#f4f3f4"}
               />
             </View>
@@ -422,7 +422,7 @@ export default function ProfileSettings() {
               <Switch
                 value={showLocation}
                 onValueChange={setShowLocation}
-                trackColor={{ false: "#767577", true: "#e66cab" }}
+                trackColor={{ false: "#767577", true: "#79ce54" }}
                 thumbColor={showLocation ? "#f4f3f4" : "#f4f3f4"}
               />
             </View>
@@ -432,7 +432,7 @@ export default function ProfileSettings() {
               <Switch
                 value={showMyEvents}
                 onValueChange={setShowMyEvents}
-                trackColor={{ false: "#767577", true: "#e66cab" }}
+                trackColor={{ false: "#767577", true: "#79ce54" }}
                 thumbColor={showMyEvents ? "#f4f3f4" : "#f4f3f4"}
               />
             </View>
@@ -591,7 +591,7 @@ export default function ProfileSettings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   scrollContent: {
     flexGrow: 1,
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#f4a261',
+    color: '#fba904',
     fontWeight: 'bold',
   },
   profileSection: {
@@ -621,13 +621,13 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 3,
-    borderColor: '#e66cab',
+    borderColor: '#fc6c85',
   },
   editButton: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    backgroundColor: '#e66cab',
+    backgroundColor: '#fc6c85',
     borderRadius: 15,
     width: 35,
     height: 35,
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   logoutButton: {
     marginTop: 20,
     marginHorizontal: 20,
-    backgroundColor: '#e66cab',
+    backgroundColor: '#37bdd5',
     padding: 15,
     borderRadius: 25,
     alignItems: 'center',
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    borderColor: '#f4a261',
+    borderColor: '#fba904',
     borderWidth: 1,
   },
   modalOption: {
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     borderWidth: 1,
-    borderColor: '#e66cab',
+    borderColor: '#fc6c85',
     borderRadius: 8,
     padding: 6,
     marginRight: 40,
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#f0f0f0',
     borderWidth: 1,
-    borderColor: '#e66cab',
+    borderColor: '#fc6c85',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchButton: {
-    backgroundColor: '#e66cab',
+    backgroundColor: '#fc6c85',
     padding: 10,
     borderRadius: 8,
     marginLeft: 5,
@@ -772,13 +772,13 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#e66cab',
+    borderColor: '#fc6c85',
     borderRadius: 8,
     padding: 10,
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#e66cab',
+    backgroundColor: '#fc6c85',
     padding: 10,
     borderRadius: 8,
     alignItems: 'center',

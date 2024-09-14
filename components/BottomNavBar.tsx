@@ -46,10 +46,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingTop: 10,
     position: 'absolute',
-    bottom: 60,
+    bottom: 55,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   navItem: {
     fontSize: 14,
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   },
   activeNavItem: {
     fontSize: 14,
-    color: '#FF69B4',
+    color: '#37bdd5',
     marginHorizontal: 20,
   },
   boldText: {

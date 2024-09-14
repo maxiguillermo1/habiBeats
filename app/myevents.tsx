@@ -20,7 +20,7 @@ const MyEvents = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0', // Updated background color
   },
   content: {
     flex: 1,

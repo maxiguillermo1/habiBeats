@@ -54,7 +54,7 @@ const Match = () => {
   }, [showMatchModal]);
 
   const handleClosePress = () => {
-    setDislikeButtonColor('#ff964f'); // Change to orange
+    setDislikeButtonColor('#fba904'); // Change to orange
     // Here you would typically load the next user profile
     // For this example, we'll use a timeout to simulate that
     setTimeout(() => {
@@ -123,14 +123,6 @@ const Match = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Message icon button on the top right */}
-      <TouchableOpacity 
-        style={styles.messageIcon} 
-        onPress={handleMessageIconPress}
-      >
-        <Ionicons name="chatbubble-ellipses-outline" size={35} color="#1E1E1E" />
-      </TouchableOpacity>
-
       {/* Match modal */}
       <Modal
         transparent={true}
@@ -195,7 +187,7 @@ const Match = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   content: {
     flex: 1,
@@ -290,7 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#ff964f',
+    backgroundColor: '#79ce54',
     padding: 20,
     borderRadius: 40,
     alignItems: 'center',

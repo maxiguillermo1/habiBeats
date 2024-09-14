@@ -168,7 +168,7 @@ export default function ForgotPasswordConfirm() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
   backButton: {
     position: 'absolute',
