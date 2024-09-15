@@ -1,6 +1,6 @@
 // Forgot Password
 import React, { useState, useEffect } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard, Image } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
@@ -34,6 +34,8 @@ export default function ForgotPassword() {
   const otpInputTranslateY = useSharedValue(50);
   const newPasswordInputOpacity = useSharedValue(0);
   const newPasswordInputTranslateY = useSharedValue(50);
+  const miniLogoOpacity = useSharedValue(0);
+  const miniLogoScale = useSharedValue(0.5);
 
   useEffect(() => {
     titleOpacity.value = withSpring(1);
@@ -50,6 +52,8 @@ export default function ForgotPassword() {
     otpInputTranslateY.value = withDelay(450, withSpring(0));
     newPasswordInputOpacity.value = withDelay(600, withSpring(1));
     newPasswordInputTranslateY.value = withDelay(600, withSpring(0));
+    miniLogoOpacity.value = withDelay(750, withSpring(1));
+    miniLogoScale.value = withDelay(750, withSpring(1));
   }, []);
 
   const animatedTitleStyle = useAnimatedStyle(() => ({
@@ -85,6 +89,11 @@ export default function ForgotPassword() {
   const animatedNewPasswordInputStyle = useAnimatedStyle(() => ({
     opacity: newPasswordInputOpacity.value,
     transform: [{ translateY: newPasswordInputTranslateY.value }],
+  }));
+
+  const animatedMiniLogoStyle = useAnimatedStyle(() => ({
+    opacity: miniLogoOpacity.value,
+    transform: [{ scale: miniLogoScale.value }],
   }));
 
   const generateOTP = () => {
@@ -243,6 +252,10 @@ export default function ForgotPassword() {
             </>
           )}
         </View>
+        <Animated.Image 
+          source={require('../assets/images/transparent_mini_logo.png')} 
+          style={[styles.miniLogo, animatedMiniLogoStyle]}
+        />
       </SafeAreaView>
     </>
   );
@@ -261,7 +274,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#0e1514',
+    color: '#fba904',
     fontWeight: 'bold',
   },
   content: {
@@ -278,7 +291,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#37bdd5',
+    color: '#fc6c85',
     marginBottom: 20,
     textAlign: 'center',
     width: '100%',
@@ -316,7 +329,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   resetButton: {
-    backgroundColor: "#37bdd5",
+    backgroundColor:'rgba(121, 206, 84, 1)',
     padding: 15,
     borderRadius: 15,
     width: "100%",
@@ -340,5 +353,12 @@ const styles = StyleSheet.create({
   },
   smallSpacer: {
     height: 10,
+  },
+  miniLogo: {
+    position: 'absolute',
+    bottom: 20,
+    right: 10,
+    width: 80,
+    height: 80,
   },
 });

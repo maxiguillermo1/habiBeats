@@ -1,6 +1,6 @@
 // Landing
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
@@ -8,27 +8,31 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } fro
 export default function Landing() {
   const router = useRouter();
 
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(50);
+  const logoOpacity = useSharedValue(0);
+  const logoTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
   const subtitleTranslateY = useSharedValue(50);
   const buttonOpacity = useSharedValue(0);
   const buttonTranslateY = useSharedValue(50);
+  const imageOpacity = useSharedValue(0);
+  const imageTranslateY = useSharedValue(50);
 
-// Animated Flow for Title, Subtitle, and Button
+// Animated Flow for Logo, Subtitle, Image, and Button
   useEffect(() => {
-    titleOpacity.value = withSpring(1);
-    titleTranslateY.value = withSpring(0);
+    logoOpacity.value = withSpring(1);
+    logoTranslateY.value = withSpring(0);
     subtitleOpacity.value = withDelay(150, withSpring(1));
     subtitleTranslateY.value = withDelay(150, withSpring(0));
-    buttonOpacity.value = withDelay(300, withSpring(1));
-    buttonTranslateY.value = withDelay(300, withSpring(0));
+    imageOpacity.value = withDelay(300, withSpring(1));
+    imageTranslateY.value = withDelay(300, withSpring(0));
+    buttonOpacity.value = withDelay(450, withSpring(1));
+    buttonTranslateY.value = withDelay(450, withSpring(0));
   }, []);
 
-  const animatedTitleStyle = useAnimatedStyle(() => {
+  const animatedLogoStyle = useAnimatedStyle(() => {
     return {
-      opacity: titleOpacity.value,
-      transform: [{ translateY: titleTranslateY.value }],
+      opacity: logoOpacity.value,
+      transform: [{ translateY: logoTranslateY.value }],
     };
   });
 
@@ -36,6 +40,13 @@ export default function Landing() {
     return {
       opacity: subtitleOpacity.value,
       transform: [{ translateY: subtitleTranslateY.value }],
+    };
+  });
+
+  const animatedImageStyle = useAnimatedStyle(() => {
+    return {
+      opacity: imageOpacity.value,
+      transform: [{ translateY: imageTranslateY.value }],
     };
   });
 
@@ -63,9 +74,22 @@ export default function Landing() {
         <Text style={styles.backButtonText}>back</Text>
       </TouchableOpacity>
       <View style={styles.content}>
-        <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-        <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>music connection paired successfully</Animated.Text>
+        <Animated.View style={[styles.logoContainer, animatedLogoStyle]}>
+          <Image 
+            source={require('../assets/images/transparent_long_logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </Animated.View>
+        <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>finding your music connection</Animated.Text>
       </View>
+      <Animated.View style={[styles.imageContainer, animatedImageStyle]}>
+        <Image 
+          source={require('../assets/images/boy_landing_graphic.png')} 
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </Animated.View>
       <Animated.View style={animatedButtonStyle}>
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
           <Text style={styles.continueButtonText}>continue</Text>
@@ -82,26 +106,35 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingBottom: 120, // FIXME: padding at the bottom to move content up
   },
-  title: {
-    fontSize: 34,
-    fontWeight: 'bold',
+  logoContainer: {
     marginBottom: 20,
-    color: '#37bdd5',
-    textAlign: 'center',
+  },
+  logo: {
+    width: 310,
+    height: 70,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: 'bold',
     marginBottom: 18,
     color: '#0e1514',
     textAlign: 'center',
   },
+  imageContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  image: {
+    width: 215,
+    height: 215,
+  },
   continueButton: {
-    backgroundColor: '#37bdd5',
+    backgroundColor: 'rgba(121, 206, 84, 1)', // light green
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 15,
@@ -122,7 +155,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#0e1514',
+    color: '#fba904',
     fontWeight: 'bold',
   },
 });

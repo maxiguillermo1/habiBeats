@@ -1,6 +1,6 @@
 // Login Signup
 import React, { useState, useEffect } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, ActivityIndicator } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, ActivityIndicator, Keyboard } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
@@ -37,6 +37,7 @@ export default function LoginSignup() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+
   // START of Animated Flow
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
@@ -48,6 +49,8 @@ export default function LoginSignup() {
   const buttonTranslateY = useSharedValue(50);
   const linksOpacity = useSharedValue(0);
   const linksTranslateY = useSharedValue(50);
+  const miniLogoOpacity = useSharedValue(0);
+  const miniLogoScale = useSharedValue(0.5);
 
   useEffect(() => {
     titleOpacity.value = withSpring(1);
@@ -60,6 +63,8 @@ export default function LoginSignup() {
     buttonTranslateY.value = withDelay(350, withSpring(0));
     linksOpacity.value = withDelay(500, withSpring(1));
     linksTranslateY.value = withDelay(500, withSpring(0));
+    miniLogoOpacity.value = withDelay(750, withSpring(1));
+    miniLogoScale.value = withDelay(750, withSpring(1));
   }, []);
 
   const animatedTitleStyle = useAnimatedStyle(() => {
@@ -97,10 +102,16 @@ export default function LoginSignup() {
     };
   });
 
+  const animatedMiniLogoStyle = useAnimatedStyle(() => ({
+    opacity: miniLogoOpacity.value,
+    transform: [{ scale: miniLogoScale.value }],
+  }));
+
   // END of Animated Flow
 
   // Authentication functions
   async function signIn() {
+    Keyboard.dismiss();  // Dismiss the keyboard when sign in is pressed
     const auth = getAuth(app);
     console.log("Attempting to sign in with email:", email);
 
@@ -249,6 +260,11 @@ export default function LoginSignup() {
             <Text style={[styles.signUpButtonText, styles.boldText]}>Sign Up Now</Text>
           </TouchableOpacity>
         </Animated.View>
+
+        <Animated.Image 
+          source={require('../assets/images/transparent_mini_logo.png')} 
+          style={[styles.miniLogo, animatedMiniLogoStyle]}
+        />
       </SafeAreaView>
     </>
   );
@@ -277,8 +293,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#37bdd5',
+    marginTop: 10,
+    color: '#fc6c85',
     textAlign: 'center',
     width: '100%',  // Ensure the text takes full width of its container
   },
@@ -319,7 +335,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   signInButton: {
-    backgroundColor: '#37bdd5',
+    backgroundColor: 'rgba(121, 206, 84, 1)',
     paddingVertical: 12,
     paddingHorizontal: 3,
     borderRadius: 8,
@@ -355,7 +371,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   signUpButtonText: {
-    color: '#fc6c85',
+    color: '#79ce54',
     fontSize: 15,
   },
   errorText: {
@@ -382,11 +398,18 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#0e1514',
+    color: '#fba904',
     fontWeight: 'bold',
   },
   newHereText: {
     color: '#0e1514',
     fontSize: 15,
+  },
+  miniLogo: {
+    position: 'absolute',
+    bottom: 20,
+    right: 10,
+    width: 80,
+    height: 80,
   },
 });

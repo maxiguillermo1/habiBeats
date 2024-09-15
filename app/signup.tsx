@@ -1,8 +1,8 @@
 // sign up page (user registration)
 
 import React, { useState, useEffect } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
@@ -64,8 +64,12 @@ export default function SignUp() {
   const passwordSubtitleTranslateY = useSharedValue(50);
   const passwordInputOpacity = useSharedValue(0);
   const passwordInputTranslateY = useSharedValue(50);
+  const confirmPasswordInputOpacity = useSharedValue(0);
+  const confirmPasswordInputTranslateY = useSharedValue(50);
   const passwordButtonOpacity = useSharedValue(0);
   const passwordButtonTranslateY = useSharedValue(50);
+  const miniLogoOpacity = useSharedValue(0);
+  const miniLogoScale = useSharedValue(0.5);
 
   useEffect(() => {
     titleOpacity.value = withSpring(1);
@@ -74,9 +78,12 @@ export default function SignUp() {
     subtitleTranslateY.value = withDelay(100, withSpring(0));
     formOpacity.value = withDelay(200, withSpring(1));
     formTranslateY.value = withDelay(200, withSpring(0));
+    miniLogoOpacity.value = withDelay(750, withSpring(1));
+    miniLogoScale.value = withDelay(750, withSpring(1));
   }, []);
 
   useEffect(() => {
+
     if (step === 2) {
       emailSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
       emailSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
@@ -96,8 +103,10 @@ export default function SignUp() {
       passwordSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
       passwordInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
       passwordInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      passwordButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      passwordButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      confirmPasswordInputOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      confirmPasswordInputTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      passwordButtonOpacity.value = withDelay(600, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+      passwordButtonTranslateY.value = withDelay(600, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
     }
   }, [step]);
 
@@ -178,6 +187,13 @@ export default function SignUp() {
     };
   });
 
+  const animatedConfirmPasswordInputStyle = useAnimatedStyle(() => {
+    return {
+      opacity: confirmPasswordInputOpacity.value,
+      transform: [{ translateY: confirmPasswordInputTranslateY.value }],
+    };
+  });
+
   const animatedPasswordButtonStyle = useAnimatedStyle(() => {
     return {
       opacity: passwordButtonOpacity.value,
@@ -185,24 +201,45 @@ export default function SignUp() {
     };
   });
 
+  const animatedMiniLogoStyle = useAnimatedStyle(() => ({
+    opacity: miniLogoOpacity.value,
+    transform: [{ scale: miniLogoScale.value }],
+  }));
+
   // Function to handle the sign-up process
   const handleSignUp = async () => {
-    const auth = getAuth(app);
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      const auth = getAuth(app);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    await updateProfile(user, {
-      displayName: `${firstName} ${lastName}`
-    })
+      const displayName = `${firstName} ${lastName}`;
+      await updateProfile(user, {
+        displayName: displayName
+      });
 
-    const db = getFirestore(app);
-    
-    await setDoc(doc(db, "users", user.uid), {
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
-    });
+      const db = getFirestore(app);
+      
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
+        displayName: displayName,
+        uid: user.uid
+      });
+
+      setSuccessMessage("Sign up successful!");
+      // Navigate to the next screen or perform any other action after successful sign up
+      router.push("/login-signup"); // Adjust this based on your app's navigation structure
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage("This email is already registered. Please use a different email or try logging in.");
+      } else {
+        setErrorMessage("An error occurred during sign up. Please try again.");
+      }
+      console.error("Sign up error:", error);
+    }
   };
 
   // Function to clear error message when user re-enters form
@@ -233,6 +270,7 @@ export default function SignUp() {
     } else if (step === 4) {
       if (password && confirmPassword) {
         if (password === confirmPassword) {
+          Keyboard.dismiss();
           handleSignUp();
         } else {
           setErrorMessage("Passwords do not match.");
@@ -358,7 +396,50 @@ export default function SignUp() {
                 </Animated.View>
               </>
             )}
+            {step === 4 && (
+              <>
+                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
+                <Animated.Text style={[styles.subtitle, animatedPasswordSubtitleStyle]}>Password Setup</Animated.Text>
+                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                  {/* Password input */}
+                  <Animated.View style={[styles.inputContainer, animatedPasswordInputStyle]}>
+                    <CustomTextInput 
+                      value={password} 
+                      onChangeText={(text) => { setPassword(text); clearErrorMessage(); }} 
+                      placeholder="new password"
+                      secureTextEntry={true}
+                    />
+                  </Animated.View>
+                  {/* Confirm Password input */}
+                  <Animated.View style={[styles.inputContainer, animatedPasswordInputStyle]}>
+                    <CustomTextInput 
+                      value={confirmPassword} 
+                      onChangeText={(text) => { setConfirmPassword(text); clearErrorMessage(); }} 
+                      placeholder="re-enter new password"
+                      secureTextEntry={true}
+                    />
+                  </Animated.View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <Animated.View style={animatedPasswordButtonStyle}>
+                    <TouchableOpacity 
+                      style={styles.button}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.buttonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </Animated.View>
+              </>
+            )}
           </View>
+          <Animated.Image 
+            source={require('../assets/images/transparent_mini_logo.png')} 
+            style={[styles.miniLogo, animatedMiniLogoStyle]}
+          />
         </SafeAreaView>
       </KeyboardAvoidingView>
     </>
@@ -379,7 +460,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 14,
-    color: '#0e1514',
+    color: '#fba904',
     fontWeight: 'bold',
   },
   content: {
@@ -393,7 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 50,
-    color: '#37bdd5',
+    color: '#fc6c85',
     textAlign: 'center',
     width: '100%',  // Ensure the text takes full width of its container
   },
@@ -423,7 +504,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   button: {
-    backgroundColor: '#37bdd5',
+    backgroundColor: 'rgba(121, 206, 84, 1)',
     paddingVertical: 12,
     paddingHorizontal: 3,
     borderRadius: 8,
@@ -444,6 +525,13 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     paddingHorizontal: 5,
     borderRadius: 5,
+  },
+  miniLogo: {
+    position: 'absolute',
+    bottom: 20,
+    right: 10,
+    width: 80,
+    height: 80,
   },
   workInProgress: {
     color: 'red',
