@@ -6,12 +6,12 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../hooks/useAuth';
-import { app, db, auth } from '../firebaseConfig';
-import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { app, db, auth, storage } from '../firebaseConfig';
+import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { getAuth, signOut, updateEmail, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-// Define the ProfileSettings component
 export default function ProfileSettings() {
   // Get the user and userData from the useAuth hook
   const { user, userData } = useAuth();
@@ -54,15 +54,57 @@ export default function ProfileSettings() {
       setName(`${userData.firstName} ${userData.lastName}`);
       setLocation(userData.location || 'Location not set');
       // Set other state variables based on userData
+      if (userData.profileImageUrl) {
+        setProfileImage(userData.profileImageUrl);
+      }
     }
   }, [userData]);
+
+  // update the user's email in Firestore if the email has been verified
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = auth.onIdTokenChanged(async (updatedUser) => {
+        if (updatedUser) {
+          const userDocRef = doc(db, 'users', updatedUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          const userData = userDoc.data();
+          
+          if (userData && userData.pendingEmail && updatedUser.email === userData.pendingEmail) {
+            // Email has been verified and changed
+            await updateDoc(userDocRef, {
+              email: updatedUser.email,
+              pendingEmail: null
+            });
+            console.log('Email updated in Firestore');
+          }
+        }
+      });
+  
+      return () => unsubscribe();
+    }
+  }, [user]);
   
   // Function to handle back button press
   const handleBackPress = () => {
     router.back();
   };
 
-  // Function to handle image picking
+  const uploadImageToFirebase = async (uri: string) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const filename = 'profilePicture_' + auth.currentUser?.uid;
+    const storageRef = ref(storage, `profilePictures/${filename}`);
+    
+    try {
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image: ", error);
+      throw error;
+    }
+  };
+
   const handleImagePicker = async (setImageFunction: React.Dispatch<React.SetStateAction<string>>) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -72,8 +114,22 @@ export default function ProfileSettings() {
     });
 
     if (!result.canceled) {
-      setImageFunction(result.assets[0].uri);
-      setHasChanges(true);
+      try {
+        const downloadURL = await uploadImageToFirebase(result.assets[0].uri);
+        setImageFunction(downloadURL);
+        setHasChanges(true);
+
+        // Update user document in Firestore
+        if (auth.currentUser) {
+          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          await updateDoc(userDocRef, {
+            profileImageUrl: downloadURL
+          });
+        }
+      } catch (error) {
+        console.error("Error handling image pick: ", error);
+        Alert.alert("Error", "Failed to upload image. Please try again.");
+      }
     }
   };
 
@@ -233,6 +289,17 @@ export default function ProfileSettings() {
         setEmailChangeError('New email addresses do not match.');
         return;
       }
+
+      // Check if the new email is already in use
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', newEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        setEmailChangeError('This email is already in use. Please choose a different email.');
+        return;
+      }
+
       // Send OTP to the current email
       await sendEmailChangeOTP(auth.currentUser.email!);
       return;
@@ -271,9 +338,27 @@ export default function ProfileSettings() {
     try {
       // Send verification email to the new email address
       await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
-
+  
       // Mark OTP as used
       await updateDoc(otpDoc.ref, { used: true });
+  
+      // Save the new email in Firestore (it will be updated after verification)
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userDocRef, {
+        pendingEmail: newEmail
+      });
+  
+      // Set up an observer for the user's ID token
+      const unsubscribe = auth.onIdTokenChanged(async (user) => {
+        if (user?.email === newEmail) {
+          // Email has been verified and changed
+          await updateDoc(userDocRef, {
+            email: newEmail,
+            pendingEmail: null
+          });
+          unsubscribe(); // Stop listening for changes
+        }
+      });
 
       Alert.alert(
         'Verification Email Sent',
@@ -796,6 +881,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalText: {
+    fontSize: 15,
     marginBottom: 20,
   },
 });

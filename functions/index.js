@@ -118,3 +118,32 @@ exports.resetPassword = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'Failed to reset password: ' + error.message);
   }
 });
+
+//update email in firestore
+exports.onUserChanged = functions.auth.user().onUpdate(async (change, context) => {
+  const beforeUser = change.before.data();
+  const afterUser = change.after.data();
+
+  // Check if email has changed
+  if (beforeUser.email !== afterUser.email) {
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(afterUser.uid);
+
+    try {
+      const userDoc = await userRef.get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        if (userData.pendingEmail === afterUser.email) {
+          // Update the email in Firestore
+          await userRef.update({
+            email: afterUser.email,
+            pendingEmail: null
+          });
+          console.log(`Updated email for user ${afterUser.uid} in Firestore`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error updating user ${afterUser.uid} in Firestore:`, error);
+    }
+  }
+});

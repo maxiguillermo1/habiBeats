@@ -9,6 +9,7 @@ interface UserData {
   lastName: string;
   email: string;
   location: string;
+  profileImageUrl: string;
 }
 
 

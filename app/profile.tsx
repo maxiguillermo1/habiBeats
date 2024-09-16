@@ -12,7 +12,7 @@ export default function Profile() {
   const [user, setUser] = useState({
     name: 'Name not set',
     location: 'Location not set',
-    profilePicture: '',
+    profileImageUrl: '',
   });
 
   // State hooks for managing the editable fields
@@ -34,7 +34,7 @@ export default function Profile() {
           setUser({
             name: `${userData.firstName} ${userData.lastName}`,
             location: userData.location || 'Location not set',
-            profilePicture: userData.profilePicture || '',
+            profileImageUrl: userData.profileImageUrl || '',
           });
           setTuneOfMonth(userData.tuneOfMonth || '');
           setFavoritePerformance(userData.favoritePerformance || '');
@@ -59,7 +59,7 @@ export default function Profile() {
         {/* Header section with profile picture, user info, and settings button */}
         <View style={styles.header}>
           <Image
-            source={{ uri: user.profilePicture }}
+            source={{ uri: user.profileImageUrl }}
             style={styles.profilePicture}
           />
           <View style={styles.userInfo}>
