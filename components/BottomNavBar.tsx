@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingBottom: 70,
     paddingTop: 10,
     position: 'absolute',
-    bottom: 55,
+    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#fff8f0',
