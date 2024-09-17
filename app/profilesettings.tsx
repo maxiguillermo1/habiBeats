@@ -51,6 +51,8 @@ export default function ProfileSettings() {
   const [otp, setOtp] = useState('');
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
+  // START of Displaying Real-Time User Data
+  // START of Jesus Donate Contribution
   useEffect(() => {
     if (userData) {
       // Combine firstName and lastName
@@ -62,7 +64,11 @@ export default function ProfileSettings() {
       }
     }
   }, [userData]);
+  // END of Displaying Real-Time User Data
+  // END of Jesus Donate Contribution
 
+  // START of Updating User Email in Firestore
+  // START of Jesus Donate Contribution
   // update the user's email in Firestore if the email has been verified
   useEffect(() => {
     if (user) {
@@ -86,12 +92,16 @@ export default function ProfileSettings() {
       return () => unsubscribe();
     }
   }, [user]);
+  // END of Updating User Email in Firestore
+  // END of Jesus Donate Contribution
   
   // Function to handle back button press
   const handleBackPress = () => {
     router.back();
   };
 
+  // START of Uploading Image to Firebase
+  // START of Jesus Donate Contribution
   const uploadImageToFirebase = async (uri: string) => {
     const response = await fetch(uri);
     const blob = await response.blob();
@@ -107,7 +117,11 @@ export default function ProfileSettings() {
       throw error;
     }
   };
+  // END of Uploading Image to Firebase
+  // END of Jesus Donate Contribution
 
+  // START of Picking Image from Camera Roll
+  // Start of Grace Mariann Dizon Contribution
   const handleImagePicker = async (setImageFunction: React.Dispatch<React.SetStateAction<string>>) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -135,6 +149,8 @@ export default function ProfileSettings() {
       }
     }
   };
+  // END of Picking Image from Camera Roll
+  // END of Grace Mariann Dizon Contribution
 
   // Function to handle profile picture edit
   const handleEditProfilePicture = () => setModalVisible(true);
@@ -184,6 +200,8 @@ export default function ProfileSettings() {
   // END Function to Handle Logout
   // END of Reyna Aguirre Contribution
 
+  // START of Jesus Donate Contribution
+  // START of Updating User Display Name in Firestore
   const handleSaveNameChange = async () => {
     setName(tempName);
     setIsEditingName(false);
@@ -210,7 +228,11 @@ export default function ProfileSettings() {
       }
     }
   };
+  // END of Updating User Display Name in Firestore
+  // END of Jesus Donate Contribution
 
+  // START of Updating User Location in Firestore
+  // START of Jesus Donate Contribution
   const handleSaveLocationChange = async (data: any, details: any) => {
     console.log('handleSaveLocationChange called');
     console.log('data:', data);
@@ -236,6 +258,8 @@ export default function ProfileSettings() {
       }
     }
   };
+  // END of Updating User Location in Firestore
+  // END of Jesus Donate Contribution
 
   const handleSaveLocation = async () => {
     setLocation(tempLocation);
@@ -256,6 +280,8 @@ export default function ProfileSettings() {
     }
   };
 
+  // START of Changing User Email
+  // START of Jesus Donate Contribution
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
@@ -381,7 +407,11 @@ export default function ProfileSettings() {
       setEmailChangeError('Failed to send verification email. Please try again.');
     }
   };
+  // END of Changing User Email
+  // END of Jesus Donate Contribution
 
+  // START of Changing User Password
+  // START of Jesus Donate Contribution
   const handleChangePassword = async () => {
     setPasswordChangeError('');
     const auth = getAuth();
@@ -418,7 +448,11 @@ export default function ProfileSettings() {
       }
     }
   };
+  // END of Changing User Password
+  // END of Jesus Donate Contribution
 
+  // START of UI Render
+  // START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
   // Render the component
   return (
     <>
@@ -624,7 +658,7 @@ export default function ProfileSettings() {
           </View>
         </View>
       </Modal>
-
+      
       {/* Password Change Modal */}
       <Modal
         animationType="slide"
@@ -676,7 +710,11 @@ export default function ProfileSettings() {
     </>
   );
 }
+// END of UI Render
+// END of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
 
+// START of StyleSheet
+// START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution 
 // Define styles for the component
 const styles = StyleSheet.create({
   container: {
@@ -893,3 +931,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+// END of StyleSheet
+// END of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution 

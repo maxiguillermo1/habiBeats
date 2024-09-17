@@ -3,6 +3,8 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig'; // Adjust the import path as needed
 
+// START of Retriving User Data from subscripted (logged in) user
+// START of Jesus Donate Contribution
 interface UserData {
   // hashmap of the user document
   firstName: string;
@@ -10,6 +12,12 @@ interface UserData {
   email: string;
   location: string;
   profileImageUrl: string;
+  tuneOfMonth: string;
+  favoritePerformance: string;
+  listenTo: string;
+  favoriteMusicArtists: string;
+  favoriteAlbum: string;
+  artistToSee: string;
 }
 
 
@@ -44,3 +52,6 @@ export function useAuth() {
 
   return { user, userData };
 }
+
+// END of Retriving User Data from Firebase
+// END of Jesus Donate Contribution
