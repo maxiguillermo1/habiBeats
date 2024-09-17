@@ -1,3 +1,6 @@
+// profilesettings.tsx
+// Mariann Grace Dizon, Jesus Donate, and Reyna Aguirre
+
 // Import necessary dependencies
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, Switch, TouchableOpacity, TextInput, Modal, ScrollView, Alert } from 'react-native';
@@ -150,7 +153,8 @@ export default function ProfileSettings() {
     });
   };
 
-  // Function to handle logout
+  // START Function to Handle Logout
+  // START of Reyna Aguirre Contribution
   const handleLogout = () => {
     // R (09/06/2024) - Added a Popup Alert to Confirm Logout START
     Alert.alert(
@@ -177,7 +181,8 @@ export default function ProfileSettings() {
       ]
     );
   };
-  // R (09/06/2024) - Added a Popup Alert to Confirm Logout END
+  // END Function to Handle Logout
+  // END of Reyna Aguirre Contribution
 
   const handleSaveNameChange = async () => {
     setName(tempName);

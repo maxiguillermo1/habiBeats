@@ -1,4 +1,5 @@
-// sign up page (user registration)
+// signup.tsx
+// Reyna Aguirre, Jesus Donate, Maxwell Guillermo, and Mariann Grace Dizon
 
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
@@ -9,7 +10,8 @@ import { useRouter, Stack } from "expo-router";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-// Custom TextInput component
+// START Custom TextInput component
+// START of Maxwell Guillermo Contribution
 const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -27,7 +29,11 @@ const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
     />
   );
 };
+// END Custom TextInput component
+// END of Maxwell Guillermo Contribution
 
+// START of Animated Flow and Sign Up Process
+// START of Reyna Aguirre Contribution 
 export default function SignUp() {
   // State variables to store user input
   const [firstName, setFirstName] = useState<string>("");
@@ -41,7 +47,7 @@ export default function SignUp() {
   const [step, setStep] = useState<number>(1);
   const router = useRouter();
 
-  // Animated values
+  // Animtation Declarations
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
@@ -71,6 +77,7 @@ export default function SignUp() {
   const miniLogoOpacity = useSharedValue(0);
   const miniLogoScale = useSharedValue(0.5);
 
+  // Animation Flow
   useEffect(() => {
     titleOpacity.value = withSpring(1);
     titleTranslateY.value = withSpring(0);
@@ -82,6 +89,7 @@ export default function SignUp() {
     miniLogoScale.value = withDelay(750, withSpring(1));
   }, []);
 
+  // Animation for Each Step for Sign Up Process
   useEffect(() => {
 
     if (step === 2) {
@@ -205,8 +213,11 @@ export default function SignUp() {
     opacity: miniLogoOpacity.value,
     transform: [{ scale: miniLogoScale.value }],
   }));
+  // END of Animated Flow and Sign Up Process
+  // END of Reyna Aguirre Contribution 
 
-  // Function to handle the sign-up process
+  // START of Firebase Storing of User Data
+  // START of Jesus Donate Contribution 
   const handleSignUp = async () => {
     try {
       const auth = getAuth(app);
@@ -228,10 +239,11 @@ export default function SignUp() {
         displayName: displayName,
         uid: user.uid
       });
-
+      // Firebase Error Handling
+      // FIXME: Email Already in Use Error in Enter Email Step
       setSuccessMessage("Sign up successful!");
-      // Navigate to the next screen or perform any other action after successful sign up
-      router.push("/login-signup"); // Adjust this based on your app's navigation structure
+      
+      router.push("/login-signup"); 
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setErrorMessage("This email is already registered. Please use a different email or try logging in.");
@@ -241,8 +253,11 @@ export default function SignUp() {
       console.error("Sign up error:", error);
     }
   };
+  // END of Firebase Storing of User Data
+  // END of Jesus Donate Contribution 
 
-  // Function to clear error message when user re-enters form
+  // START Function to clear error message when user re-enters form
+  // START of Mariann Grace Dizon Contribution
   const clearErrorMessage = () => {
     setErrorMessage("");
   };
@@ -280,8 +295,11 @@ export default function SignUp() {
       }
     }
   };
+  // END Function to clear error message when user re-enters form
+  // END of Mariann Grace Dizon Contribution
 
-  // UI component
+  // START of UI Render
+  // Reyna Aguirre and Maxwell Guillermo
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -445,8 +463,11 @@ export default function SignUp() {
     </>
   );
 }
+// END of UI Render
 
-// Updated styles
+
+// START of Style Code
+// Reyna Aguirre and Maxwell Guillermo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -540,3 +561,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   }
 });
+// END of Style Code

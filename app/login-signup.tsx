@@ -1,4 +1,6 @@
-// Login Signup
+// login-signup.tsx
+// Reyna Aguirre, Jesus Donate, and Maxwell Guillermo
+
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, ActivityIndicator, Keyboard } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -7,7 +9,8 @@ import { useRouter } from "expo-router";
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 
-// Custom TextInput component
+// START of Custom TextInput Component
+// START of Maxwell Guillermo Contribution
 const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -27,18 +30,24 @@ const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeho
     />
   );
 };
+// END of Custom TextInput Component
+// END of Maxwell Guillermo Contribution
 
+// START State Management
+// START of Jesus Donate Contribution
 export default function LoginSignup() {
-  // State management
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [emptyFieldsError, setEmptyFieldsError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+// END of State Mangement
+// END of Jesus Donate Contribution
 
 
   // START of Animated Flow
+  // START of Reyna Aguirre Contribution 
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
@@ -107,9 +116,11 @@ export default function LoginSignup() {
     transform: [{ scale: miniLogoScale.value }],
   }));
 
+  // END of Reyna Aguirre Contribution 
   // END of Animated Flow
 
-  // Authentication functions
+  // START of Authentication Functions
+  // START of of Maxwell Guillermo Contribution
   async function signIn() {
     Keyboard.dismiss();  // Dismiss the keyboard when sign in is pressed
     const auth = getAuth(app);
@@ -130,11 +141,17 @@ export default function LoginSignup() {
       setErrorMessage(""); // Clear any existing error message
       setEmptyFieldsError(""); // Clear empty fields error
 
+      // END of Authentication Functions
+      // END of of Maxwell Guillermo Contribution
+
       // Delay the navigation to show the loading indicator
       setTimeout(() => {
         setIsLoading(false);
         router.push("/profile");
-      }, 2000); // 2 seconds delay, adjust as needed
+      }, 2000); // 2 seconds delay\
+
+      // START of Log In Error Handling
+      // START of Jesus Donate Contribution
     } catch (error: unknown) {
       setIsLoading(false);
       if (error instanceof Error) {
@@ -145,8 +162,13 @@ export default function LoginSignup() {
         Alert.alert("Error", "An unknown error occurred");
       }
     }
+    // END of Log In Error Handling
+    // ENDof Jesus Donate Contribution
   }
-  // Firebase Log Error Handlings
+
+
+  // START Firebase Log Error Handlings
+  // START of Reyna Aguirre Contribution
   const handleFirebaseErrors = (error: Error) => {
     switch (error.message) {
       case "Firebase: Error (auth/user-not-found).":
@@ -163,8 +185,11 @@ export default function LoginSignup() {
         break;
     }
   };
+  // END Firebase Log Error Handlings
+  // END of Reyna Aguirre Contribution
 
-  // Navigation functions
+  // START of Navigation Functions
+  // START of Maxwell Guillermo Contribution
   const handleSignUp = () => {
     router.push("/signup");
   };
@@ -176,8 +201,11 @@ export default function LoginSignup() {
   const handleBackPress = () => {
     router.push("/landing");
   };
+  // END of Navigation Functions
+  // END of Maxwell Guillermo Contribution
 
-  // UI Render
+  // START of UI Render
+  // Reyna Aguirre, Jesus Donate, andMaxwell Guillermo
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -269,7 +297,10 @@ export default function LoginSignup() {
     </>
   );
 }
+// END of UI Render
 
+// START of Style Codes
+// Reyna Aguirre and Maxwell Guillermo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -413,3 +444,4 @@ const styles = StyleSheet.create({
     height: 80,
   },
 });
+// END of Style Codes

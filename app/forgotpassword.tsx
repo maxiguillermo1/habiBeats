@@ -1,4 +1,6 @@
-// Forgot Password
+// forgotpassword.tsx
+// Reyna Aguirre and Maxwell Guillermo
+
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard, Image } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
@@ -19,7 +21,8 @@ export default function ForgotPassword() {
   const router = useRouter();
   const db = getFirestore(app);
 
-  // Animation values
+  // START of Animation Code
+  // START of Reyna Aguirre Contribution
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
@@ -95,7 +98,11 @@ export default function ForgotPassword() {
     opacity: miniLogoOpacity.value,
     transform: [{ scale: miniLogoScale.value }],
   }));
+  // END of Animation Code
+  // END of Reyna Aguirre Contribution
 
+  // START of Recovery Code Functions
+  // START of Maxwell Guillermo Contribution
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
@@ -167,7 +174,11 @@ export default function ForgotPassword() {
       setShowMessage(true);
     }
   };
+  // END of Recovery Code Functions
+  // END of Maxwell Guillermo Contribution
 
+  // START of UI Render
+  // Reyna Aguirre and Maxwell Guillermo
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -260,7 +271,10 @@ export default function ForgotPassword() {
     </>
   );
 }
+// END of UI Render
 
+// START of Style Codes
+// Reyna Aguirre and Maxwell Guillermo
 const styles = StyleSheet.create({
   container: {
     flex: 1,

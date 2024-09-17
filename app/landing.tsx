@@ -1,4 +1,6 @@
-// Landing
+// landing.tsx
+// Reyna Aguirre 
+
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
