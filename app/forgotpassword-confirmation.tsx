@@ -1,4 +1,10 @@
+// forgotpassword-confirmation.tsx
+// Reyna Aguirre and Maxwell Guillermo
+
 // Forgot Password Confirmation
+
+  // START of Forgot Password Confirmation Code
+  // START of Maxwell Guillermo
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
@@ -248,3 +254,6 @@ const styles = StyleSheet.create({
   },
   
 });
+
+  // END of Forgot Password Confirmation Code
+  // END of Maxwell Guillermo
