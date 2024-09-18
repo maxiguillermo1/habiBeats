@@ -140,6 +140,18 @@ export default function ForgotPassword() {
       return;
     }
 
+    // Check if the email is in firestore
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      setMessage("Email not found. Please check your email address.");
+      setShowMessage(true);
+      return;
+    }
+
+
     Keyboard.dismiss();  // Dismiss the keyboard
 
     try {
