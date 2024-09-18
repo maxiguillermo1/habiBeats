@@ -33,6 +33,17 @@ const db = getFirestore(app);
 // Initialize Firebase Storage and get a reference to the service
 const storage = getStorage(app);
 
-export { app, auth, db, storage };
+// check if email is in firestore
+const checkEmailInFirestore = async (email) => {
+  const db = getFirestore(app);
+  const usersCollection = collection(db, 'users');
+  const q = query(usersCollection, where('email', '==', email));
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.empty;
+}
+
+
+export { app, auth, db, storage, checkEmailInFirestore };
 
 
