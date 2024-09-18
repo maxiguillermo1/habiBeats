@@ -1,8 +1,14 @@
+// match.tsx
+// Mariann Grace Dizon and Maxwell Guillermo
+
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Dimensions, Animated } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+
+// START of Matching feature 
+// START of Maxwell Guillermo Contribution
 
 const Match = () => {
   // State to control the visibility of the match modal
@@ -19,6 +25,9 @@ const Match = () => {
     setShowMatchModal(true);
     animateModal(true);
   };
+
+  // END of Matching feature (WIP)
+  // END of Maxwell Guillermo Contribution
 
   // Handler for when the message button is pressed in the modal
   const handleMessagePress = () => {

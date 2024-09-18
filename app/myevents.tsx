@@ -1,17 +1,22 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import TopNavBar from '../components/TopNavBar';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
+import AttendingEvents from '../components/AttendingEvents';
+import FavoriteEvents from '../components/FavoriteEvents';
 
 const MyEvents = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
-      <View style={styles.content}>
-        {/* Content for my events page will go here */}
-      </View>
+      <ScrollView style={styles.content}>
+        <Text style={styles.pageTitle}>My Events</Text>
+        <AttendingEvents />
+        <View style={styles.spacer} />
+        <FavoriteEvents />
+      </ScrollView>
       <BottomNavBar />
     </SafeAreaView>
   );
@@ -24,6 +29,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  pageTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginTop: 27,
+    marginBottom: 8,
+    marginLeft: 81,
+    color: '#FF69B4',
+  },
+  spacer: {
+    height: 20,
   },
 });
 

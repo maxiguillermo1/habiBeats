@@ -22,8 +22,8 @@ const TopNavBar = () => {
       <TouchableOpacity onPress={() => navigateTo('/trending')}>
         <Text style={[getNavItemStyle('/trending'), styles.boldText]}>Trending</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/events')}>
-        <Text style={[getNavItemStyle('/events'), styles.boldText]}>My Events</Text>
+      <TouchableOpacity onPress={() => navigateTo('/myevents')}>
+        <Text style={[getNavItemStyle('/myevents'), styles.boldText]}>My Events</Text>
       </TouchableOpacity>
     </View>
   );

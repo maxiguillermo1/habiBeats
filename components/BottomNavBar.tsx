@@ -15,16 +15,16 @@ const BottomNavBar = () => {
   };
 
   const isEventActive = () => {
-    return ['/events', '/search', '/trending'].includes(currentPath);
+    return ['/myevents', '/search', '/trending'].includes(currentPath);
   };
 
   return (
     <View style={styles.bottomNav}>
-      <TouchableOpacity onPress={() => navigateTo('/events')}>
+      <TouchableOpacity onPress={() => navigateTo('/search')}>
         <Text style={[
           isEventActive() ? styles.activeNavItem : styles.navItem,
           styles.boldText
-        ]}>Event</Text>
+        ]}>Events</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigateTo('/messages')}>
         <Text style={[getNavItemStyle('/messages'), styles.boldText]}>Messages</Text>

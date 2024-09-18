@@ -1,5 +1,5 @@
 // profilesettings.tsx
-// Mariann Grace Dizon, Jesus Donate, and Reyna Aguirre
+// Mariann Grace Dizon, Jesus Donate, Reyna Aguirre, and Maxwell Guillermo
 
 // Import necessary dependencies
 import React, { useState, useEffect, useRef } from 'react';

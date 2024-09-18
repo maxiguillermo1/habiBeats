@@ -19,7 +19,7 @@ export default function Index() {
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/profile")}>
         <Text style={styles.buttonText}>Profile</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/events")}>
+      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/search")}>
         <Text style={styles.buttonText}>Events</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/messages")}>
