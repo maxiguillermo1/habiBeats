@@ -1,3 +1,9 @@
+// ParallaxScrollView.tsx
+// Maxwell Guillermo 
+
+// START of Parallax Scroll View Component
+// START of Maxwell Guillermo Contribution
+
 import type { PropsWithChildren, ReactElement } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 import Animated, {
@@ -74,3 +80,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 });
+
+
+
+// END of Parallax Scroll View Component
+// END of Maxwell Guillermo Contribution

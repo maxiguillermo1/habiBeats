@@ -1,3 +1,9 @@
+// HelloWave.tsx
+// Maxwell Guillermo 
+
+// START of Hello Wave Component
+// START of Maxwell Guillermo Contribution
+
 import { StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -35,3 +41,6 @@ const styles = StyleSheet.create({
     marginTop: -6,
   },
 });
+
+// END of Hello Wave Component
+// END of Maxwell Guillermo Contribution

@@ -1,3 +1,9 @@
+// AttendingEvents.tsx
+// Maxwell Guillermo 
+
+// START of AttendingEvents UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,3 +138,6 @@ const styles = StyleSheet.create({
 });
 
 export default AttendingEvents;
+
+// END of AttendingCards UI/UX
+// END of Maxwell Guillermo Contribution

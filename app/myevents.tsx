@@ -1,3 +1,9 @@
+// myevents.tsx
+// Maxwell Guillermo 
+
+// START of my events page UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import TopNavBar from '../components/TopNavBar';
@@ -44,3 +50,6 @@ const styles = StyleSheet.create({
 });
 
 export default MyEvents;
+
+// END of my events page UI/UX
+// END of Maxwell Guillermo Contribution

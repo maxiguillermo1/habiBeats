@@ -1,3 +1,9 @@
+// Collapsible.tsx
+// Maxwell Guillermo 
+
+// START of Collapsible Component
+// START of Maxwell Guillermo Contribution
+
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { PropsWithChildren, useState } from 'react';
 import { StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
@@ -39,3 +45,6 @@ const styles = StyleSheet.create({
     marginLeft: 24,
   },
 });
+
+// END of Collapsible Component
+// END of Maxwell Guillermo Contribution

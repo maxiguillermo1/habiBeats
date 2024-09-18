@@ -1,3 +1,9 @@
+// TrendingEvents.tsx
+// Maxwell Guillermo 
+
+// START of TrendingEvents UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React from 'react';
 import { View, StyleSheet, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -163,3 +169,6 @@ const styles = StyleSheet.create({
 });
 
 export default TrendingEventCard;
+
+// END of TrendingEvents UI/UX
+// END of Maxwell Guillermo Contribution

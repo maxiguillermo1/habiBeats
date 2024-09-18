@@ -1,3 +1,9 @@
+// EventCards.tsx
+// Maxwell Guillermo 
+
+// START of EventCards UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Image, Dimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -144,3 +150,6 @@ const styles = StyleSheet.create({
 });
 
 export default EventCard;
+
+// END of EventCards UI/UX
+// END of Maxwell Guillermo Contribution

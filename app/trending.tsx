@@ -1,3 +1,9 @@
+// trending.tsx
+// Maxwell Guillermo 
+
+// START of trending page UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import TopNavBar from '../components/TopNavBar';
@@ -31,3 +37,6 @@ const styles = StyleSheet.create({
 });
 
 export default Trending;
+
+// END of trending page UI/UX
+// END of Maxwell Guillermo Contribution

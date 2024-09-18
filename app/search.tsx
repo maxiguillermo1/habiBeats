@@ -1,3 +1,9 @@
+// search.tsx
+// Maxwell Guillermo 
+
+// START of search page UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, TextInput } from 'react-native';
 import TopNavBar from '../components/TopNavBar';
@@ -74,3 +80,6 @@ const styles = StyleSheet.create({
 });
 
 export default Search;
+
+// END of search page UI/UX
+// END of Maxwell Guillermo Contribution

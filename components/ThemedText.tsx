@@ -1,3 +1,9 @@
+// ThemedText.tsx
+// Maxwell Guillermo 
+
+// START of Themed Text Component
+// START of Maxwell Guillermo Contribution
+
 import { Text, type TextProps, StyleSheet } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -58,3 +64,7 @@ const styles = StyleSheet.create({
     color: '#0a7ea4',
   },
 });
+
+
+// END of Themed Text Component
+// END of Maxwell Guillermo Contribution
