@@ -7,8 +7,16 @@ import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMeth
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Font from 'expo-font'; // Sora SemiBold Font
+import { Checkbox } from 'react-native-paper'; // Import Checkbox for Profile Visibility
+
+// Loading Sora SemiBold Font
+async function loadFonts() {
+  await Font.loadAsync({
+    'Sora-SemiBold': require('../assets/fonts/Sora-SemiBold.ttf'),
+  });
+}
 
 // START Custom TextInput component
 // START of Maxwell Guillermo Contribution
@@ -32,9 +40,18 @@ const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
 // END Custom TextInput component
 // END of Maxwell Guillermo Contribution
 
-// START of Animated Flow and Sign Up Process
+// START of Sign Up Process
 // START of Reyna Aguirre Contribution 
 export default function SignUp() {
+  
+  // START of Sora SemiBold Font Loading
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+  loadFonts().then(() => setFontsLoaded(true));
+  }, []);
+  // END of Sora SemiBold Font Loading
+
   // State variables to store user input
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -44,176 +61,11 @@ export default function SignUp() {
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(0);
+  const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
   const router = useRouter();
 
-  // Animtation Declarations
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(50);
-  const subtitleOpacity = useSharedValue(0);
-  const subtitleTranslateY = useSharedValue(50);
-  const formOpacity = useSharedValue(0);
-  const formTranslateY = useSharedValue(50);
-  const emailSubtitleOpacity = useSharedValue(0);
-  const emailSubtitleTranslateY = useSharedValue(50);
-  const emailInputOpacity = useSharedValue(0);
-  const emailInputTranslateY = useSharedValue(50);
-  const emailButtonOpacity = useSharedValue(0);
-  const emailButtonTranslateY = useSharedValue(50);
-  const dobSubtitleOpacity = useSharedValue(0);
-  const dobSubtitleTranslateY = useSharedValue(50);
-  const dobInputOpacity = useSharedValue(0);
-  const dobInputTranslateY = useSharedValue(50);
-  const dobButtonOpacity = useSharedValue(0);
-  const dobButtonTranslateY = useSharedValue(50);
-  const passwordSubtitleOpacity = useSharedValue(0);
-  const passwordSubtitleTranslateY = useSharedValue(50);
-  const passwordInputOpacity = useSharedValue(0);
-  const passwordInputTranslateY = useSharedValue(50);
-  const confirmPasswordInputOpacity = useSharedValue(0);
-  const confirmPasswordInputTranslateY = useSharedValue(50);
-  const passwordButtonOpacity = useSharedValue(0);
-  const passwordButtonTranslateY = useSharedValue(50);
-  const miniLogoOpacity = useSharedValue(0);
-  const miniLogoScale = useSharedValue(0.5);
-
-  // Animation Flow
-  useEffect(() => {
-    titleOpacity.value = withSpring(1);
-    titleTranslateY.value = withSpring(0);
-    subtitleOpacity.value = withDelay(100, withSpring(1));
-    subtitleTranslateY.value = withDelay(100, withSpring(0));
-    formOpacity.value = withDelay(200, withSpring(1));
-    formTranslateY.value = withDelay(200, withSpring(0));
-    miniLogoOpacity.value = withDelay(750, withSpring(1));
-    miniLogoScale.value = withDelay(750, withSpring(1));
-  }, []);
-
-  // Animation for Each Step for Sign Up Process
-  useEffect(() => {
-
-    if (step === 2) {
-      emailSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-      emailSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
-      emailInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      emailInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      emailButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      emailButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-    } else if (step === 3) {
-      dobSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-      dobSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
-      dobInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      dobInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      dobButtonOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      dobButtonTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-    } else if (step === 4) {
-      passwordSubtitleOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-      passwordSubtitleTranslateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
-      passwordInputOpacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      passwordInputTranslateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      confirmPasswordInputOpacity.value = withDelay(400, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      confirmPasswordInputTranslateY.value = withDelay(400, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      passwordButtonOpacity.value = withDelay(600, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-      passwordButtonTranslateY.value = withDelay(600, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
-    }
-  }, [step]);
-
-  const animatedTitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: titleOpacity.value,
-      transform: [{ translateY: titleTranslateY.value }],
-    };
-  });
-
-  const animatedSubtitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: subtitleOpacity.value,
-      transform: [{ translateY: subtitleTranslateY.value }],
-    };
-  });
-
-  const animatedFormStyle = useAnimatedStyle(() => {
-    return {
-      opacity: formOpacity.value,
-      transform: [{ translateY: formTranslateY.value }],
-    };
-  });
-
-  const animatedEmailSubtitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: emailSubtitleOpacity.value,
-      transform: [{ translateY: emailSubtitleTranslateY.value }],
-    };
-  });
-
-  const animatedEmailInputStyle = useAnimatedStyle(() => {
-    return {
-      opacity: emailInputOpacity.value,
-      transform: [{ translateY: emailInputTranslateY.value }],
-    };
-  });
-
-  const animatedEmailButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: emailButtonOpacity.value,
-      transform: [{ translateY: emailButtonTranslateY.value }],
-    };
-  });
-
-  const animatedDobSubtitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: dobSubtitleOpacity.value,
-      transform: [{ translateY: dobSubtitleTranslateY.value }],
-    };
-  });
-
-  const animatedDobInputStyle = useAnimatedStyle(() => {
-    return {
-      opacity: dobInputOpacity.value,
-      transform: [{ translateY: dobInputTranslateY.value }],
-    };
-  });
-
-  const animatedDobButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: dobButtonOpacity.value,
-      transform: [{ translateY: dobButtonTranslateY.value }],
-    };
-  });
-
-  const animatedPasswordSubtitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: passwordSubtitleOpacity.value,
-      transform: [{ translateY: passwordSubtitleTranslateY.value }],
-    };
-  });
-
-  const animatedPasswordInputStyle = useAnimatedStyle(() => {
-    return {
-      opacity: passwordInputOpacity.value,
-      transform: [{ translateY: passwordInputTranslateY.value }],
-    };
-  });
-
-  const animatedConfirmPasswordInputStyle = useAnimatedStyle(() => {
-    return {
-      opacity: confirmPasswordInputOpacity.value,
-      transform: [{ translateY: confirmPasswordInputTranslateY.value }],
-    };
-  });
-
-  const animatedPasswordButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: passwordButtonOpacity.value,
-      transform: [{ translateY: passwordButtonTranslateY.value }],
-    };
-  });
-
-  const animatedMiniLogoStyle = useAnimatedStyle(() => ({
-    opacity: miniLogoOpacity.value,
-    transform: [{ scale: miniLogoScale.value }],
-  }));
-  // END of Animated Flow and Sign Up Process
+  // END of Sign Up Process
   // END of Reyna Aguirre Contribution 
 
   // START of Firebase Storing of User Data
@@ -224,7 +76,7 @@ export default function SignUp() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const displayName = `${firstName} ${lastName}`;
+      const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
       await updateProfile(user, {
         displayName: displayName
       });
@@ -237,6 +89,7 @@ export default function SignUp() {
         email: email,
         dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
         displayName: displayName,
+        lastNameVisible: lastNameVisible,
         uid: user.uid
       });
       // Firebase Error Handling
@@ -264,7 +117,9 @@ export default function SignUp() {
 
   // Function to handle next step
   const handleNextStep = () => {
-    if (step === 1) {
+    if (step === 0) {
+      setStep(1);
+    } else if (step === 1) {
       if (firstName && lastName) {
         setStep(2);
       } else {
@@ -300,6 +155,10 @@ export default function SignUp() {
 
   // START of UI Render
   // Reyna Aguirre and Maxwell Guillermo
+  if (!fontsLoaded) {
+    return null; // or a loading indicator
+  }
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -308,17 +167,54 @@ export default function SignUp() {
         style={styles.container}
       >
         <SafeAreaView style={styles.container}>
-          {/* Back button */}
-          <TouchableOpacity style={styles.backButton} onPress={() => router.push("/login-signup")}>
+          {/* START Back Button: Reyna Aguirre 09/18/2024 */}
+          <TouchableOpacity style={styles.backButton} onPress={() => {
+            Alert.alert(
+              "Exit Profile Setup",
+              "\nAre you sure you want to exit the profile setup process?\n\nChanges will be unsaved.",
+              [
+                {
+                  text: "Yes", 
+                  onPress: () => router.push("/login-signup")
+                },
+                { 
+                  text: "Cancel", 
+                  style: "cancel"
+                }
+              ]
+            );
+          }}>
             <Text style={styles.backButtonText}>back</Text>
           </TouchableOpacity>
+          {/* END Back Button: Reyna Aguirre 09/18/2024 */}
 
           <View style={styles.content}>
+            {/* START of Profile Landing Page */}
+            {step === 0 && (
+              <>
+                <Text style={styles.landingsubtitle}>Let's get started with creating your unique music profile.</Text>
+                <Image 
+                  source={require('../assets/images/Profile_Landing_Graphic.png')}
+                  style={styles.landingImage}
+                  resizeMode="contain"
+                />
+                <View style={styles.formContainer}>
+                  <TouchableOpacity 
+                    style={styles.landingbutton}
+                    onPress={handleNextStep}
+                  >
+                    <Text style={styles.buttonText}>
+                      enter info
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            {/* END of Profile Landing Page */}
             {step === 1 && (
               <>
-                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-                <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>what's your name ?</Animated.Text>
-                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                <Text style={styles.subtitle}>What's your name ?</Text>
+                <View style={styles.formContainer}>
                   {/* First Name input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
@@ -346,16 +242,32 @@ export default function SignUp() {
                       continue
                     </Text>
                   </TouchableOpacity>
-                </Animated.View>
+                </View>
+                {/* Checkbox for last name visibility */}
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => setLastNameVisible(!lastNameVisible)}
+                  >
+                    <Checkbox
+                      status={lastNameVisible ? 'checked' : 'unchecked'}
+                      onPress={() => setLastNameVisible(!lastNameVisible)}
+                      color="#fba904"
+                    />
+                    {lastNameVisible && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={styles.checkboxLabel}>last name visible</Text>
+                </View>
               </>
             )}
             {step === 2 && (
               <>
-                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-                <Animated.Text style={[styles.subtitle, animatedEmailSubtitleStyle]}>what's your email ?</Animated.Text>
-                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                <Text style={styles.subtitle}>what's your email ?</Text>
+                <View style={styles.formContainer}>
                   {/* Email input */}
-                  <Animated.View style={[styles.inputContainer, animatedEmailInputStyle]}>
+                  <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={email} 
                       onChangeText={(text) => { setEmail(text); clearErrorMessage(); }} 
@@ -363,11 +275,11 @@ export default function SignUp() {
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
-                  </Animated.View>
+                  </View>
                   {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                   {/* Next button */}
-                  <Animated.View style={animatedEmailButtonStyle}>
+                  <View>
                     <TouchableOpacity 
                       style={styles.button}
                       onPress={handleNextStep}
@@ -376,17 +288,16 @@ export default function SignUp() {
                         continue
                       </Text>
                     </TouchableOpacity>
-                  </Animated.View>
-                </Animated.View>
+                  </View>
+                </View>
               </>
             )}
             {step === 3 && (
               <>
-                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-                <Animated.Text style={[styles.subtitle, animatedDobSubtitleStyle]}>what's your date of birth ?</Animated.Text>
-                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                <Text style={styles.subtitle}>what's your date of birth ?</Text>
+                <View style={styles.formContainer}>
                   {/* Date of Birth input */}
-                  <Animated.View style={[styles.inputContainer, animatedDobInputStyle]}>
+                  <View style={styles.inputContainer}>
                     <DateTimePicker
                       value={dateOfBirth}
                       mode="date"
@@ -397,11 +308,11 @@ export default function SignUp() {
                         clearErrorMessage();
                       }}
                     />
-                  </Animated.View>
+                  </View>
                   {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                   {/* Next button */}
-                  <Animated.View style={animatedDobButtonStyle}>
+                  <View>
                     <TouchableOpacity 
                       style={styles.button}
                       onPress={handleNextStep}
@@ -410,37 +321,36 @@ export default function SignUp() {
                         continue
                       </Text>
                     </TouchableOpacity>
-                  </Animated.View>
-                </Animated.View>
+                  </View>
+                </View>
               </>
             )}
             {step === 4 && (
               <>
-                <Animated.Text style={[styles.title, animatedTitleStyle]}>HabiBeats</Animated.Text>
-                <Animated.Text style={[styles.subtitle, animatedPasswordSubtitleStyle]}>Password Setup</Animated.Text>
-                <Animated.View style={[styles.formContainer, animatedFormStyle]}>
+                <Text style={styles.subtitle}>Password Setup</Text>
+                <View style={styles.formContainer}>
                   {/* Password input */}
-                  <Animated.View style={[styles.inputContainer, animatedPasswordInputStyle]}>
+                  <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={password} 
                       onChangeText={(text) => { setPassword(text); clearErrorMessage(); }} 
                       placeholder="new password"
                       secureTextEntry={true}
                     />
-                  </Animated.View>
+                  </View>
                   {/* Confirm Password input */}
-                  <Animated.View style={[styles.inputContainer, animatedPasswordInputStyle]}>
+                  <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={confirmPassword} 
                       onChangeText={(text) => { setConfirmPassword(text); clearErrorMessage(); }} 
                       placeholder="re-enter new password"
                       secureTextEntry={true}
                     />
-                  </Animated.View>
+                  </View>
                   {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                   {/* Next button */}
-                  <Animated.View style={animatedPasswordButtonStyle}>
+                  <View>
                     <TouchableOpacity 
                       style={styles.button}
                       onPress={handleNextStep}
@@ -449,15 +359,11 @@ export default function SignUp() {
                         continue
                       </Text>
                     </TouchableOpacity>
-                  </Animated.View>
-                </Animated.View>
+                  </View>
+                </View>
               </>
             )}
           </View>
-          <Animated.Image 
-            source={require('../assets/images/transparent_mini_logo.png')} 
-            style={[styles.miniLogo, animatedMiniLogoStyle]}
-          />
         </SafeAreaView>
       </KeyboardAvoidingView>
     </>
@@ -475,7 +381,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 80,
+    top: 60,
     left: 30,
     zIndex: 1,
   },
@@ -486,51 +392,68 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 65,
-    paddingTop: 120,
-    paddingBottom: 20,
-    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 100, 
+    justifyContent: 'flex-start', 
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 50,
-    color: '#fc6c85',
-    textAlign: 'center',
-    width: '100%',  // Ensure the text takes full width of its container
+  landingsubtitle: {
+    fontSize: 25,
+    color: '#0e1514',
+    textAlign: 'left',
+    marginBottom: 40, 
+    paddingTop: 80,
+    fontFamily: 'Sora-SemiBold', // New Sora Font
+    lineHeight: 35, // Line Spacing
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 25,
     color: '#0e1514',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontWeight: 'bold',
+    textAlign: 'left',
+    marginBottom: 20, // Reduced margin to move content up
+    paddingTop: 20,
+    fontFamily: 'Sora-SemiBold', // New Sora Font
+    lineHeight: 30, // Line Spacing
   },
   formContainer: {
     width: '100%',
+    marginTop: 20, 
   },
   inputContainer: {
-    marginBottom: 10,
+    marginBottom: 15, 
+    marginLeft: 20,
+    marginRight: 20,
   },
   input: {
     width: "100%",
-    height: 40,
+    height: 50, 
     borderWidth: 0,
-    paddingHorizontal: 10,
+    paddingHorizontal: 15, 
+    paddingVertical: 10, 
     color: '#808080',
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 15,
   },
   smallerText: {
     fontSize: 12,
   },
-  button: {
-    backgroundColor: 'rgba(121, 206, 84, 1)',
-    paddingVertical: 12,
-    paddingHorizontal: 3,
-    borderRadius: 8,
-    marginTop: 20,
+  landingbutton: {
+    backgroundColor: '#fba904',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 15,
     marginBottom: 30,
+    marginHorizontal: 20,
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: '#fba904',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 15,
+    marginTop: 5,
+    marginBottom: 30,
+    marginHorizontal: 20,
     alignItems: 'center',
   },
   buttonText: {
@@ -540,25 +463,60 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    fontSize: 10,
+    fontSize: 12,
     marginTop: -5,
     marginBottom: 5,
     textAlign: 'left',
-    paddingHorizontal: 5,
+    paddingHorizontal: 30,
+    paddingVertical:5,
     borderRadius: 5,
-  },
-  miniLogo: {
-    position: 'absolute',
-    bottom: 20,
-    right: 10,
-    width: 80,
-    height: 80,
   },
   workInProgress: {
     color: 'red',
     fontSize: 14,
     marginTop: 10,
     textAlign: 'center',
-  }
+  },
+  landingImage: {
+    alignItems: 'center',
+    width: 215,
+    height: 215,
+    marginTop: 70, // Added margin to bring image closer to button
+    marginBottom:-75, // image right on top of button
+  },
+  checkboxContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 20,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 13,
+    color: '#fba904',
+    fontWeight: "700",
+    paddingLeft: 5,
+  },
+  checkbox: {
+    width: 25,
+    height: 25,
+    borderWidth: 3,
+    borderRadius: 5,
+    borderColor: '#fba904',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  checkmark: {
+    color: '#fba904',
+    fontSize: 18,
+    fontWeight: 'bold',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -9 }, { translateY: -12 }],
+  },
 });
 // END of Style Code
