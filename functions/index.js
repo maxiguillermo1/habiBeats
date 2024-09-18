@@ -1,10 +1,19 @@
+//  index.js 
+//  index.js file for google cloud function connection 
+//  allows user to use functions on the cloud 
+
+
+//  Maxwell Guillermo 
+
+
+
+  // START of Google Cloud Functions Implementation/Contribution
+  // START of Maxwell Guillermo
+
+
 /**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * This file contains Google Cloud Functions for a Firebase-based application.
+ * It uses Firebase Admin SDK, Firebase Functions, and Nodemailer for various operations.
  */
 
 const {onRequest} = require("firebase-functions/v2/https");
@@ -23,7 +32,7 @@ const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 admin.initializeApp();
 
-// Configure the email transporter
+// Configure the email transporter using Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -32,6 +41,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Cloud Function: Send OTP via email
 exports.sendOTP = functions.https.onCall(async (data, context) => {
   const { email, otp, isEmailChange } = data;
 
@@ -61,6 +71,7 @@ exports.sendOTP = functions.https.onCall(async (data, context) => {
   }
 });
 
+// Cloud Function: Reset Password
 exports.resetPassword = functions.https.onCall(async (data, context) => {
   const { email, otp, newPassword } = data;
 
@@ -119,7 +130,7 @@ exports.resetPassword = functions.https.onCall(async (data, context) => {
   }
 });
 
-//update email in firestore
+// Cloud Function: Update email in Firestore when changed in Auth
 exports.onUserChanged = functions.auth.user().onUpdate(async (change, context) => {
   const beforeUser = change.before.data();
   const afterUser = change.after.data();
@@ -147,3 +158,7 @@ exports.onUserChanged = functions.auth.user().onUpdate(async (change, context) =
     }
   }
 });
+
+
+  // END of Google Cloud Functions Implementation/Contribution
+  // END of Maxwell Guillermo
