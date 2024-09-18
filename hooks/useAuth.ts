@@ -9,6 +9,8 @@ interface UserData {
   // hashmap of the user document
   firstName: string;
   lastName: string;
+  age: number;
+  gender: string,
   email: string;
   location: string;
   profileImageUrl: string;

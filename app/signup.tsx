@@ -1,7 +1,7 @@
 // signup.tsx
 // Reyna Aguirre, Jesus Donate, Maxwell Guillermo, and Mariann Grace Dizon
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
@@ -48,7 +48,15 @@ export default function SignUp() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
-  loadFonts().then(() => setFontsLoaded(true));
+    let isMounted = true;
+    loadFonts().then(() => {
+      if (isMounted) {
+        setFontsLoaded(true);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
   // END of Sora SemiBold Font Loading
 
@@ -59,10 +67,13 @@ export default function SignUp() {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
+  const [age, setAge] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [step, setStep] = useState<number>(0);
   const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
+  const [gender, setGender] = useState<string>(""); 
+  const [pronouns, setPronouns] = useState<string[]>([]);
   const router = useRouter();
 
   // END of Sign Up Process
@@ -70,7 +81,7 @@ export default function SignUp() {
 
   // START of Firebase Storing of User Data
   // START of Jesus Donate Contribution 
-  const handleSignUp = async () => {
+  const handleSignUp = useCallback(async () => {
     try {
       const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -88,8 +99,11 @@ export default function SignUp() {
         lastName: lastName,
         email: email,
         dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
+        age: age,
         displayName: displayName,
         lastNameVisible: lastNameVisible,
+        gender: gender, 
+        pronouns: pronouns,
         uid: user.uid
       });
       // Firebase Error Handling
@@ -105,18 +119,18 @@ export default function SignUp() {
       }
       console.error("Sign up error:", error);
     }
-  };
+  }, [firstName, lastName, email, password, dateOfBirth, age, lastNameVisible, gender, pronouns, router]);
   // END of Firebase Storing of User Data
   // END of Jesus Donate Contribution 
 
   // START Function to clear error message when user re-enters form
   // START of Mariann Grace Dizon Contribution
-  const clearErrorMessage = () => {
+  const clearErrorMessage = useCallback(() => {
     setErrorMessage("");
-  };
+  }, []);
 
   // Function to handle next step
-  const handleNextStep = () => {
+  const handleNextStep = useCallback(() => {
     if (step === 0) {
       setStep(1);
     } else if (step === 1) {
@@ -141,7 +155,7 @@ export default function SignUp() {
       if (password && confirmPassword) {
         if (password === confirmPassword) {
           Keyboard.dismiss();
-          handleSignUp();
+          setStep(5);
         } else {
           setErrorMessage("Passwords do not match.");
         }
@@ -149,7 +163,24 @@ export default function SignUp() {
         setErrorMessage("Please enter and confirm your password.");
       }
     }
-  };
+    else if (step === 5) {
+      setStep(6);
+    }
+    else if (step === 6) {
+      if (gender) {
+        setStep(7);
+      } else {
+        setErrorMessage("Please select your gender.");
+      }
+    }
+    else if (step === 7) {
+      if (pronouns.length > 0) {
+        handleSignUp();
+      } else {
+        setErrorMessage("Please select at least one pronoun.");
+      }
+    }
+  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, handleSignUp]);
   // END Function to clear error message when user re-enters form
   // END of Mariann Grace Dizon Contribution
 
@@ -213,7 +244,7 @@ export default function SignUp() {
             {/* END of Profile Landing Page */}
             {step === 1 && (
               <>
-                <Text style={styles.subtitle}>What's your name ?</Text>
+                <Text style={styles.subtitle}>What's your name?</Text>
                 <View style={styles.formContainer}>
                   {/* First Name input */}
                   <View style={styles.inputContainer}>
@@ -264,7 +295,8 @@ export default function SignUp() {
             )}
             {step === 2 && (
               <>
-                <Text style={styles.subtitle}>what's your email ?</Text>
+                <Text style={styles.subtitle}>What's your email?</Text>
+                <Text style={styles.subtitleDescription}>your email is required for account recovery and security purposes.</Text>
                 <View style={styles.formContainer}>
                   {/* Email input */}
                   <View style={styles.inputContainer}>
@@ -294,7 +326,7 @@ export default function SignUp() {
             )}
             {step === 3 && (
               <>
-                <Text style={styles.subtitle}>what's your date of birth ?</Text>
+                <Text style={styles.subtitle}>What's your birthday?</Text>
                 <View style={styles.formContainer}>
                   {/* Date of Birth input */}
                   <View style={styles.inputContainer}>
@@ -315,7 +347,36 @@ export default function SignUp() {
                   <View>
                     <TouchableOpacity 
                       style={styles.button}
-                      onPress={handleNextStep}
+                      onPress={() => {
+                        // Calculate Age
+                        const today = new Date();
+                        let calculatedAge = today.getFullYear() - dateOfBirth.getFullYear();
+                        const m = today.getMonth() - dateOfBirth.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < dateOfBirth.getDate())) {
+                          calculatedAge--;
+                        }
+                        setAge(calculatedAge); // save age to firestor
+                        
+                        // Show Pop-Up to Confirm Age
+                        Alert.alert(
+                          `Confirm you're ${calculatedAge}.`,
+                          `\nIs this correct?`,
+                          [
+                            {
+                              text: "No",
+                              onPress: () => console.log("Age is incorrect"),
+                              style: "cancel"
+                            },
+                            { 
+                              text: "Yes", 
+                              onPress: () => {
+                                setStep(4);
+                                handleNextStep();
+                              }
+                            }
+                          ]
+                        );
+                      }}
                     >
                       <Text style={styles.buttonText}>
                         continue
@@ -334,7 +395,7 @@ export default function SignUp() {
                     <CustomTextInput 
                       value={password} 
                       onChangeText={(text) => { setPassword(text); clearErrorMessage(); }} 
-                      placeholder="new password"
+                      placeholder="enter password"
                       secureTextEntry={true}
                     />
                   </View>
@@ -357,6 +418,117 @@ export default function SignUp() {
                     >
                       <Text style={styles.buttonText}>
                         continue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+            {step === 5 && (
+              <>
+              <Text style={styles.landingsubtitle}>Let's add more info to refine your music connections.</Text>
+              <Image 
+                source={require('../assets/images/Profile_Information_Graphic.png')}
+                style={styles.landingProfileImage}
+                resizeMode="contain"
+              />
+              <View style={styles.formContainer}>
+                <TouchableOpacity 
+                  style={styles.landingProfileButton}
+                  onPress={handleNextStep}
+                >
+                  <Text style={styles.profileButtonText}>
+                    enter profile info
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+            )}
+            {step === 6 && (
+              <>
+                <Text style={styles.subtitle}>What gender best describes you?</Text>
+                <View style={styles.formContainer}>
+                  {/* Gender selection buttons */}
+                  <View style={styles.genderButtonsContainer}>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, gender === 'Male' && styles.selectedGenderButton]}
+                      onPress={() => setGender('Male')}
+                    >
+                      <Text style={[styles.genderButtonText, gender === 'Male' && styles.selectedGenderButtonText]}>male</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, gender === 'Female' && styles.selectedGenderButton]}
+                      onPress={() => setGender('Female')}
+                    >
+                      <Text style={[styles.genderButtonText, gender === 'Female' && styles.selectedGenderButtonText]}>female</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, gender === 'Other' && styles.selectedGenderButton]}
+                      onPress={() => setGender('Other')}
+                    >
+                      <Text style={[styles.genderButtonText, gender === 'Other' && styles.selectedGenderButtonText]}>other</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <View>
+                    <TouchableOpacity 
+                      style={styles.profileButton}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.profileButtonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+            {step === 7 && (
+              <>
+                <Text style={styles.subtitle}>What are your pronouns?</Text>
+                <Text style={styles.subtitleDescription}>select up to two that apply.</Text>
+                <View style={styles.formContainer}>
+                  {/* Pronoun selection checkboxes */}
+                  <View style={styles.pronounCheckboxContainer}>
+                    {['she', 'her', 'he', 'him', 'they', 'them'].map((pronoun) => (
+                      <TouchableOpacity 
+                        key={pronoun}
+                        style={styles.pronounCheckbox}
+                        onPress={() => {
+                          if (pronouns.includes(pronoun)) {
+                            setPronouns(pronouns.filter(p => p !== pronoun));
+                          } else if (pronouns.length < 2) {
+                            setPronouns([...pronouns, pronoun]);
+                          }
+                        }}
+                      >
+                        <Checkbox
+                          status={pronouns.includes(pronoun) ? 'checked' : 'unchecked'}
+                          onPress={() => {
+                            if (pronouns.includes(pronoun)) {
+                              setPronouns(pronouns.filter(p => p !== pronoun));
+                            } else if (pronouns.length < 2) {
+                              setPronouns([...pronouns, pronoun]);
+                            }
+                          }}
+                          color="#fba904"
+                        />
+                        <Text style={styles.pronounCheckboxLabel}>{pronoun}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <View>
+                    <TouchableOpacity 
+                      style={styles.profileButton}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.profileButtonText}>
+                        finish
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -409,12 +581,22 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 25,
     color: '#0e1514',
-    textAlign: 'left',
+    textAlign: 'center',
     marginBottom: 20, // Reduced margin to move content up
     paddingTop: 20,
     fontFamily: 'Sora-SemiBold', // New Sora Font
     lineHeight: 30, // Line Spacing
   },
+  subtitleDescription: {
+    fontSize: 13,
+    fontWeight: '600',
+    paddingLeft: 20,
+    paddingRight: 20,
+    color: '#0e1514',
+    textAlign: 'left',
+    marginBottom: 30,
+  },
+
   formContainer: {
     width: '100%',
     marginTop: 20, 
@@ -446,6 +628,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     alignItems: 'center',
   },
+  landingProfileButton: {
+    backgroundColor: 'rgba(55,189,213,0.8)',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 15,
+    marginBottom: 30,
+    marginHorizontal: 20,
+    alignItems: 'center',
+  },
   button: {
     backgroundColor: '#fba904',
     paddingVertical: 15,
@@ -457,6 +648,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
+    color: "white",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  profileButton: {
+    backgroundColor: 'rgba(55,189,213,0.8)',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 15,
+    marginTop: 5,
+    marginBottom: 30,
+    marginHorizontal: 20,
+    alignItems: 'center',
+  },
+  profileButtonText: {
     color: "white",
     fontSize: 15,
     fontWeight: "600",
@@ -482,7 +688,14 @@ const styles = StyleSheet.create({
     width: 215,
     height: 215,
     marginTop: 70, // Added margin to bring image closer to button
-    marginBottom:-75, // image right on top of button
+    marginBottom:-75, 
+  },
+  landingProfileImage: {
+    alignItems: 'center',
+    width: '100%',
+    height: 220,
+    marginTop: 70, // Added margin to bring image closer to button
+    marginBottom: -10, 
   },
   checkboxContainer: {
     position: 'absolute',
@@ -517,6 +730,50 @@ const styles = StyleSheet.create({
     top: '50%',
     left: '50%',
     transform: [{ translateX: -9 }, { translateY: -12 }],
+  },
+  genderButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  genderButton: {
+    backgroundColor: 'rgba(55,189,213,0.2)',
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+    
+  },
+  selectedGenderButton: {
+    backgroundColor: 'rgba(55,189,213,1)',
+  },
+  genderButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  selectedGenderButtonText: {
+    color: '#FFFFFF',
+  },
+  pronounCheckboxContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  pronounCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '45%',
+    marginBottom: 10,
+  },
+  pronounCheckboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#0e1514',
   },
 });
 // END of Style Code
