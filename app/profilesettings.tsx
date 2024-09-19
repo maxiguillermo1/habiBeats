@@ -311,16 +311,39 @@ export default function ProfileSettings() {
     }
   };
 
+
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+
   const handleChangeEmail = async () => {
     setEmailChangeError('');
     if (!auth.currentUser) return;
 
-    if (!otpSent) {
-      if (newEmail !== confirmNewEmail) {
-        setEmailChangeError('New email addresses do not match.');
-        return;
-      }
+    if (!newEmail) {
+      setEmailChangeError('Please enter your new email address.');
+      return;
+    }
 
+    // check if the new email is valid
+    if (!isValidEmail(newEmail)) {
+      setEmailChangeError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!confirmNewEmail) {
+      setEmailChangeError('Please confirm your new email address.');
+      return;
+    }
+
+    if (newEmail !== confirmNewEmail) {
+      setEmailChangeError('New email addresses do not match.');
+      return;
+    }
+    
+    if (!otpSent) {
       // Check if the new email is already in use
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', newEmail));
@@ -422,8 +445,18 @@ export default function ProfileSettings() {
       return;
     }
 
+    if (!newPassword) {
+      setPasswordChangeError('New password cannot be empty.');
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPasswordChangeError('New password cannot be the same as current password.');
+      return;
+    }
+
     if (newPassword !== confirmNewPassword) {
-      setPasswordChangeError('New passwords do not match.');
+      setPasswordChangeError('New password and confirm new password do not match.');
       return;
     }
 
@@ -444,7 +477,7 @@ export default function ProfileSettings() {
       if (error.code === 'auth/wrong-password') {
         setPasswordChangeError('Current password is incorrect. Please try again.');
       } else {
-        setPasswordChangeError('Failed to change password. Please try again later.');
+        setPasswordChangeError('Failed to change password. Enter valid current password.');
       }
     }
   };
