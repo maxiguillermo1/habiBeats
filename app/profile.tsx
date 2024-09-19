@@ -98,22 +98,29 @@ export default function Profile() {
 
   // Handler for canceling changes
   const handleCancel = () => {
-    // Reset state to initial values
-    setTuneOfMonth(initialValues.current.tuneOfMonth);
-    setFavoritePerformance(initialValues.current.favoritePerformance);
-    setListenTo(initialValues.current.listenTo);
-    setFavoriteMusicArtists(initialValues.current.favoriteMusicArtists);
-    setFavoriteAlbum(initialValues.current.favoriteAlbum);
-    setArtistToSee(initialValues.current.artistToSee);
-    setImage(initialValues.current.favoritePerformance);
-    setHasChanges(false);
+    try {
+      // Reset state to initial values
+      setTuneOfMonth(initialValues.current.tuneOfMonth);
+      setFavoritePerformance(initialValues.current.favoritePerformance);
+      setListenTo(initialValues.current.listenTo);
+      setFavoriteMusicArtists(initialValues.current.favoriteMusicArtists);
+      setFavoriteAlbum(initialValues.current.favoriteAlbum);
+      setArtistToSee(initialValues.current.artistToSee);
+      setImage(initialValues.current.favoritePerformance);
 
-    // Hide the button after canceling
-    Animated.timing(buttonY, {
-      toValue: 100,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+      // Simultaneously hide the button and revert inputs to saved state
+      Animated.parallel([
+        Animated.timing(buttonY, {
+          toValue: 100,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setHasChanges(false);
+      });
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
   };
 
   // Handler for picking an image
@@ -320,7 +327,9 @@ export default function Profile() {
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => {
+            handleCancel();
+          }}>
             <Text style={styles.cancelButtonText}>Cancel Changes</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -376,6 +385,7 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     paddingBottom: 25,
+    paddingRight: 8,
   },
   content: {
     paddingTop: 20,
