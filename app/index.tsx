@@ -1,15 +1,20 @@
+// index.tsx
+// Reyna Aguirre, Mariann Grace Dizon, Maxwell Guillermo, Jesus Donate
+
 import React from "react";
 import { Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
-import { useRouter, Link } from "expo-router";
+import { useRouter, Link } from "expo-router"; // Importing useRouter and Link from expo-router for navigation
 
+// Function to navigate to a specific route using the router instance
 export default function Index() {
-  const router = useRouter();
+  const router = useRouter(); // Using useRouter hook to get the router instance
   const navigateTo = (route: string) => {
     router.push(route as never);
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Navigation buttons to different routes */}
       <TouchableOpacity style={styles.button} onPress={() => navigateTo("/landing")}>
         <Text style={styles.buttonText}>HabiBeats</Text>
       </TouchableOpacity>
@@ -44,6 +49,7 @@ export default function Index() {
   );
 }
 
+// Styles for the Index component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

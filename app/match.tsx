@@ -1,21 +1,24 @@
 // match.tsx
-// Mariann Grace Dizon and Maxwell Guillermo
+// Mariann Grace Dizon
 
+
+// START of Mariann Grace Dizon
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Dimensions, Animated } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-// START of Matching feature 
-// START of Maxwell Guillermo Contribution
-
+// Match component definition
 const Match = () => {
   // State to control the visibility of the match modal
   const [showMatchModal, setShowMatchModal] = useState(false);
+  // State to manage the color of the like and dislike buttons
   const [likeButtonColor, setLikeButtonColor] = useState('#1E1E1E');
   const [dislikeButtonColor, setDislikeButtonColor] = useState('#1E1E1E');
+  // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
+  // Refs for animation values
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
 
@@ -25,9 +28,6 @@ const Match = () => {
     setShowMatchModal(true);
     animateModal(true);
   };
-
-  // END of Matching feature (WIP)
-  // END of Maxwell Guillermo Contribution
 
   // Handler for when the message button is pressed in the modal
   const handleMessagePress = () => {
@@ -41,7 +41,7 @@ const Match = () => {
     router.push('/messages');
   };
 
-  // Update the animateModal function
+  // Function to animate the modal
   const animateModal = (visible: boolean) => {
     Animated.parallel([
       Animated.spring(scaleValue, {
@@ -56,12 +56,14 @@ const Match = () => {
     ]).start();
   };
 
+  // Effect to reset like button color when modal is closed
   useEffect(() => {
     if (!showMatchModal) {
       setLikeButtonColor('#1E1E1E'); // Change back to original color
     }
   }, [showMatchModal]);
 
+  // Function to handle the close button press
   const handleClosePress = () => {
     setDislikeButtonColor('#fba904'); // Change to orange
     // Here you would typically load the next user profile
@@ -305,8 +307,8 @@ const styles = StyleSheet.create({
     marginBottom: 200,
   },
   modalTitle: {
-    fontSize: 38, // Increased font size
-    fontWeight: '800', // Made font thicker
+    fontSize: 38,
+    fontWeight: '800',
     marginTop: 'auto',
     marginBottom: 300,
     color:'#1E1E1E',
@@ -347,3 +349,5 @@ const styles = StyleSheet.create({
 });
 
 export default Match;
+
+// END of Mariann Grace Dizon

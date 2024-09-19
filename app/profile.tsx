@@ -1,3 +1,7 @@
+// profile.tsx
+// Mariann Grace Dizon
+
+// START of Mariann Grace Dizon
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView, Animated, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +12,7 @@ import { auth, db, storage } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
+// Profile component definition
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
@@ -40,6 +45,7 @@ export default function Profile() {
   // Animated value for the button
   const buttonY = useRef(new Animated.Value(100)).current;
 
+  // Handler for saving changes
   const handleSave = async () => {
     try {
       const currentUser = auth.currentUser;
@@ -80,6 +86,7 @@ export default function Profile() {
     }
   };
 
+  // Handler for input change
   const handleInputChange = () => {
     setHasChanges(true);
     Animated.timing(buttonY, {
@@ -89,6 +96,7 @@ export default function Profile() {
     }).start();
   };
 
+  // Handler for canceling changes
   const handleCancel = () => {
     // Reset state to initial values
     setTuneOfMonth(initialValues.current.tuneOfMonth);
@@ -108,6 +116,7 @@ export default function Profile() {
     }).start();
   };
 
+  // Handler for picking an image
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -130,6 +139,7 @@ export default function Profile() {
     }
   };
 
+  // Effect for fetching user data
   useEffect(() => {
     try {
       const currentUser = auth.currentUser;
@@ -188,10 +198,12 @@ export default function Profile() {
     };
   }, []);
 
+  // Handler for settings button press
   const handleSettingsPress = () => {
     router.push('/profilesettings');
   };
 
+  // Render the component
   return (
     <SafeAreaView style={[styles.container, isKeyboardVisible && { paddingBottom: 0 }]}>
       {/* Header section with profile picture, user info, and settings button */}
@@ -205,7 +217,7 @@ export default function Profile() {
             <Text style={styles.location}>{user.location}</Text>
           </View>
         <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
-          <Ionicons name="settings-outline" size={24} color="#333" />
+          <Ionicons name="settings-outline" size={20} color="#333" />
         </TouchableOpacity>
       </View>
 
@@ -327,43 +339,48 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
-    paddingBottom: 80, // Default padding bottom
+    paddingBottom: 80, 
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 85, // Add padding to account for the BottomNavBar
+    paddingBottom: 85,
   },
   header: {
     flexDirection: 'row',
-    padding: 20,
+    paddingLeft: 30,
+    paddingRight: 30,
+    paddingTop: 25,
+    paddingBottom: 15,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   profilePicture: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: '#fc6c85', // Updated border color
+    width: 70,
+    height: 70,
+    borderRadius: 40,
+    borderWidth: 7,
+    borderColor: '#fc6c85',
   },
   userInfo: {
     flex: 1,
     marginLeft: 15,
   },
   name: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: 'bold',
-    color: '#fc6c85', // Updated text color
+    color: '#fc6c85',
   },
   location: {
     fontSize: 14,
     color: '#666',
   },
   settingsButton: {
-    padding: 10,
+    paddingBottom: 25,
   },
   content: {
-    padding: 20,
+    paddingTop: 20,
+    paddingLeft: 50,
+    paddingRight: 50,
   },
   inputContainer: {
     marginBottom: 25,
@@ -372,31 +389,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#fba904', // Updated text color
+    color: '#fba904',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#fff', // Updated border color
+    borderColor: '#fff',
     borderRadius: 8,
     padding: 12,
     minHeight: 45,
-    backgroundColor: '#fff', // Updated background color
-    color: '#542f11', // Updated text color
+    backgroundColor: '#fff',
+    color: '#542f11',
   },
   imageInputPlaceholder: {
     width: '100%',
-    height: 350,
-    backgroundColor: '#f0f0f0', // Updated background color
-    borderColor: '#fff', // Updated border color
-    borderRadius: 8,
-    borderWidth: 4,
+    height: 290,
+    backgroundColor: '#f0f0f0',
+    borderColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageInput: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
   },
   imageInputText: {
     fontSize: 40,
@@ -404,17 +420,17 @@ const styles = StyleSheet.create({
   },
   saveButtonContainer: {
     position: 'absolute',
-    bottom: 105, // Adjust this value to position above the BottomNavBar
-    left: 0,
-    right: 0,
+    bottom: 105,
+    left: 25,
+    right: 25,
     alignItems: 'center',
-    zIndex: 1, // Ensure the button appears on top
-    flexDirection: 'row', // Added to align buttons horizontally
-    justifyContent: 'space-around', // Added to space buttons evenly
+    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
   saveButton: {
     backgroundColor: '#79ce54',
-    padding: 14,
+    padding: 13,
     borderRadius: 15,
     width: '40%',
   },
@@ -425,10 +441,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cancelButton: {
-    backgroundColor: '#ff6b6b', // Different color for cancel button
-    padding: 14,
+    backgroundColor: '#ff6b6b',
+    padding: 13,
     borderRadius: 15,
-    width: '40%',
+    width: '50%',
   },
   cancelButtonText: {
     color: '#fff',
@@ -441,6 +457,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: 80, // Default padding bottom
+    paddingBottom: 80,
   },
 });
+// END of Mariann Grace Dizon

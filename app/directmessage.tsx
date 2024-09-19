@@ -1,23 +1,31 @@
+// directmessage.tsx
+// Mariann Grace Dizon
+
+// START of Mariann Grace Dizon
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+// Define the DirectMessageScreen component
 const DirectMessageScreen = () => {
-    const scrollViewRef = useRef<ScrollView>(null); // Initialize scrollViewRef
+    // Initialize scrollViewRef
+    const scrollViewRef = useRef<ScrollView>(null); 
 
+    // Return the JSX for the DirectMessageScreen
     return (
         <View style={styles.container}>
-            {/* Moved userContainer to the top */}
+            {/* User container */}
             <View style={styles.userContainer}>
                 <Image source={{ uri: 'https://example.com/user-avatar.jpg' }} style={styles.profilePic} />
                 <Text style={styles.userName}>Miles Morales</Text>
             </View>
+            {/* ScrollView for messages */}
             <ScrollView style={styles.scrollView} ref={scrollViewRef} onContentSizeChange={(width, height) => {
                 if (scrollViewRef.current) { // Check if scrollViewRef.current is not null
                     scrollViewRef.current.scrollToEnd({ animated: true });
                 }
             }}>
-                {/* Adjusted margin to separate messages from the input area */}
+                {/* Message bubbles */}
                 <View style={[styles.messageContainer, { alignSelf: 'flex-start', backgroundColor: '#ffc4ce' }]}>
                     <Text style={[styles.messageText, { color: '#0e1514' }]}>What's up Gwen?</Text>
                 </View>
@@ -26,6 +34,7 @@ const DirectMessageScreen = () => {
                 </View>
                 {/* Additional messages can be dynamically added here */}
             </ScrollView>
+            {/* Input area for sending messages */}
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
@@ -40,6 +49,7 @@ const DirectMessageScreen = () => {
     );
 };
 
+// Define the styles for the DirectMessageScreen
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -111,4 +121,6 @@ const styles = StyleSheet.create({
     },
 });
 
+// Export the DirectMessageScreen component
 export default DirectMessageScreen;
+// END of Mariann Grace Dizon
