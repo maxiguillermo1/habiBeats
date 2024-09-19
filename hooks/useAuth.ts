@@ -11,8 +11,13 @@ interface UserData {
   lastName: string;
   age: number;
   gender: string,
+  pronouns: string[],
   email: string;
   location: string;
+  matchIntention: string;
+  musicPreference: string[];
+  pronounsVisible: boolean;
+  lastNameVisible: boolean;
   profileImageUrl: string;
   tuneOfMonth: string;
   favoritePerformance: string;

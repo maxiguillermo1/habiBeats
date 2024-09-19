@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
-import { getFirestore, setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -74,7 +74,19 @@ export default function SignUp() {
   const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
   const [gender, setGender] = useState<string>(""); 
   const [pronouns, setPronouns] = useState<string[]>([]);
+  const [pronounVisible, setPronounVisible] = useState<boolean>(true); // Pronoun Visibility Variable
+  const [matchIntention, setMatchIntention] = useState<string>(""); // Match Intention Variable [Friends, Dating, Both]
+  const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
   const router = useRouter();
+
+  useEffect(() => {
+    if (step === 10) {
+      const timer = setTimeout(() => {
+        router.push("/login-signup");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, router]);
 
   // END of Sign Up Process
   // END of Reyna Aguirre Contribution 
@@ -102,13 +114,19 @@ export default function SignUp() {
         age: age,
         displayName: displayName,
         lastNameVisible: lastNameVisible,
+        pronounsVisible: pronounVisible,
         gender: gender, 
         pronouns: pronouns,
+        musicPreference: musicPreference,
+        matchIntention: matchIntention,
         uid: user.uid
       });
+
       // Firebase Error Handling
-      // FIXME: Email Already in Use Error in Enter Email Step
       setSuccessMessage("Sign up successful!");
+      
+      // Update the database
+      await updateUserProfile(user.uid);
       
       router.push("/login-signup"); 
     } catch (error: any) {
@@ -119,7 +137,36 @@ export default function SignUp() {
       }
       console.error("Sign up error:", error);
     }
-  }, [firstName, lastName, email, password, dateOfBirth, age, lastNameVisible, gender, pronouns, router]);
+  }, [firstName, lastName, email, password, dateOfBirth, age, lastNameVisible, gender, pronouns, matchIntention, musicPreference, router]);
+
+  // Function to update user profile in the database
+  const updateUserProfile = async (userId: string) => {
+    const db = getFirestore(app);
+    const userRef = doc(db, "users", userId);
+    
+    try {
+      await setDoc(userRef, {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        dateOfBirth: dateOfBirth.toISOString().split('T')[0],
+        age: age,
+        displayName: lastNameVisible ? `${firstName} ${lastName}` : firstName,
+        lastNameVisible: lastNameVisible,
+        pronounsVisible: pronounVisible,
+        gender: gender,
+        pronouns: pronouns,
+        musicPreference: musicPreference,
+        matchIntention: matchIntention,
+        uid: userId
+      }, { merge: true });
+      
+      console.log("User profile updated successfully");
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      setErrorMessage("Failed to update user profile. Please try again.");
+    }
+  };
   // END of Firebase Storing of User Data
   // END of Jesus Donate Contribution 
 
@@ -141,20 +188,8 @@ export default function SignUp() {
       }
     } else if (step === 2) {
       if (email) {
-        // check if email is in firestore
-        const db = getFirestore(app);
-        const usersCollection = collection(db, 'users');
-        const q = query(usersCollection, where('email', '==', email));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-          setStep(3);
-        } else {
-          setErrorMessage("Email already in use. Please use a different email.");
-        }
-        
-
+        setStep(3);
       } else {
-
         setErrorMessage("Please enter your email.");
       }
     } else if (step === 3) {
@@ -187,12 +222,28 @@ export default function SignUp() {
     }
     else if (step === 7) {
       if (pronouns.length > 0) {
-        handleSignUp();
+        setStep(8);
       } else {
         setErrorMessage("Please select at least one pronoun.");
       }
     }
-  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, handleSignUp]);
+    else if (step === 8) {
+      if (matchIntention) {
+        setStep(9);
+      } else {
+        setErrorMessage("Please select your match intention.");
+      }
+    }
+    else if (step === 9) {
+      if (musicPreference.length > 0) {
+        // Instead of just setting the step to 10, call handleSignUp
+        await handleSignUp();
+        setStep(10);
+      } else {
+        setErrorMessage("Please select your music preference.");
+      }
+    }
+  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, matchIntention, musicPreference, handleSignUp]);
   // END Function to clear error message when user re-enters form
   // END of Mariann Grace Dizon Contribution
 
@@ -301,7 +352,7 @@ export default function SignUp() {
                       <Text style={styles.checkmark}>✓</Text>
                     )}
                   </TouchableOpacity>
-                  <Text style={styles.checkboxLabel}>last name visible</Text>
+                  <Text style={styles.checkboxLabel}>last name visible on profile</Text>
                 </View>
               </>
             )}
@@ -314,14 +365,12 @@ export default function SignUp() {
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={email} 
-                      onChangeText={(text) => { setEmail(text); clearErrorMessage(); }} 
+                      onChangeText={(text) => setEmail(text)} 
                       placeholder="email"
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
                   </View>
-                  {/* Error message */}
-                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                   {/* Next button */}
                   <View>
                     <TouchableOpacity 
@@ -438,7 +487,7 @@ export default function SignUp() {
             )}
             {step === 5 && (
               <>
-              <Text style={styles.landingsubtitle}>Let's add more info to refine your music connections.</Text>
+              <Text style={styles.landingsubtitle}>Now, let's add more info to refine your music connections.</Text>
               <Image 
                 source={require('../assets/images/Profile_Information_Graphic.png')}
                 style={styles.landingProfileImage}
@@ -500,7 +549,7 @@ export default function SignUp() {
             {step === 7 && (
               <>
                 <Text style={styles.subtitle}>What are your pronouns?</Text>
-                <Text style={styles.subtitleDescription}>select up to two that apply.</Text>
+                <Text style={styles.subtitleDescription}>select up to (2) pronouns that apply.</Text>
                 <View style={styles.formContainer}>
                   {/* Pronoun selection checkboxes */}
                   <View style={styles.pronounCheckboxContainer}>
@@ -516,17 +565,11 @@ export default function SignUp() {
                           }
                         }}
                       >
-                        <Checkbox
-                          status={pronouns.includes(pronoun) ? 'checked' : 'unchecked'}
-                          onPress={() => {
-                            if (pronouns.includes(pronoun)) {
-                              setPronouns(pronouns.filter(p => p !== pronoun));
-                            } else if (pronouns.length < 2) {
-                              setPronouns([...pronouns, pronoun]);
-                            }
-                          }}
-                          color="#fba904"
-                        />
+                        <View style={[styles.checkboxWrapper, pronouns.includes(pronoun) && styles.checkedCheckboxWrapper]}>
+                          {pronouns.includes(pronoun) && (
+                            <Text style={styles.checkmarkPronoun}>✓</Text>
+                          )}
+                        </View>
                         <Text style={styles.pronounCheckboxLabel}>{pronoun}</Text>
                       </TouchableOpacity>
                     ))}
@@ -540,11 +583,117 @@ export default function SignUp() {
                       onPress={handleNextStep}
                     >
                       <Text style={styles.profileButtonText}>
-                        finish
+                        continue
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
+                {/* Checkbox for pronoun visibility */}
+                <View style={styles.checkboxContainerP}>
+                  <TouchableOpacity 
+                    style={styles.checkboxP}
+                    onPress={() => setPronounVisible(!pronounVisible)}
+                  >
+                    <View style={[styles.checkboxWrapper, pronounVisible && styles.checkedCheckboxWrapper]}>
+                      {pronounVisible && (
+                        <Text style={styles.checkmarkPronoun}>✓</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <Text style={styles.checkboxLabelP}>pronouns visible on profile</Text>
+                </View>
+              </>
+            )}
+            {step === 8 && (
+              <>
+              <Text style={styles.subtitle}>What are your intentions for connecting?</Text>
+              <Text style={styles.subtitleDescription}>select (1) that applies to you.</Text>
+              <View style={styles.formContainer}>
+                  {/* Intention selection buttons */}
+                  {/* Re-used Gender Buttons for Styling of Intention Buttons */}
+                  <View style={styles.intentionButtonsContainer}>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, matchIntention === 'Friends' && styles.selectedGenderButton]}
+                      onPress={() => setMatchIntention('Friends')}
+                    >
+                      <Text style={[styles.genderButtonText, matchIntention === 'Friends' && styles.selectedGenderButtonText]}>friends</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, matchIntention === 'Flirting' && styles.selectedGenderButton]}
+                      onPress={() => setMatchIntention('Flirting')}
+                    >
+                      <Text style={[styles.genderButtonText, matchIntention === 'Flirting' && styles.selectedGenderButtonText]}>flirting</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, matchIntention === 'Both' && styles.selectedGenderButton]}
+                      onPress={() => setMatchIntention('Both')}
+                    >
+                      <Text style={[styles.genderButtonText, matchIntention === 'Both' && styles.selectedGenderButtonText]}>both</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  
+                  {/* Next button */}
+                  <View>
+                    <TouchableOpacity 
+                      style={styles.profileButton}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.profileButtonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )} 
+            {step === 9 && (
+              <>
+                <Text style={styles.subtitle}>What are your favorite music genre(s)?</Text>
+                <Text style={styles.subtitleDescription}>select all that apply.</Text>
+                <View style={styles.genreContainer}>
+                  {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
+                    <TouchableOpacity
+                      key={genre}
+                      style={[
+                        styles.genreButton,
+                        musicPreference.includes(genre) && styles.selectedGenreButton
+                      ]}
+                      onPress={() => {
+                        setMusicPreference((prev) =>
+                          prev.includes(genre)
+                            ? prev.filter((item) => item !== genre)
+                            : [...prev, genre]
+                        );
+                      }}
+                    >
+                      <Text style={[
+                        styles.genreButtonText,
+                        musicPreference.includes(genre) && styles.selectedGenreButtonText
+                      ]}>
+                        {genre}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                <View>
+                  <TouchableOpacity 
+                    style={styles.profileButton}
+                    onPress={handleNextStep}
+                  >
+                    <Text style={styles.profileButtonText}>
+                      finish profile setup
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            {step === 10 && (
+              <>
+                <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
+                <Text style={styles.subtitleDescription}>now routing you to login..</Text>
               </>
             )}
           </View>
@@ -591,9 +740,9 @@ const styles = StyleSheet.create({
     lineHeight: 35, // Line Spacing
   },
   subtitle: {
-    fontSize: 25,
+    fontSize: 20,
     color: '#0e1514',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 20, // Reduced margin to move content up
     paddingTop: 20,
     fontFamily: 'Sora-SemiBold', // New Sora Font
@@ -736,12 +885,54 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#fba904',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'bold',
+    marginTop: -20, // uniwue to the last name checkbox
+
+  },
+  checkboxContainerP: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -9 }, { translateY: -12 }],
+    bottom: 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 20,
+    
+  },
+  checkboxLabelP: {
+    marginLeft: 8,
+    fontSize: 13,
+    color: '#37bdd5',
+    fontWeight: "700",
+    paddingLeft: 5,
+  },
+  checkboxP: {
+    width: 25,
+    height: 25,
+    borderWidth: 3,
+    borderRadius: 5,
+    borderColor: '#37bdd5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    
+  },
+  checkmarkPronoun: {
+    color: '#37bdd5',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  checkboxWrapper: {
+    width: 25,
+    height: 25,
+    borderWidth: 3,
+    borderColor: '#37bdd5',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkedCheckboxWrapper: {
+    backgroundColor: '#fff8f0',
   },
   genderButtonsContainer: {
     flexDirection: 'row',
@@ -759,7 +950,7 @@ const styles = StyleSheet.create({
     
   },
   selectedGenderButton: {
-    backgroundColor: 'rgba(55,189,213,1)',
+    backgroundColor: '#fba904',
   },
   genderButtonText: {
     color: '#000',
@@ -785,7 +976,42 @@ const styles = StyleSheet.create({
   pronounCheckboxLabel: {
     marginLeft: 8,
     fontSize: 16,
+    fontWeight: '600',
     color: '#0e1514',
+    paddingLeft: 5,
+  },
+  intentionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  genreContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  genreButton: {
+    backgroundColor: 'rgba(55,189,213,0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 15,
+    marginBottom: 10,
+    width: '48%',
+    alignItems: 'center',
+  },
+  selectedGenreButton: {
+    backgroundColor: '#fba904',
+  },
+  genreButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedGenreButtonText: {
+    color: '#FFFFFF',
   },
 });
 // END of Style Code
