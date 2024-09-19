@@ -1,7 +1,7 @@
 // profile.tsx
 // Mariann Grace Dizon
 
-// START of Mariann Grace Dizon
+// START of Mariann Grace Dizon Contribution
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView, Animated, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -460,4 +460,4 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
 });
-// END of Mariann Grace Dizon
+// END of Mariann Grace Dizon Contribution

@@ -2,7 +2,7 @@
 // Mariann Grace Dizon
 
 
-// START of Mariann Grace Dizon
+// START of Mariann Grace Dizon Contribution
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Dimensions, Animated } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 30,
   },
   header: {
     flexDirection: 'row',
@@ -350,4 +350,4 @@ const styles = StyleSheet.create({
 
 export default Match;
 
-// END of Mariann Grace Dizon
+// END of Mariann Grace Dizon Contribution

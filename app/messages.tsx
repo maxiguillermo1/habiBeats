@@ -1,14 +1,20 @@
+// messages.tsx
+// Maxwell Guillermo
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 
+// Component for displaying messages
 const Messages = () => {
+  // Array of recent messages
   const recentMessages = [
     { id: 1, name: 'Gwen Stacy', message: 'Hey! I\'d love to go to that concert with you. Is the venue...', time: '4 minutes ago', avatar: 'https://example.com/gwen-stacy-avatar.jpg' },
     { id: 2, name: 'Miles Spider', message: 'Thanks for the playlist recommendation! I really enjoyed...', time: '2 hours ago', avatar: 'https://example.com/miles-spider-avatar.jpg' },
   ];
 
+  // Object for new match
   const newMatch = { id: 3, name: 'Peni Prabhakar', avatar: 'https://example.com/peni-prabhakar-avatar.jpg' };
 
   return (
@@ -38,6 +44,7 @@ const Messages = () => {
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

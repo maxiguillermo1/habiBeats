@@ -1,7 +1,7 @@
 // directmessage.tsx
 // Mariann Grace Dizon
 
-// START of Mariann Grace Dizon
+// START of Mariann Grace Dizon Contribution
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -123,4 +123,4 @@ const styles = StyleSheet.create({
 
 // Export the DirectMessageScreen component
 export default DirectMessageScreen;
-// END of Mariann Grace Dizon
+// END of Mariann Grace Dizon Contribution
