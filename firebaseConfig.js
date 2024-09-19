@@ -34,16 +34,17 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // check if email is in firestore
-const checkEmailInFirestore = async (email) => {
-  const db = getFirestore(app);
-  const usersCollection = collection(db, 'users');
-  const q = query(usersCollection, where('email', '==', email));
+// const checkEmailInFirestore = async (email) => {
+//   const db = getFirestore(app);
+//   const usersCollection = collection(db, 'users');
+//   const q = query(usersCollection, where('email', '==', email));
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.empty;
-}
+//   const querySnapshot = await getDocs(q);
+//   return !querySnapshot.empty;
+// }
 
 
-export { app, auth, db, storage, checkEmailInFirestore };
+
+export { app, auth, db, storage };
 
 

@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
-import { getFirestore, setDoc, doc } from "firebase/firestore";
-import { app, checkEmailInFirestore } from "../firebaseConfig.js";
+import { getFirestore, setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Font from 'expo-font'; // Sora SemiBold Font
@@ -142,11 +142,17 @@ export default function SignUp() {
     } else if (step === 2) {
       if (email) {
         // check if email is in firestore
-        if (await checkEmailInFirestore(email)) {
-          setErrorMessage("Email already in use. Please use a different email.");
-        } else {
+        const db = getFirestore(app);
+        const usersCollection = collection(db, 'users');
+        const q = query(usersCollection, where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
           setStep(3);
+        } else {
+          setErrorMessage("Email already in use. Please use a different email.");
         }
+        
+
       } else {
 
         setErrorMessage("Please enter your email.");

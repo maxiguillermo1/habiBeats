@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard, Image } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
-import { app, checkEmailInFirestore } from "../firebaseConfig.js";
+import { app } from "../firebaseConfig.js";
 import { useRouter } from "expo-router";
 import { Stack } from 'expo-router';
 import { getFirestore, collection, addDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
@@ -140,8 +140,11 @@ export default function ForgotPassword() {
       return;
     }
 
-    // Check if the email is in firestore
-    if (await checkEmailInFirestore(email)) {
+    // Check if email is in firestore
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
       setMessage("Email not found. Please check your email address.");
       setShowMessage(true);
       return;
