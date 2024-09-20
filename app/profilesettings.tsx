@@ -496,6 +496,29 @@ export default function ProfileSettings() {
           <Text style={styles.backButtonText}>back</Text>
         </TouchableOpacity>
         
+        {/* REYNA AGUIRRED 09/20/24: Delete account button */}
+        <TouchableOpacity style={styles.deleteButton}
+        onPress={() => {
+          Alert.alert(
+            "Delete Account",
+            "\nAre you sure you want to delete your account?",
+            [
+              {
+                text: "Cancel",
+                style: "cancel"
+              },
+              
+            ]
+          );
+          }}>
+          <Image
+
+
+            source={require('../assets/images/delete_icon.png')}
+            style={styles.deleteIcon}
+          />
+        </TouchableOpacity>
+        
         {/* Profile section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
@@ -753,6 +776,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 80,
+    right: 30,
+    zIndex: 1,
+  },
+  deleteIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#fc6c85',
   },
   scrollContent: {
     flexGrow: 1,

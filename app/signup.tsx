@@ -10,6 +10,7 @@ import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Font from 'expo-font'; // Sora SemiBold Font
 import { Checkbox } from 'react-native-paper'; // Import Checkbox for Profile Visibility
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated'; // Animation Library
 
 // Loading Sora SemiBold Font
 async function loadFonts() {
@@ -60,7 +61,7 @@ export default function SignUp() {
   }, []);
   // END of Sora SemiBold Font Loading
 
-  // State variables to store user input
+  // State variables to Store User Input
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -79,7 +80,20 @@ export default function SignUp() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
   const router = useRouter();
 
+  // State variables to Store User Input for Animation 
+  const landingSubtitleOpacity = useSharedValue(0);
+  const landingSubtitleTranslateY = useSharedValue(50);
+  const subtitleOpacity = useSharedValue(0);
+  const subtitleTranslateY = useSharedValue(50);
+
   useEffect(() => {
+
+
+    landingSubtitleOpacity.value = withDelay(150, withSpring(1));
+    landingSubtitleTranslateY.value = withDelay(150, withSpring(0));
+    subtitleOpacity.value = withDelay(150, withSpring(1));
+    subtitleTranslateY.value = withDelay(150, withSpring(0));
+
     if (step === 10) {
       const timer = setTimeout(() => {
         router.push("/login-signup");
@@ -88,7 +102,26 @@ export default function SignUp() {
     }
   }, [step, router]);
 
+  // START of Animated Styles
+  // START of Reyna Aguirre Contribution
+  const animatedLandingSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: landingSubtitleOpacity.value,
+      transform: [{ translateY: landingSubtitleTranslateY.value }],
+    };
+  });
+
+  const animatedSubtitleStyle = useAnimatedStyle(() => {
+    return {
+      opacity: subtitleOpacity.value,
+      transform: [{ translateY: subtitleTranslateY.value }],
+    };
+  });
+
+
+
   // END of Sign Up Process
+
   // END of Reyna Aguirre Contribution 
 
   // START of Firebase Storing of User Data
@@ -286,7 +319,7 @@ export default function SignUp() {
             {/* START of Profile Landing Page */}
             {step === 0 && (
               <>
-                <Text style={styles.landingsubtitle}>Let's get started with creating your unique music profile.</Text>
+                <Animated.Text style={[styles.landingsubtitle, animatedLandingSubtitleStyle]}>Let's get started with creating your unique music profile.</Animated.Text>
                 <Image 
                   source={require('../assets/images/Profile_Landing_Graphic.png')}
                   style={styles.landingImage}
@@ -307,7 +340,7 @@ export default function SignUp() {
             {/* END of Profile Landing Page */}
             {step === 1 && (
               <>
-                <Text style={styles.subtitle}>What's your name?</Text>
+                <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>What's your name?</Animated.Text>
                 <View style={styles.formContainer}>
                   {/* First Name input */}
                   <View style={styles.inputContainer}>
