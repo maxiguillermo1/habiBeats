@@ -90,12 +90,14 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
       <TouchableOpacity style={styles.songBox} onPress={() => setModalVisible(true)}>
         {selectedSong ? (
           <>
-            <Image source={{ uri: selectedSong.albumArt }} style={styles.albumArt} />
-            <View style={styles.songInfo}>
-              <Text style={styles.songName}>{selectedSong.name}</Text>
-              <Text style={styles.artistName}>{selectedSong.artist}</Text>
+            <View style={styles.songContent}>
+              <Image source={{ uri: selectedSong.albumArt }} style={styles.albumArt} />
+              <View style={styles.songInfo}>
+                <Text style={styles.songName} numberOfLines={2} ellipsizeMode="tail">{selectedSong.name}</Text>
+                <Text style={styles.artistName} numberOfLines={1} ellipsizeMode="tail">{selectedSong.artist}</Text>
+              </View>
             </View>
-            <Ionicons name="pencil" size={24} color="#999" />
+            <Ionicons name="pencil" size={16} color="#999" style={styles.editIcon} />
           </>
         ) : (
           <Text style={styles.placeholderText}>Select a song</Text>
@@ -130,9 +132,9 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
                   onPress={() => handleSelectSong(item)}
                 >
                   <Image source={{ uri: item.albumArt }} style={styles.resultAlbumArt} />
-                  <View>
-                    <Text style={styles.resultSongName}>{item.name}</Text>
-                    <Text style={styles.resultArtistName}>{item.artist}</Text>
+                  <View style={styles.resultTextContainer}>
+                    <Text style={styles.resultSongName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
+                    <Text style={styles.resultArtistName} numberOfLines={1} ellipsizeMode="tail">{item.artist}</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -156,28 +158,39 @@ const styles = StyleSheet.create({
   songBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 10,
     padding: 15,
   },
+  songContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   albumArt: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
+    width: 60,
+    height: 60,
     marginRight: 15,
   },
   songInfo: {
     flex: 1,
   },
   songName: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 2,
   },
   artistName: {
     fontSize: 14,
     color: '#666',
+  },
+  editIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
   placeholderText: {
     color: '#999',
@@ -221,14 +234,17 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   resultAlbumArt: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
     marginRight: 15,
+  },
+  resultTextContainer: {
+    flex: 1,
   },
   resultSongName: {
     fontSize: 16,
     color: '#333',
+    marginBottom: 2,
   },
   resultArtistName: {
     fontSize: 14,
