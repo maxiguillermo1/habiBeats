@@ -1,8 +1,7 @@
 // profile.tsx
 // Mariann Grace Dizon
 
-// START of Mariann Grace Dizon Contribution
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView, Animated, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,8 +10,15 @@ import BottomNavBar from '../components/BottomNavBar';
 import { auth, db, storage } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import SearchSong from '../components/search-song';
 
-// Profile component definition
+interface Song {
+  id: string;
+  name: string;
+  artist: string;
+  albumArt: string;
+}
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
@@ -21,20 +27,19 @@ export default function Profile() {
     profileImageUrl: '',
   });
 
-  // State hooks for managing the editable fields
-  const [tuneOfMonth, setTuneOfMonth] = useState('');
+  const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [listenTo, setListenTo] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [favoriteMusicArtists, setFavoriteMusicArtists] = useState('');
   const [favoriteAlbum, setFavoriteAlbum] = useState('');
-  const [artistToSee, setArtistToSee] = useState(''); // New state for artistToSee
+  const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
 
-  // Store initial values to reset on cancel
   const initialValues = useRef({
-    tuneOfMonth: '',
+    tuneOfMonth: null as Song | null,
     favoritePerformance: '',
     listenTo: '',
     favoriteMusicArtists: '',
@@ -42,10 +47,8 @@ export default function Profile() {
     artistToSee: '',
   });
 
-  // Animated value for the button
   const buttonY = useRef(new Animated.Value(100)).current;
 
-  // Handler for saving changes
   const handleSave = async () => {
     try {
       const currentUser = auth.currentUser;
@@ -61,19 +64,24 @@ export default function Profile() {
         imageUrl = await getDownloadURL(imageRef);
       }
 
-      // Update user data in the database
-      await updateDoc(userDocRef, {
-        tuneOfMonth,
+      let updatedData = {
         favoritePerformance: imageUrl,
         listenTo,
         favoriteMusicArtists,
         favoriteAlbum,
-        artistToSee, // Save the artistToSee field
+        artistToSee,
         updatedAt: new Date(),
-      });
+        tuneOfMonth: JSON.stringify(tuneOfMonth),
+      };
+
+      if (tuneOfMonth) {
+        updatedData.tuneOfMonth = JSON.stringify(tuneOfMonth);
+      }
+
+
+      await updateDoc(userDocRef, updatedData);
       console.log('User data updated successfully');
 
-      // Hide the button after saving
       Animated.timing(buttonY, {
         toValue: 100,
         duration: 300,
@@ -86,7 +94,6 @@ export default function Profile() {
     }
   };
 
-  // Handler for input change
   const handleInputChange = () => {
     setHasChanges(true);
     Animated.timing(buttonY, {
@@ -96,34 +103,24 @@ export default function Profile() {
     }).start();
   };
 
-  // Handler for canceling changes
   const handleCancel = () => {
-    try {
-      // Reset state to initial values
-      setTuneOfMonth(initialValues.current.tuneOfMonth);
-      setFavoritePerformance(initialValues.current.favoritePerformance);
-      setListenTo(initialValues.current.listenTo);
-      setFavoriteMusicArtists(initialValues.current.favoriteMusicArtists);
-      setFavoriteAlbum(initialValues.current.favoriteAlbum);
-      setArtistToSee(initialValues.current.artistToSee);
-      setImage(initialValues.current.favoritePerformance);
+    setTuneOfMonth(initialValues.current.tuneOfMonth);
+    setFavoritePerformance(initialValues.current.favoritePerformance);
+    setListenTo(initialValues.current.listenTo);
+    setFavoriteMusicArtists(initialValues.current.favoriteMusicArtists);
+    setFavoriteAlbum(initialValues.current.favoriteAlbum);
+    setArtistToSee(initialValues.current.artistToSee);
+    setImage(initialValues.current.favoritePerformance);
 
-      // Simultaneously hide the button and revert inputs to saved state
-      Animated.parallel([
-        Animated.timing(buttonY, {
-          toValue: 100,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setHasChanges(false);
-      });
-    } catch (error) {
-      console.error('Error updating user data:', error);
-    }
+    Animated.timing(buttonY, {
+      toValue: 100,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setHasChanges(false);
+    });
   };
 
-  // Handler for picking an image
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -146,14 +143,12 @@ export default function Profile() {
     }
   };
 
-  // Effect for fetching user data
   useEffect(() => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       const userDocRef = doc(db, 'users', currentUser.uid);
 
-      // Listen for changes to the user document
       const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           const userData = docSnapshot.data();
@@ -162,17 +157,28 @@ export default function Profile() {
             location: userData.location || 'Location not set',
             profileImageUrl: userData.profileImageUrl || '',
           });
-          setTuneOfMonth(userData.tuneOfMonth || '');
+          
+          if (userData.tuneOfMonth) {
+            try {
+              const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
+              setTuneOfMonth(parsedTuneOfMonth);
+            } catch (error) {
+              console.error('Error parsing tuneOfMonth:', error);
+              setTuneOfMonth(null);
+            }
+          } else {
+            setTuneOfMonth(null);
+          }
+          setTuneOfMonthLoaded(true);
           setFavoritePerformance(userData.favoritePerformance || '');
           setListenTo(userData.listenTo || '');
           setImage(userData.favoritePerformance || '');
           setFavoriteMusicArtists(userData.favoriteMusicArtists || '');
           setFavoriteAlbum(userData.favoriteAlbum || '');
-          setArtistToSee(userData.artistToSee || ''); // Set artistToSee state
+          setArtistToSee(userData.artistToSee || '');
 
-          // Store initial values
           initialValues.current = {
-            tuneOfMonth: userData.tuneOfMonth || '',
+            tuneOfMonth: userData.tuneOfMonth ? JSON.parse(userData.tuneOfMonth) : null,
             favoritePerformance: userData.favoritePerformance || '',
             listenTo: userData.listenTo || '',
             favoriteMusicArtists: userData.favoriteMusicArtists || '',
@@ -182,15 +188,15 @@ export default function Profile() {
         }
       }, (error) => {
         console.error('Error fetching user data:', error);
+        setTuneOfMonthLoaded(true);
       });
 
-      // Cleanup function to unsubscribe when component unmounts
       return () => unsubscribe();
     } catch (error) {
       console.error('Error fetching user data:', error);
+      setTuneOfMonthLoaded(true);
     }
 
-    // Add keyboard event listeners
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
     });
@@ -198,22 +204,49 @@ export default function Profile() {
       setKeyboardVisible(false);
     });
 
-    // Cleanup function to remove keyboard event listeners
     return () => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
   }, []);
 
-  // Handler for settings button press
   const handleSettingsPress = () => {
     router.push('/profilesettings');
   };
 
-  // Render the component
+  const handleSelectSong = async (song: Song) => {
+    setTuneOfMonth(song);
+    console.log('Selected song:', song);
+    handleInputChange();
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+      const userDocRef = doc(db, 'users', currentUser.uid);
+
+      await updateDoc(userDocRef, {
+        tuneOfMonth: JSON.stringify(song),
+      });
+      console.log('Tune of the month updated successfully');
+
+      // Update the initial value
+      initialValues.current.tuneOfMonth = song;
+
+      // Hide the save button as changes are already saved
+      Animated.timing(buttonY, {
+        toValue: 100,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error updating tune of the month:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, isKeyboardVisible && { paddingBottom: 0 }]}>
-      {/* Header section with profile picture, user info, and settings button */}
       <View style={styles.header}>
           <Image
             source={{ uri: user.profileImageUrl }}
@@ -229,21 +262,13 @@ export default function Profile() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.scrollContent, isKeyboardVisible && { paddingBottom: 80 }]}>
-        {/* Content section with editable fields */}
         <View style={styles.content}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Tune of the Month</Text>
-            <TextInput
-              style={styles.input}
-              value={tuneOfMonth}
-              onChangeText={(text) => {
-                setTuneOfMonth(text);
-                handleInputChange();
-              }}
-              multiline
-              placeholder="Enter tune of the month"
-              editable={true}
-            />
+            {/* Conditional rendering to prevent error when tuneOfMonth is null */}
+            {tuneOfMonthLoaded && (
+              <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
+            )}
           </View>
 
           <View style={styles.inputContainer}>
@@ -321,21 +346,17 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      {/* Save and Cancel Buttons */}
       {hasChanges && (
         <Animated.View style={[styles.saveButtonContainer, { transform: [{ translateY: buttonY }] }]}>
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => {
-            handleCancel();
-          }}>
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>Cancel Changes</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
 
-      {/* Bottom Navigation Bar */}
       <View style={[styles.bottomNavBarContainer, isKeyboardVisible && { paddingBottom: 0 }]}>
         <BottomNavBar />
       </View>
@@ -343,7 +364,6 @@ export default function Profile() {
   );
 }
 
-// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -470,4 +490,3 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
 });
-// END of Mariann Grace Dizon Contribution
