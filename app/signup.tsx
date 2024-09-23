@@ -74,10 +74,12 @@ export default function SignUp() {
   const [step, setStep] = useState<number>(0);
   const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
   const [gender, setGender] = useState<string>(""); 
+  const [genderPreference, setGenderPreference] = useState<string>(""); // Gender Preference Variable
   const [pronouns, setPronouns] = useState<string[]>([]);
   const [pronounVisible, setPronounVisible] = useState<boolean>(true); // Pronoun Visibility Variable
   const [matchIntention, setMatchIntention] = useState<string>(""); // Match Intention Variable [Friends, Dating, Both]
   const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
+  const [agePreference, setAgePreference] = useState<number>(0); // Age Preference Variable
   const router = useRouter();
 
   // State variables to Store User Input for Animation 
@@ -149,6 +151,8 @@ export default function SignUp() {
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
         gender: gender, 
+        genderPreference: genderPreference,
+        agePreference: { min: 21, max: 80 }, // automatically set age preference
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
@@ -188,6 +192,8 @@ export default function SignUp() {
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
         gender: gender,
+        genderPreference: genderPreference,
+        agePreference: { min: 21, max: 80 }, // automatically set age preference
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
@@ -268,16 +274,22 @@ export default function SignUp() {
       }
     }
     else if (step === 9) {
-      if (musicPreference.length > 0) {
-        // Instead of just setting the step to 10, call handleSignUp
-        await handleSignUp();
+      if (genderPreference) {
         setStep(10);
+      } else {
+        setErrorMessage("Please select your gender preference.");
+      }
+    }
+    else if (step === 10) {
+      if (musicPreference.length > 0) {
+        // Instead of just setting the step to 11, call handleSignUp
+        await handleSignUp();
+        setStep(11);
       } else {
         setErrorMessage("Please select your music preference.");
       }
     }
-  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, matchIntention, musicPreference, handleSignUp]);
-  // END Function to clear error message when user re-enters form
+  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, matchIntention, genderPreference, musicPreference, handleSignUp]);
   // END of Mariann Grace Dizon Contribution
 
   // START of UI Render
@@ -520,7 +532,7 @@ export default function SignUp() {
             )}
             {step === 5 && (
               <>
-              <Text style={styles.landingsubtitle}>Now, let's add more info to refine your music connections.</Text>
+               <Animated.Text style={[styles.landingsubtitle, animatedLandingSubtitleStyle]}>Now, let's add more info to refine your music connections.</Animated.Text>
               <Image 
                 source={require('../assets/images/Profile_Information_Graphic.png')}
                 style={styles.landingProfileImage}
@@ -683,6 +695,48 @@ export default function SignUp() {
             )} 
             {step === 9 && (
               <>
+                <Text style={styles.subtitle}>What gender are you looking for?</Text>
+                <Text style={styles.subtitleDescription}>select (1) that applies to you.</Text>
+                <View style={styles.formContainer}>
+                  {/* Gender selection buttons */}
+                  <View style={styles.genderButtonsContainer}>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Male' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Male')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Male' && styles.selectedGenderButtonText]}>male</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Female' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Female')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Female' && styles.selectedGenderButtonText]}>female</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Other' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Other')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Other' && styles.selectedGenderButtonText]}>other</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <View>
+                    <TouchableOpacity 
+                      style={styles.profileButton}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.profileButtonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+            {step === 10 && (
+              <>
                 <Text style={styles.subtitle}>What are your favorite music genre(s)?</Text>
                 <Text style={styles.subtitleDescription}>select all that apply.</Text>
                 <View style={styles.genreContainer}>
@@ -723,7 +777,7 @@ export default function SignUp() {
                 </View>
               </>
             )}
-            {step === 10 && (
+            {step === 11 && (
               <>
                 <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
                 <Text style={styles.subtitleDescription}>now routing you to login..</Text>

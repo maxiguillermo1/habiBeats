@@ -1,5 +1,5 @@
 // match.tsx
-// Mariann Grace Dizon
+// Mariann Grace Dizon and Reyna Aguirre
 
 
 // START of Mariann Grace Dizon Contribution
@@ -8,6 +8,7 @@ import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollVi
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { isMatch, User } from './match-algorithm'; // import isMatch and User from match-algorithm.tsx
 
 // Match component definition
 const Match = () => {
