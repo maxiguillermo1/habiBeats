@@ -9,7 +9,9 @@ import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { isMatch, User } from './match-algorithm'; // import isMatch and User from match-algorithm.tsx
-
+import { getFirestore, collection, getDoc, getDocs, query, limit, doc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { app } from '../firebaseConfig'; 
 // Match component definition
 const Match = () => {
   // State to control the visibility of the match modal
@@ -23,11 +25,55 @@ const Match = () => {
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
 
+
+  //  START of fetch two users from Firestore
+  //  START of Reyna Aguirre Contribution
+  const [user1, setUser1] = useState<User | null>(null);
+  const [user2, setUser2] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const db = getFirestore(app);
+      const usersRef = collection(db, "users");
+      
+      // Fetch current user (user1)
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const user1Doc = await getDoc(doc(usersRef, currentUser.uid));
+        if (user1Doc.exists()) {
+          setUser1(user1Doc.data() as User);
+        }
+      }
+
+      // Fetch a random user (user2)
+      const querySnapshot = await getDocs(query(usersRef, limit(1)));
+      querySnapshot.forEach((doc) => {
+        if (doc.id !== currentUser?.uid) {
+          setUser2(doc.data() as User);
+        }
+      });
+    };
+
+    fetchUsers();
+  }, []);
+  //  END of fetch two users from Firestore
+  //  END of Reyna Aguirre Contribution
+
   // Handler for when the heart button is pressed
-  const handleHeartPress = () => {
-    setLikeButtonColor('#e66cab'); // Change to pink
-    setShowMatchModal(true);
-    animateModal(true);
+  const handleHeartPress = async () => {
+    if (user1 && user2) {
+      const matched = await isMatch(user1, user2);  // check if users match
+      if (matched) {
+        setLikeButtonColor('#e66cab'); // Change to pink
+        setShowMatchModal(true);
+        animateModal(true);
+      } else {
+        console.log("No match");
+      }
+    } else {
+      console.log("User data not available");
+    }
   };
 
   // Handler for when the message button is pressed in the modal

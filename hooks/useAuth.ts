@@ -10,7 +10,12 @@ interface UserData {
   firstName: string;
   lastName: string;
   age: number;
+  agePreference: {
+    min: number;
+    max: number;
+  };
   gender: string,
+  genderPreference: string,
   pronouns: string[],
   email: string;
   location: string;
