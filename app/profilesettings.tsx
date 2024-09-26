@@ -286,6 +286,7 @@ export default function ProfileSettings() {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
 
+  // Send an OTP to the user's current email address to verify the email change request
   const sendEmailChangeOTP = async (email: string) => {
     const otpCode = generateOTP();
     const timestamp = Timestamp.now();
@@ -327,7 +328,6 @@ export default function ProfileSettings() {
       return;
     }
 
-    // check if the new email is valid
     if (!isValidEmail(newEmail)) {
       setEmailChangeError('Please enter a valid email address.');
       return;
@@ -377,7 +377,7 @@ export default function ProfileSettings() {
       setEmailChangeError('Invalid OTP. Please try again.');
       return;
     }
-
+    console.log('OTP is valid');
     const otpDoc = snapshot.docs[0];
     const otpData = otpDoc.data();
 
@@ -388,10 +388,12 @@ export default function ProfileSettings() {
       setEmailChangeError('OTP has expired. Please request a new one.');
       return;
     }
-
+    
     try {
+      console.log('Sending verification email to new email address:', newEmail);
       // Send verification email to the new email address
       await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+      console.log('Verification email sent successfully');
   
       // Mark OTP as used
       await updateDoc(otpDoc.ref, { used: true });
@@ -413,7 +415,7 @@ export default function ProfileSettings() {
           unsubscribe(); // Stop listening for changes
         }
       });
-
+      
       Alert.alert(
         'Verification Email Sent',
         'A verification link has been sent to your new email address. Please check your new email and click on the link to complete the email change process.',

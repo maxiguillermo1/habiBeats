@@ -1,19 +1,10 @@
-//  index.js 
-//  index.js file for google cloud function connection 
-//  allows user to use functions on the cloud 
-
-
-//  Maxwell Guillermo 
-
-
-
-  // START of Google Cloud Functions Implementation/Contribution
-  // START of Maxwell Guillermo
-
-
 /**
- * This file contains Google Cloud Functions for a Firebase-based application.
- * It uses Firebase Admin SDK, Firebase Functions, and Nodemailer for various operations.
+ * Import function triggers from their respective submodules:
+ *
+ * const {onCall} = require("firebase-functions/v2/https");
+ * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
 const {onRequest} = require("firebase-functions/v2/https");
@@ -32,7 +23,7 @@ const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 admin.initializeApp();
 
-// Configure the email transporter using Gmail
+// Configure the email transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -41,15 +32,14 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Cloud Function: Send OTP via email
 exports.sendOTP = functions.https.onCall(async (data, context) => {
   const { email, otp, isEmailChange } = data;
 
   let subject, text;
 
   if (isEmailChange) {
-    subject = 'Email Change OTP';
-    text = `Your OTP for email change is: ${otp}. If you didn't request this change, please ignore this email.`;
+    subject = 'Email Change Verification';
+    text = `Your OTP for email change verification is: ${otp}. Please enter this code to confirm your email change request.`;
   } else {
     subject = 'Password Reset OTP';
     text = `Your OTP for password reset is: ${otp}`;
@@ -71,7 +61,6 @@ exports.sendOTP = functions.https.onCall(async (data, context) => {
   }
 });
 
-// Cloud Function: Reset Password
 exports.resetPassword = functions.https.onCall(async (data, context) => {
   const { email, otp, newPassword } = data;
 
@@ -129,36 +118,3 @@ exports.resetPassword = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'Failed to reset password: ' + error.message);
   }
 });
-
-// Cloud Function: Update email in Firestore when changed in Auth
-exports.onUserChanged = functions.auth.user().onUpdate(async (change, context) => {
-  const beforeUser = change.before.data();
-  const afterUser = change.after.data();
-
-  // Check if email has changed
-  if (beforeUser.email !== afterUser.email) {
-    const db = admin.firestore();
-    const userRef = db.collection('users').doc(afterUser.uid);
-
-    try {
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        if (userData.pendingEmail === afterUser.email) {
-          // Update the email in Firestore
-          await userRef.update({
-            email: afterUser.email,
-            pendingEmail: null
-          });
-          console.log(`Updated email for user ${afterUser.uid} in Firestore`);
-        }
-      }
-    } catch (error) {
-      console.error(`Error updating user ${afterUser.uid} in Firestore:`, error);
-    }
-  }
-});
-
-
-  // END of Google Cloud Functions Implementation/Contribution
-  // END of Maxwell Guillermo
