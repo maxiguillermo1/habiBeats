@@ -9,6 +9,7 @@ interface UserData {
   // hashmap of the user document
   firstName: string;
   lastName: string;
+  displayName: string;
   age: number;
   agePreference: {
     min: number;

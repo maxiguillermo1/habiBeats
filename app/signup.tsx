@@ -128,13 +128,14 @@ export default function SignUp() {
 
   // START of Firebase Storing of User Data
   // START of Jesus Donate Contribution 
-  const handleSignUp = useCallback(async () => {
+  const handleSignUp = async () => {
     try {
       const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
+      
       await updateProfile(user, {
         displayName: displayName
       });
@@ -166,6 +167,7 @@ export default function SignUp() {
       await updateUserProfile(user.uid);
       
       router.push("/login-signup"); 
+
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setErrorMessage("This email is already registered. Please use a different email or try logging in.");
@@ -174,7 +176,7 @@ export default function SignUp() {
       }
       console.error("Sign up error:", error);
     }
-  }, [firstName, lastName, email, password, dateOfBirth, age, lastNameVisible, gender, pronouns, matchIntention, musicPreference, router]);
+  };
 
   // Function to update user profile in the database
   const updateUserProfile = async (userId: string) => {
@@ -211,12 +213,12 @@ export default function SignUp() {
 
   // START Function to clear error message when user re-enters form
   // START of Mariann Grace Dizon Contribution
-  const clearErrorMessage = useCallback(() => {
+  const clearErrorMessage = () => {
     setErrorMessage("");
-  }, []);
+  };
 
   // Function to handle next step
-  const handleNextStep = useCallback(async () => {
+  const handleNextStep = async () => {
     if (step === 0) {
       setStep(1);
     } else if (step === 1) {
@@ -282,14 +284,14 @@ export default function SignUp() {
     }
     else if (step === 10) {
       if (musicPreference.length > 0) {
-        // Instead of just setting the step to 11, call handleSignUp
-        await handleSignUp();
-        setStep(11);
+        handleSignUp();
       } else {
         setErrorMessage("Please select your music preference.");
       }
     }
-  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, matchIntention, genderPreference, musicPreference, handleSignUp]);
+  };
+
+
   // END of Mariann Grace Dizon Contribution
 
   // START of UI Render
@@ -771,7 +773,7 @@ export default function SignUp() {
                     onPress={handleNextStep}
                   >
                     <Text style={styles.profileButtonText}>
-                      finish profile setup
+                      continue
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -780,7 +782,7 @@ export default function SignUp() {
             {step === 11 && (
               <>
                 <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
-                <Text style={styles.subtitleDescription}>now routing you to login..</Text>
+                <Text style={styles.subtitleDescription}>Click the button below to finish signing up.</Text>
               </>
             )}
           </View>
