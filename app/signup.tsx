@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
-import { app } from "../firebaseConfig.js";
+import { app, auth } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Font from 'expo-font'; // Sora SemiBold Font
@@ -96,12 +96,12 @@ export default function SignUp() {
     subtitleOpacity.value = withDelay(150, withSpring(1));
     subtitleTranslateY.value = withDelay(150, withSpring(0));
 
-    if (step === 10) {
-      const timer = setTimeout(() => {
-        router.push("/login-signup");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    // if (step === 10) {
+    //   const timer = setTimeout(() => {
+    //     router.push("/login-signup");
+    //   }, 3000);
+    //   return () => clearTimeout(timer);
+    // }
   }, [step, router]);
 
   // START of Animated Styles
@@ -223,13 +223,33 @@ export default function SignUp() {
       setStep(1);
     } else if (step === 1) {
       if (firstName && lastName) {
+        console.log("firstName:", firstName);
+        console.log("lastName:", lastName);
         setStep(2);
       } else {
         setErrorMessage("Please enter both first and last name.");
       }
     } else if (step === 2) {
       if (email) {
-        setStep(3);
+        try {
+          const auth = getAuth(app);
+          // Attempt to create a user with the given email
+          await createUserWithEmailAndPassword(auth, email, 'temporaryPassword');
+          // If successful, delete the temporary user
+          if (auth.currentUser) {
+            await auth.currentUser.delete();
+          }
+          // Email is not in use, proceed to next step
+          console.log("email:", email);
+          setStep(3);
+        } catch (error: any) {
+          if (error.code === 'auth/email-already-in-use') {
+            setErrorMessage("This email is already registered. Please use a different email or try logging in.");
+          } else {
+            console.error("Error checking email:", error);
+            setErrorMessage("An error occurred. Please try again.");
+          }
+        }
       } else {
         setErrorMessage("Please enter your email.");
       }
@@ -256,6 +276,7 @@ export default function SignUp() {
     }
     else if (step === 6) {
       if (gender) {
+        console.log("gender:", gender);
         setStep(7);
       } else {
         setErrorMessage("Please select your gender.");
@@ -263,6 +284,7 @@ export default function SignUp() {
     }
     else if (step === 7) {
       if (pronouns.length > 0) {
+        console.log("pronouns:", pronouns);
         setStep(8);
       } else {
         setErrorMessage("Please select at least one pronoun.");
@@ -270,6 +292,7 @@ export default function SignUp() {
     }
     else if (step === 8) {
       if (matchIntention) {
+        console.log("matchIntention:", matchIntention);
         setStep(9);
       } else {
         setErrorMessage("Please select your match intention.");
@@ -277,12 +300,14 @@ export default function SignUp() {
     }
     else if (step === 9) {
       if (genderPreference) {
+        console.log("genderPreference:", genderPreference);
         setStep(10);
       } else {
         setErrorMessage("Please select your gender preference.");
       }
     }
     else if (step === 10) {
+      console.log("musicPreference:", musicPreference);
       if (musicPreference.length > 0) {
         handleSignUp();
       } else {
