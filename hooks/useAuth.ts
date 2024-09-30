@@ -9,8 +9,14 @@ interface UserData {
   // hashmap of the user document
   firstName: string;
   lastName: string;
+  displayName: string;
   age: number;
+  agePreference: {
+    min: number;
+    max: number;
+  };
   gender: string,
+  genderPreference: string,
   pronouns: string[],
   email: string;
   location: string;

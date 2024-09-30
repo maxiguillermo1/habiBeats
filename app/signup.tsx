@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
-import { app } from "../firebaseConfig.js";
+import { app, auth } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Font from 'expo-font'; // Sora SemiBold Font
@@ -74,10 +74,12 @@ export default function SignUp() {
   const [step, setStep] = useState<number>(0);
   const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
   const [gender, setGender] = useState<string>(""); 
+  const [genderPreference, setGenderPreference] = useState<string>(""); // Gender Preference Variable
   const [pronouns, setPronouns] = useState<string[]>([]);
   const [pronounVisible, setPronounVisible] = useState<boolean>(true); // Pronoun Visibility Variable
   const [matchIntention, setMatchIntention] = useState<string>(""); // Match Intention Variable [Friends, Dating, Both]
   const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
+  const [agePreference, setAgePreference] = useState<number>(0); // Age Preference Variable
   const router = useRouter();
 
   // State variables to Store User Input for Animation 
@@ -94,12 +96,12 @@ export default function SignUp() {
     subtitleOpacity.value = withDelay(150, withSpring(1));
     subtitleTranslateY.value = withDelay(150, withSpring(0));
 
-    if (step === 10) {
-      const timer = setTimeout(() => {
-        router.push("/login-signup");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    // if (step === 10) {
+    //   const timer = setTimeout(() => {
+    //     router.push("/login-signup");
+    //   }, 3000);
+    //   return () => clearTimeout(timer);
+    // }
   }, [step, router]);
 
   // START of Animated Styles
@@ -126,13 +128,14 @@ export default function SignUp() {
 
   // START of Firebase Storing of User Data
   // START of Jesus Donate Contribution 
-  const handleSignUp = useCallback(async () => {
+  const handleSignUp = async () => {
     try {
       const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
+      
       await updateProfile(user, {
         displayName: displayName
       });
@@ -149,6 +152,8 @@ export default function SignUp() {
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
         gender: gender, 
+        genderPreference: genderPreference,
+        agePreference: { min: 21, max: 80 }, // automatically set age preference
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
@@ -162,6 +167,7 @@ export default function SignUp() {
       await updateUserProfile(user.uid);
       
       router.push("/login-signup"); 
+
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
         setErrorMessage("This email is already registered. Please use a different email or try logging in.");
@@ -170,7 +176,7 @@ export default function SignUp() {
       }
       console.error("Sign up error:", error);
     }
-  }, [firstName, lastName, email, password, dateOfBirth, age, lastNameVisible, gender, pronouns, matchIntention, musicPreference, router]);
+  };
 
   // Function to update user profile in the database
   const updateUserProfile = async (userId: string) => {
@@ -188,6 +194,8 @@ export default function SignUp() {
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
         gender: gender,
+        genderPreference: genderPreference,
+        agePreference: { min: 21, max: 80 }, // automatically set age preference
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
@@ -205,23 +213,43 @@ export default function SignUp() {
 
   // START Function to clear error message when user re-enters form
   // START of Mariann Grace Dizon Contribution
-  const clearErrorMessage = useCallback(() => {
+  const clearErrorMessage = () => {
     setErrorMessage("");
-  }, []);
+  };
 
   // Function to handle next step
-  const handleNextStep = useCallback(async () => {
+  const handleNextStep = async () => {
     if (step === 0) {
       setStep(1);
     } else if (step === 1) {
       if (firstName && lastName) {
+        console.log("firstName:", firstName);
+        console.log("lastName:", lastName);
         setStep(2);
       } else {
         setErrorMessage("Please enter both first and last name.");
       }
     } else if (step === 2) {
       if (email) {
-        setStep(3);
+        try {
+          const auth = getAuth(app);
+          // Attempt to create a user with the given email
+          await createUserWithEmailAndPassword(auth, email, 'temporaryPassword');
+          // If successful, delete the temporary user
+          if (auth.currentUser) {
+            await auth.currentUser.delete();
+          }
+          // Email is not in use, proceed to next step
+          console.log("email:", email);
+          setStep(3);
+        } catch (error: any) {
+          if (error.code === 'auth/email-already-in-use') {
+            setErrorMessage("This email is already registered. Please use a different email or try logging in.");
+          } else {
+            console.error("Error checking email:", error);
+            setErrorMessage("An error occurred. Please try again.");
+          }
+        }
       } else {
         setErrorMessage("Please enter your email.");
       }
@@ -248,6 +276,7 @@ export default function SignUp() {
     }
     else if (step === 6) {
       if (gender) {
+        console.log("gender:", gender);
         setStep(7);
       } else {
         setErrorMessage("Please select your gender.");
@@ -255,6 +284,7 @@ export default function SignUp() {
     }
     else if (step === 7) {
       if (pronouns.length > 0) {
+        console.log("pronouns:", pronouns);
         setStep(8);
       } else {
         setErrorMessage("Please select at least one pronoun.");
@@ -262,22 +292,31 @@ export default function SignUp() {
     }
     else if (step === 8) {
       if (matchIntention) {
+        console.log("matchIntention:", matchIntention);
         setStep(9);
       } else {
         setErrorMessage("Please select your match intention.");
       }
     }
     else if (step === 9) {
-      if (musicPreference.length > 0) {
-        // Instead of just setting the step to 10, call handleSignUp
-        await handleSignUp();
+      if (genderPreference) {
+        console.log("genderPreference:", genderPreference);
         setStep(10);
+      } else {
+        setErrorMessage("Please select your gender preference.");
+      }
+    }
+    else if (step === 10) {
+      console.log("musicPreference:", musicPreference);
+      if (musicPreference.length > 0) {
+        handleSignUp();
       } else {
         setErrorMessage("Please select your music preference.");
       }
     }
-  }, [step, firstName, lastName, email, dateOfBirth, password, confirmPassword, gender, pronouns, matchIntention, musicPreference, handleSignUp]);
-  // END Function to clear error message when user re-enters form
+  };
+
+
   // END of Mariann Grace Dizon Contribution
 
   // START of UI Render
@@ -520,7 +559,7 @@ export default function SignUp() {
             )}
             {step === 5 && (
               <>
-              <Text style={styles.landingsubtitle}>Now, let's add more info to refine your music connections.</Text>
+               <Animated.Text style={[styles.landingsubtitle, animatedLandingSubtitleStyle]}>Now, let's add more info to refine your music connections.</Animated.Text>
               <Image 
                 source={require('../assets/images/Profile_Information_Graphic.png')}
                 style={styles.landingProfileImage}
@@ -683,6 +722,48 @@ export default function SignUp() {
             )} 
             {step === 9 && (
               <>
+                <Text style={styles.subtitle}>What gender are you looking for?</Text>
+                <Text style={styles.subtitleDescription}>select (1) that applies to you.</Text>
+                <View style={styles.formContainer}>
+                  {/* Gender selection buttons */}
+                  <View style={styles.genderButtonsContainer}>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Male' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Male')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Male' && styles.selectedGenderButtonText]}>male</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Female' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Female')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Female' && styles.selectedGenderButtonText]}>female</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.genderButton, genderPreference === 'Other' && styles.selectedGenderButton]}
+                      onPress={() => setGenderPreference('Other')}
+                    >
+                      <Text style={[styles.genderButtonText, genderPreference === 'Other' && styles.selectedGenderButtonText]}>other</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Error message */}
+                  {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                  {/* Next button */}
+                  <View>
+                    <TouchableOpacity 
+                      style={styles.profileButton}
+                      onPress={handleNextStep}
+                    >
+                      <Text style={styles.profileButtonText}>
+                        continue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+            {step === 10 && (
+              <>
                 <Text style={styles.subtitle}>What are your favorite music genre(s)?</Text>
                 <Text style={styles.subtitleDescription}>select all that apply.</Text>
                 <View style={styles.genreContainer}>
@@ -717,16 +798,16 @@ export default function SignUp() {
                     onPress={handleNextStep}
                   >
                     <Text style={styles.profileButtonText}>
-                      finish profile setup
+                      continue
                     </Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
-            {step === 10 && (
+            {step === 11 && (
               <>
                 <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
-                <Text style={styles.subtitleDescription}>now routing you to login..</Text>
+                <Text style={styles.subtitleDescription}>Click the button below to finish signing up.</Text>
               </>
             )}
           </View>
