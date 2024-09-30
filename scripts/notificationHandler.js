@@ -3,9 +3,8 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-
 export async function registerForPushNotificationsAsync() {
-  let token; // this is the push notification token
+  let token;
 
   // check if the user has a physical device
   if (Device.isDevice) {
@@ -22,7 +21,7 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
     token = await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig.extra.eas.projectId,
+      projectId: 'b84f445c-ce92-4d11-8330-a9a9373e08c9',
     });
   } else {
     // if the user does not have a physical device, alert them
@@ -39,5 +38,6 @@ export async function registerForPushNotificationsAsync() {
     });
   }
 
+  console.log('Push token:', token);
   return token;
 }

@@ -4,6 +4,14 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 
+// Define the types for your route parameters
+export type RootStackParamList = {
+  index: undefined;
+  profile: undefined;
+  profilesettings: undefined;
+  DirectMessage: { recipientId: string; recipientName: string };
+};
+
 // Define the RootLayout component
 export default function RootLayout() {
   // Return the Stack navigation layout

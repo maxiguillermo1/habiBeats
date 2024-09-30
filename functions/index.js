@@ -32,6 +32,38 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Send a message to a user
+exports.sendMessage = functions.https.onCall(async (data, context) => {
+  // Get the recipient ID and message from the data
+  const { recipientId, message } = data;
+  // Get the sender ID from the context
+  const senderId = context.auth.uid;
+
+  // Store the message in Firestore
+  await admin.firestore().collection('messages').add({
+    senderId,
+    recipientId,
+    message,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Get the recipient's FCM token
+  const recipientDoc = await admin.firestore().collection('users').doc(recipientId).get();
+  const recipientToken = recipientDoc.data().fcmToken;
+
+  // Send the notification
+  await admin.messaging().send({
+    token: recipientToken,
+    notification: {
+      title: 'New Message',
+      body: message,
+    },
+  });
+
+  return { success: true };
+});
+
+
 exports.sendOTP = functions.https.onCall(async (data, context) => {
   const { email, otp, isEmailChange } = data;
 

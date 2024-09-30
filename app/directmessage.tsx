@@ -2,50 +2,91 @@
 // Mariann Grace Dizon
 
 // START of Mariann Grace Dizon Contribution
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView } from 'react-native';
+import { collection, addDoc, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import { useLocalSearchParams } from 'expo-router';
+
+// Define the message structure
+interface Message {
+    id: string;
+    message: string;
+    senderId: string;
+    recipientId: string;
+    timestamp: number;
+}
 
 // Define the DirectMessageScreen component
 const DirectMessageScreen = () => {
-    // Initialize scrollViewRef
-    const scrollViewRef = useRef<ScrollView>(null); 
+    const { recipientId, recipientName } = useLocalSearchParams();
+    console.log(recipientId, recipientName);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [newMessage, setNewMessage] = useState('');
 
-    // Return the JSX for the DirectMessageScreen
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const q = query(
+            collection(db, 'messages'),
+            where('participants', 'array-contains', auth.currentUser.uid),
+            orderBy('timestamp', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const newMessages = snapshot.docs.map(doc => ({
+                id: doc.id,
+                message: doc.data().text,
+                senderId: doc.data().senderId,
+                recipientId: doc.data().recipientId,
+                timestamp: doc.data().timestamp,
+            }));
+            setMessages(newMessages as Message[]);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const sendMessage = async () => {
+        if (newMessage.trim() === '' || !auth.currentUser) return;
+
+        await addDoc(collection(db, 'messages'), {
+            text: newMessage,
+            senderId: auth.currentUser.uid, // user sends the message
+            senderName: auth.currentUser.displayName,
+            recipientName: recipientName, 
+            recipientId: recipientId, // habibi is the recipient
+            timestamp: Timestamp.now(),
+            participants: [auth.currentUser.uid, recipientId]
+        });
+
+        setNewMessage('');
+    };
+
     return (
-        <View style={styles.container}>
-            {/* User container */}
-            <View style={styles.userContainer}>
-                <Image source={{ uri: 'https://example.com/user-avatar.jpg' }} style={styles.profilePic} />
-                <Text style={styles.userName}>Miles Morales</Text>
-            </View>
-            {/* ScrollView for messages */}
-            <ScrollView style={styles.scrollView} ref={scrollViewRef} onContentSizeChange={(width, height) => {
-                if (scrollViewRef.current) { // Check if scrollViewRef.current is not null
-                    scrollViewRef.current.scrollToEnd({ animated: true });
-                }
-            }}>
-                {/* Message bubbles */}
-                <View style={[styles.messageContainer, { alignSelf: 'flex-start', backgroundColor: '#ffc4ce' }]}>
-                    <Text style={[styles.messageText, { color: '#0e1514' }]}>What's up Gwen?</Text>
-                </View>
-                <View style={[styles.messageContainer, { alignSelf: 'flex-end', backgroundColor: '#fc6c85' }]}>
-                    <Text style={[styles.messageText, { color: '#fff8f0' }]}> Hey Miles, nothing much!</Text>
-                </View>
-                {/* Additional messages can be dynamically added here */}
-            </ScrollView>
-            {/* Input area for sending messages */}
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={messages}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
+                        <Text style={styles.messageText}>{item.message}</Text>
+                    </View>
+                )}
+                inverted
+            />
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    placeholder="Send a message..."
-                    placeholderTextColor="#ffd582"
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    placeholder="Type a message..."
                 />
-                <TouchableOpacity style={styles.sendButton}>
-                    <Ionicons name="send" size={15} color="#fff8f0"/>
+                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                    <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -53,71 +94,54 @@ const DirectMessageScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff8f0',
-    },
-    scrollView: {
-        padding: 10,
-        flex: 1,
-        flexDirection: 'column-reverse', // Chat bubbles come from the bottom
-        marginBottom: 100, // Added margin to separate from input area
-    },
-    userContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center', // Center the name
-        marginTop: 10, // Adjusted margin to position at the top
-        marginBottom: 10, // Added margin to separate from messages
-    },
-    profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 10,
-    },
-    userName: {
-        fontWeight: 'bold',
-    },
-    messageContainer: {
-        backgroundColor: '#F1F1F1',
-        borderRadius: 20,
-        padding: 15,
-        marginVertical: 5,
-        maxWidth: '80%',
-        alignSelf: 'flex-start',
-    },
-    messageText: {
-        color: 'black',
+        backgroundColor: '#F0F0F0',
     },
     inputContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderTopWidth: 1,
-        borderTopColor: '#fff8f0',
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        zIndex: 1000, // Ensure inputContainer is always on top
+        padding: 10,
+        backgroundColor: '#FFFFFF',
     },
     input: {
         flex: 1,
         borderWidth: 1,
-        backgroundColor: 'white',
-        borderColor: '#fba904',
+        borderColor: '#ccc',
         borderRadius: 20,
-        padding: 13,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
         marginRight: 10,
-        marginBottom: 25,
+        fontSize: 16,
     },
     sendButton: {
-        backgroundColor: '#fba904',
+        backgroundColor: '#007AFF',
         borderRadius: 20,
-        padding: 14,
-        marginBottom: 25,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        justifyContent: 'center',
     },
-    sendButtonImage: {
-        width: 20, // Set appropriate width
-        height: 20, // Set appropriate height
+    sendButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    sentMessage: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#007AFF',
+        borderRadius: 20,
+        padding: 10,
+        margin: 5,
+        maxWidth: '70%',
+    },
+    receivedMessage: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#A5E5EA',
+        borderRadius: 20,
+        padding: 10,
+        margin: 5,
+        maxWidth: '70%',
+    },
+    messageText: {
+        color: '#FFFFFF',
+        fontSize: 16,
     },
 });
 

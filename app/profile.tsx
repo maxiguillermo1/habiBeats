@@ -8,6 +8,8 @@ import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
 import { doc, onSnapshot } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
+import { registerForPushNotificationsAsync } from '../scripts/notificationHandler';
+import { updateDoc } from 'firebase/firestore';
 
 interface Song {
   id: string;
@@ -88,6 +90,22 @@ export default function Profile() {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
+  }, []);
+
+  // Register for push notifications
+  useEffect(() => {
+    console.log("Registering for push notifications");
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        console.log("Push token:", token);
+        // Save the token to the user's document in Firestore
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          updateDoc(userDocRef, { pushToken: token });
+        }
+      }
+    });
   }, []);
 
   const handleSettingsPress = () => {
