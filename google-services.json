@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "245879207190",
+    "firebase_url": "https://habibeats-app-default-rtdb.firebaseio.com",
+    "project_id": "habibeats-app",
+    "storage_bucket": "habibeats-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245879207190:android:9b0e9923c9b74a56948c37",
+        "android_client_info": {
+          "package_name": "com.habibi.habibeats"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB84-19qWV92-Lslc3lL-CuyxHaWqoXf7M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
