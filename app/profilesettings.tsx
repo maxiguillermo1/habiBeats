@@ -14,6 +14,8 @@ import { collection, addDoc, Timestamp, query, where, getDocs, updateDoc, doc, g
 import { getAuth, signOut, updateEmail, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { deleteDoc } from 'firebase/firestore';
+
 
 export default function ProfileSettings() {
   // Get the user and userData from the useAuth hook
@@ -486,6 +488,32 @@ export default function ProfileSettings() {
   // END of Changing User Password
   // END of Jesus Donate Contribution
 
+  // START of Deleting User Account
+  // START of Reyna Aguirre Contribution
+ 
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser) {
+      console.error('No authenticated user found');
+      return;
+    }
+  
+    try {
+      // Delete user document from Firestore
+      await deleteDoc(doc(db, 'users', auth.currentUser.uid));
+      
+      // Delete the user's authentication account
+      await auth.currentUser.delete();
+  
+      console.log('User account deleted successfully');
+      router.replace('/login-signup');
+    } catch (error) {
+      console.error('Error deleting user account:', error);
+      Alert.alert('Error', 'Failed to delete account. Please try again.');
+    }
+  };
+  // END of Deleting User Account
+  // END of Reyna Aguirre Contribution
+
   // START of UI Render
   // START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
   // Render the component
@@ -509,7 +537,11 @@ export default function ProfileSettings() {
                 text: "Cancel",
                 style: "cancel"
               },
-              
+              {
+                text: "Delete",
+                style: "destructive",
+                onPress: handleDeleteAccount,
+              }
             ]
           );
           }}>
