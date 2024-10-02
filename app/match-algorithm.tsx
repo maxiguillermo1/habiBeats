@@ -3,16 +3,18 @@
 
 // user data
 export interface User {
-    uid: number;
+    uid: string;
     displayName: string;
     firstName: string;
     lastName: string;
+    profileImageUrl: string;
     age: number;
     gender: string;
     genderPreference: string;
     matchIntention: string;
     agePreference: { min: number, max: number };
     musicPreference: string[];
+    tuneOfMonth: string;
     location: string; //example: "West Donald, RI 33335, USA"
     latitude?: number;  // optional if already geocoded
   longitude?: number; // optional if already geocoded

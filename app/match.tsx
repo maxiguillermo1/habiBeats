@@ -1,17 +1,28 @@
 // match.tsx
 // Mariann Grace Dizon and Reyna Aguirre
 
-
-// START of Mariann Grace Dizon Contribution
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Dimensions, Animated } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { isMatch, User } from './match-algorithm'; // import isMatch and User from match-algorithm.tsx
-import { getFirestore, collection, getDoc, getDocs, query, limit, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDoc, getDocs, query, limit, doc, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebaseConfig'; 
+
+
+// START of Tune of the Month UI 
+// START of Reyna Aguirre Contribution
+interface Song {
+  id: string;
+  name: string;
+  artist: string;
+  albumArt: string;
+}
+// END of Tune of the Month UI 
+// END of Reyna Aguirre Contribution
+
 // Match component definition
 const Match = () => {
   // State to control the visibility of the match modal
@@ -24,7 +35,7 @@ const Match = () => {
   // Refs for animation values
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
-
+  const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null); // for Tune of the Month
 
   //  START of fetch two users from Firestore
   //  START of Reyna Aguirre Contribution
@@ -42,17 +53,26 @@ const Match = () => {
       if (currentUser) {
         const user1Doc = await getDoc(doc(usersRef, currentUser.uid));
         if (user1Doc.exists()) {
-          setUser1(user1Doc.data() as User);
+          const userData = user1Doc.data() as User;
+          setUser1(userData);
+          
+          // Parse tuneOfMonth if it exists
+          if (userData.tuneOfMonth) {
+            try {
+              const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
+              setTuneOfMonth(parsedTuneOfMonth);
+            } catch (error) {
+              console.error('Error parsing tuneOfMonth:', error);
+              setTuneOfMonth(null);
+            }
+          } else {
+            setTuneOfMonth(null);
+          }
         }
       }
 
       // Fetch a random user (user2)
-      const querySnapshot = await getDocs(query(usersRef, limit(1)));
-      querySnapshot.forEach((doc) => {
-        if (doc.id !== currentUser?.uid) {
-          setUser2(doc.data() as User);
-        }
-      });
+      await fetchNextUser();
     };
 
     fetchUsers();
@@ -65,11 +85,12 @@ const Match = () => {
     if (user1 && user2) {
       const matched = await isMatch(user1, user2);  // check if users match
       if (matched) {
-        setLikeButtonColor('#e66cab'); // Change to pink
+        setLikeButtonColor('#fc6c85'); // Change to pink
         setShowMatchModal(true);
         animateModal(true);
       } else {
         console.log("No match");
+        fetchNextUser(); // Load the next user profile if no match
       }
     } else {
       console.log("User data not available");
@@ -103,6 +124,33 @@ const Match = () => {
     ]).start();
   };
 
+  // START of Reyna Aguirre Contribution
+  const fetchNextUser = async () => {
+    const db = getFirestore(app);
+    const usersRef = collection(db, "users");
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      // Query for users that are not the current user
+      const querySnapshot = await getDocs(query(usersRef, limit(50))); // Fetch more users to increase randomness
+
+      const filteredUsers = querySnapshot.docs
+        .map((doc) => doc.data() as User)
+        .filter((user) => user.uid !== currentUser.uid); // Filter out the current user
+
+      if (filteredUsers.length > 0) {
+        // Get a random user from the filtered list
+        const randomIndex = Math.floor(Math.random() * filteredUsers.length);
+        setUser2(filteredUsers[randomIndex]);
+      } else {
+        console.log("No more users to display");
+        // Handle the case when there are no more users to display
+      }
+    }
+  };
+  // END of Reyna Aguirre Contribution
+  
   // Effect to reset like button color when modal is closed
   useEffect(() => {
     if (!showMatchModal) {
@@ -112,58 +160,52 @@ const Match = () => {
 
   // Function to handle the close button press
   const handleClosePress = () => {
-    setDislikeButtonColor('#fba904'); // Change to orange
-    // Here you would typically load the next user profile
-    // For this example, we'll use a timeout to simulate that
+    setDislikeButtonColor('#de3c3c'); // Change to orange
+    fetchNextUser(); // Load the next user profile
     setTimeout(() => {
       setDislikeButtonColor('#1E1E1E'); // Change back to original color
-    }, 1000); // Adjust this time as needed
+    }, 1000);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView style={styles.content}>
-        {/* Header section with profile picture and name */}
-        <View style={styles.header}>
-          <Image
-            source={{ uri: 'https://example.com/profile-pic.jpg' }}
-            style={styles.profilePic}
-          />
-          <Text style={styles.name}>Owen Stacy</Text>
-        </View>
-        
-        {/* Tune of the month section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tune of the month</Text>
-          <View style={styles.tuneContainer}>
-            <Image
-              source={{ uri: 'https://example.com/album-cover.jpg' }}
-              style={styles.albumCover}
-            />
-            <View style={styles.tuneInfo}>
-              <Text style={styles.tuneTitle}>Just Give Them All Some Fir (Remix)</Text>
-              <Text style={styles.tuneArtist}>by Steve Aoki & Linkin Park</Text>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={{ alignItems: 'center' }} 
+      >
+        {user2 ? (
+          <>
+            <View style={styles.header}>
+              <Image
+                source={{ uri: user2.profileImageUrl }}
+                style={styles.profilePic}
+              />
+              <View style={styles.userInfo}>
+                <Text style={styles.displayName}>{user2.displayName}</Text>
+                <Text style={styles.location}>{user2.location}</Text>
+              </View>
             </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.sectionTitle}>Music Preference</Text>
+              <Text style={styles.genre}>
+                {Array.isArray(user2.musicPreference) 
+                  ? user2.musicPreference.join('      ') 
+                  : user2.musicPreference || 'No preferences set'}
+              </Text>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.sectionTitle}>Tune of the Month</Text>
+              <Text style={styles.tuneOfMonth}>{user2.tuneOfMonth}</Text>
+            </View>
+          </>
+        ) : (
+          <View>
+            <Text>Loading...</Text>
           </View>
-        </View>
-        
-        {/* Favorite performance section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My favorite performance (so far)</Text>
-          <Image
-            source={{ uri: 'https://example.com/performance-pic.jpg' }}
-            style={styles.performancePic}
-          />
-        </View>
-        
-        {/* Music listening reason section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>I listen to music to</Text>
-          <Text style={styles.musicReason}>Forget about it all and to lose myself during New York City</Text>
-        </View>
+        )}
       </ScrollView>
-      
+
       {/* Action buttons (like and dislike) */}
       <View style={styles.actionButtons}>
         <TouchableOpacity 
@@ -222,11 +264,11 @@ const Match = () => {
             </View>
             <View style={styles.profilePicContainer}>
               <Image
-                source={{ uri: 'https://example.com/placeholder-profile.png' }}
+                source={{ uri: user1?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
                 style={styles.profilePic}
               />
               <Image
-                source={{ uri: 'https://example.com/placeholder-profile.png' }}
+                source={{ uri: user2?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
                 style={styles.profilePic}
               />
             </View>
@@ -252,56 +294,56 @@ const styles = StyleSheet.create({
     padding: 30,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
   },
   profilePic: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 25,
   },
   name: {
-    fontSize: 20,
+    fontSize: 35, 
     fontWeight: 'bold',
-    marginLeft: 10,
+    textAlign: 'center',
+    color: '#0e1514',
+    marginTop: 10,
+  },
+  age: {
+    fontSize: 20,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  location: {
+    fontSize: 16,
+    color: 'rgba(14,21,20,0.5)',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
+  tuneOfMonth: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+    color: '#37bdd5',
   },
-  tuneContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  albumCover: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-  },
-  tuneInfo: {
-    marginLeft: 10,
-  },
-  tuneTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  tuneArtist: {
-    fontSize: 12,
-    color: '#666',
-  },
-  performancePic: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-  },
-  musicReason: {
+  sectionContent: {
     fontSize: 14,
     color: '#333',
+    marginBottom: 10,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -351,13 +393,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 200,
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 38,
     fontWeight: '800',
-    marginTop: 'auto',
-    marginBottom: 300,
+    marginTop: 20,
+    marginBottom: 20,
     color:'#1E1E1E',
   },
   messageButton: {
@@ -367,31 +409,26 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   profilePicContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 50,
+  },
+  userInfo: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  displayName: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  musicPreference: {
     marginBottom: 20,
   },
-  backgroundDecoration: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    opacity: 0.2,
-  },
-  decorationItem: {
-    margin: 10,
-  },
-  messageIcon: {
-    position: 'absolute',
-    top: 63,
-    right: 20,
-    padding: 10,
+  genre: {
+    fontSize: 22,
+    color: '#000',
+    marginBottom: 5,
+    fontWeight: 'bold',
   },
 });
 
