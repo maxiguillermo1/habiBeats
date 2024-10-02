@@ -74,7 +74,7 @@ const Messages = () => {
   const navigateToDirectMessage = (recipientId: string, recipientName: string) => {
     router.push({
       pathname: '/directmessage',
-      params: { recipientId, recipientName }
+      params: { recipientId, recipientName },
     });
   };
 
