@@ -34,6 +34,10 @@ export default function Profile() {
   const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
+  const [favoriteGenre, setFavoriteGenre] = useState('');
+  const [nextConcert, setNextConcert] = useState('');
+  const [unforgettableExperience, setUnforgettableExperience] = useState('');
+  const [favoriteAfterPartySpot, setFavoriteAfterPartySpot] = useState('');
 
   useEffect(() => {
     try {
@@ -49,7 +53,10 @@ export default function Profile() {
             location: userData.location || 'Location not set',
             profileImageUrl: userData.profileImageUrl || '',
           });
-          
+
+          // Ensure favoriteGenre is set
+          setFavoriteGenre(userData.favoriteGenre || '');
+
           if (userData.tuneOfMonth) {
             try {
               const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
@@ -67,6 +74,9 @@ export default function Profile() {
           setFavoriteMusicArtists(userData.favoriteMusicArtists || '');
           setFavoriteAlbum(userData.favoriteAlbum || '');
           setArtistToSee(userData.artistToSee || '');
+          setNextConcert(userData.nextConcert || '');
+          setUnforgettableExperience(userData.unforgettableExperience || '');
+          setFavoriteAfterPartySpot(userData.favoriteAfterPartySpot || '');
         }
       }, (error) => {
         console.error('Error fetching user data:', error);
@@ -119,13 +129,20 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Image
-          source={{ uri: user.profileImageUrl }}
-          style={styles.profilePicture}
-        />
+        {user.profileImageUrl ? (
+          <Image
+            source={{ uri: user.profileImageUrl }}
+            style={styles.profilePicture}
+          />
+        ) : (
+          <View style={[styles.profilePicture, styles.placeholderImage]} />
+        )}
         <View style={styles.userInfo}>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.location}>{user.location}</Text>
+          <View style={styles.locationContainer}>
+            <Ionicons name="location-outline" size={12} color="#333" />
+            <Text style={styles.location}>{user.location}</Text>
+          </View>
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
@@ -141,44 +158,86 @@ export default function Profile() {
         <View style={styles.content}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Tune of the Month</Text>
-            {tuneOfMonthLoaded && tuneOfMonth && (
-              <View style={styles.songContainer}>
-                <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
-                <View style={styles.songInfo}>
-                  <Text style={styles.songTitle}>{tuneOfMonth.name}</Text>
-                  <Text style={styles.songArtist}>{tuneOfMonth.artist}</Text>
+            <View style={styles.inputContent}>
+              {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
+                <View style={styles.songContainer}>
+                  <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
+                  <View style={styles.songInfo}>
+                    <Text style={styles.songTitle}>{tuneOfMonth.name}</Text>
+                    <Text style={styles.songArtist}>{tuneOfMonth.artist}</Text>
+                  </View>
                 </View>
-              </View>
-            )}
+              ) : (
+                <Text style={styles.inputText}>No tune of the month set</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>My Favorite Performance</Text>
-            {favoritePerformance ? (
-              <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
-            ) : (
-              <Text>No favorite performance set</Text>
-            )}
+            <View style={styles.inputContent}>
+              {favoritePerformance ? (
+                <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
+              ) : (
+                <Text style={styles.inputText}>No favorite performance set</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Favorite Music Artist/s</Text>
-            <Text>{favoriteMusicArtists}</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{favoriteMusicArtists || 'Not set'}</Text>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Favorite Album</Text>
-            <Text>{favoriteAlbum}</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{favoriteAlbum || 'Not set'}</Text>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>I Listen to Music to</Text>
-            <Text>{listenTo}</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{listenTo || 'Not set'}</Text>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
-            <Text>{artistToSee}</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{artistToSee || 'Not set'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Favorite Music Genre</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{favoriteGenre || 'Not set'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Next Concert or Event</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{nextConcert || 'No upcoming concert set'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Unforgettable Concert Experience</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{unforgettableExperience || 'No experience shared'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Favorite Post-Event Hangout Spot</Text>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputText}>{favoriteAfterPartySpot || 'No spot shared'}</Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -201,17 +260,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    paddingLeft: 30,
+    paddingLeft: 40,
     paddingRight: 30,
-    paddingTop: 25,
+    paddingTop: 20,
     paddingBottom: 15,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   profilePicture: {
-    width: 70,
-    height: 70,
-    borderRadius: 40,
+    width: 85,
+    height: 85,
+    borderRadius: 50,
     borderWidth: 7,
     borderColor: '#fc6c85',
   },
@@ -220,13 +279,15 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   name: {
-    fontSize: 21,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: '#fc6c85',
+    color: '#333',
+    marginBottom: 4,
   },
   location: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#fc6c85',
+    marginLeft: 4,
   },
   settingsButton: {
     paddingTop: 15,
@@ -235,8 +296,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 20,
-    paddingLeft: 70,
-    paddingRight: 70,
+    paddingLeft: 50,
+    paddingRight: 50,
   },
   inputContainer: {
     marginBottom: 35,
@@ -245,10 +306,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 15,
+    color: '#333',
+  },
+  inputContent: {
+    borderWidth: 3,
+    borderColor: '#f7e9da',
+    borderRadius: 10,
+    padding: 15,
+  },
+  inputText: {
+    fontSize: 14,
     color: '#fba904',
   },
   imageInput: {
-    width: 250,
+    width: '100%',
     height: 250,
   },
   bottomNavBarContainer: {
@@ -279,15 +350,22 @@ const styles = StyleSheet.create({
     paddingRight: 90,
   },
   songInfo: {
-    marginLeft: 20,
+    marginLeft: 10,
   },
   songTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fba904',
   },
   songArtist: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 10,
+    color: '#333',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  placeholderImage: {
+    backgroundColor: '##f7e9da', // Or any color you prefer for the placeholder
   },
 });
