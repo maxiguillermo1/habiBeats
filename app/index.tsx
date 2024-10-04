@@ -2,8 +2,8 @@
 // Reyna Aguirre, Mariann Grace Dizon, Maxwell Guillermo, Jesus Donate
 
 import React from "react";
-import { Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
-import { useRouter, Link } from "expo-router"; // Importing useRouter and Link from expo-router for navigation
+import { Text, TouchableOpacity, StyleSheet, SafeAreaView, View, ScrollView, Image } from "react-native";
+import { useRouter } from "expo-router"; // Importing useRouter from expo-router for navigation
 
 // Function to navigate to a specific route using the router instance
 export default function Index() {
@@ -12,39 +12,80 @@ export default function Index() {
     router.push(route as never);
   };
 
+  const menuItems = [
+    {
+      category: "Authentication",
+      color: "#37bdd5",
+      items: [
+        { name: "Landing", route: "/landing" },
+        { name: "Login/Signup", route: "/login-signup" },
+        { name: "Sign Up", route: "/signup" },
+        { name: "Forgot Password", route: "/forgot-password" },
+        { name: "Forgot Password Confirmation", route: "/forgot-password-confirmation" }
+      ]
+    },
+    {
+      category: "User Profile",
+      color: "#fba904",
+      items: [
+        { name: "Profile", route: "/profile" },
+        { name: "Edit Profile", route: "/editprofile" },
+        { name: "Profile Settings", route: "/profilesettings" }
+      ]
+    },
+    {
+      category: "Core Features",
+      color: "#fc6c85",
+      items: [
+        { name: "Search", route: "/search" },
+        { name: "Match", route: "/match" },
+        { name: "Messages", route: "/messages" },
+        { name: "Direct Message", route: "/direct-message" },
+        { name: "Events", route: "/events" },
+        { name: "My Events", route: "/my-events" },
+        { name: "Trending", route: "/trending" }
+      ]
+    },
+    {
+      category: "Settings",
+      color: "#79ce54",
+      items: [
+        { name: "Settings", route: "/settings" },
+        { name: "Email Notifications", route: "/settings/email-notifications" },
+        { name: "Push Notifications", route: "/settings/push-notifications" },
+        { name: "Change Password", route: "/settings/change-password" },
+        { name: "Change Email", route: "/settings/change-email" },
+        { name: "Block List", route: "/settings/block-list" },
+        { name: "Hidden Words", route: "/settings/hidden-words" }
+      ]
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Navigation buttons to different routes */}
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/landing")}>
-        <Text style={styles.buttonText}>HabiBeats</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/login-signup")}>
-        <Text style={styles.buttonText}>LogIn</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/profile")}>
-        <Text style={styles.buttonText}>Profile</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/search")}>
-        <Text style={styles.buttonText}>Events</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/messages")}>
-        <Text style={styles.buttonText}>Messages</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/directmessage")}>
-        <Text style={styles.buttonText}>Direct Message</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/match")}>
-        <Text style={styles.buttonText}>Match</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/myevents")}>
-        <Text style={styles.buttonText}>My Events</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/search")}>
-        <Text style={styles.buttonText}>Search</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigateTo("/trending")}>
-        <Text style={styles.buttonText}>Trending</Text>
-      </TouchableOpacity>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../assets/images/transparent_long_logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {menuItems.map((category, categoryIndex) => (
+          <View key={categoryIndex} style={styles.categoryContainer}>
+            <Text style={[styles.categoryTitle, { color: category.color }]}>{category.category}</Text>
+            {category.items.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={() => navigateTo(item.route)}
+              >
+                <Text style={styles.menuText}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -53,29 +94,34 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: 'white',
+    backgroundColor: '#fff8f0',
   },
-  habiBeatsButton: {
-    backgroundColor: "#ff69b4",
-    padding: 15,
-    borderRadius: 8,
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
     marginBottom: 20,
   },
-  habiBeatsButtonText: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
+  logo: {
+    width: 310,
+    height: 70,
   },
-  button: {
-    backgroundColor: "#e66cab",
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
   },
-  buttonText: {
-    color: "white",
+  categoryContainer: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  menuItem: {
+    paddingVertical: 10,
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

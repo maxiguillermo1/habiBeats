@@ -53,7 +53,6 @@ export const EventData = () => {
 
   return (
     <ScrollView style={styles.suggestionsContainer} contentContainerStyle={styles.scrollViewContent}>
-      <Text style={styles.sectionTitle}>Suggestions</Text>
       <View style={styles.grid}>
         {eventData.map((event, index) => (
           <EventCard
@@ -118,14 +117,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingBottom: 100, // Add extra padding at the bottom to allow scrolling past the last item
-  },
-  sectionTitle: {
-    marginLeft: 15,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#79ce54',
-    marginBottom: 25,
-    marginTop: 30,
   },
   grid: {
     flexDirection: 'row',

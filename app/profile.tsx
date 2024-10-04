@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollVi
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync } from '../scripts/notificationHandler';
 import { updateDoc } from 'firebase/firestore';
@@ -38,6 +38,7 @@ export default function Profile() {
   const [nextConcert, setNextConcert] = useState('');
   const [unforgettableExperience, setUnforgettableExperience] = useState('');
   const [favoriteAfterPartySpot, setFavoriteAfterPartySpot] = useState('');
+  const [userGender, setUserGender] = useState('');
 
   useEffect(() => {
     try {
@@ -53,6 +54,9 @@ export default function Profile() {
             location: userData.location || 'Location not set',
             profileImageUrl: userData.profileImageUrl || '',
           });
+
+          // Set the user's gender
+          setUserGender(userData.gender || 'other');
 
           // Ensure favoriteGenre is set
           setFavoriteGenre(userData.favoriteGenre || '');
@@ -119,29 +123,62 @@ export default function Profile() {
   }, []);
 
   const handleSettingsPress = () => {
-    router.push('/profilesettings');
+    router.push('/settings');
   };
 
   const handleEditPress = () => {
     router.push('/editprofile');
   };
 
+  // Add this function to determine border color based on gender
+  const getBorderColor = (gender: string) => {
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return '#37bdd5';
+      case 'female':
+        return '#fc6c85';
+      default:
+        return '#fba904';
+    }
+  };
+
+  // Add this function to determine text color based on gender
+  const getTextColor = (gender: string) => {
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return '#37bdd5';
+      case 'female':
+        return '#fc6c85';
+      default:
+        return '#fba904';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         {user.profileImageUrl ? (
-          <Image
-            source={{ uri: user.profileImageUrl }}
-            style={styles.profilePicture}
-          />
+          <View style={[
+            styles.profileImageContainer,
+            { borderColor: getBorderColor(userGender) }
+          ]}>
+            <Image
+              source={{ uri: user.profileImageUrl }}
+              style={styles.profilePicture}
+            />
+          </View>
         ) : (
-          <View style={[styles.profilePicture, styles.placeholderImage]} />
+          <View style={[
+            styles.profileImageContainer,
+            styles.placeholderImage,
+            { borderColor: getBorderColor(userGender) }
+          ]} />
         )}
         <View style={styles.userInfo}>
           <Text style={styles.name}>{user.name}</Text>
           <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={12} color="#333" />
-            <Text style={styles.location}>{user.location}</Text>
+            <Ionicons name="location-outline" size={12} color={getTextColor(userGender)} />
+            <Text style={[styles.location, { color: getTextColor(userGender) }]}>{user.location}</Text>
           </View>
         </View>
         <View style={styles.headerButtons}>
@@ -267,12 +304,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  profilePicture: {
+  profileImageContainer: {
+    borderWidth: 3,
+    borderRadius: 50, // Half of the width and height
+    overflow: 'hidden',
     width: 85,
     height: 85,
-    borderRadius: 50,
-    borderWidth: 7,
-    borderColor: '#fc6c85',
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
   },
   userInfo: {
     flex: 1,
@@ -286,7 +327,6 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 13,
-    color: '#fc6c85',
     marginLeft: 4,
   },
   settingsButton: {
@@ -366,6 +406,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeholderImage: {
-    backgroundColor: '##f7e9da', // Or any color you prefer for the placeholder
+    backgroundColor: '#f7e9da',
   },
 });
