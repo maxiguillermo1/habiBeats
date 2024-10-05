@@ -6,8 +6,23 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import SearchSong from '../components/search-song';
+import SpotifySearch from '../components/SpotifySearch';
+import SpotifyAlbumSearch from '../components/SpotifyAlbumSearch';
 
 interface Song {
+  id: string;
+  name: string;
+  artist: string;
+  albumArt: string;
+}
+
+interface Artist {
+  id: string;
+  name: string;
+  picture: string;
+}
+
+interface Album {
   id: string;
   name: string;
   artist: string;
@@ -22,15 +37,17 @@ export default function EditProfile() {
     favoriteMusicArtists: '',
     favoriteAlbum: '',
     artistToSee: '',
-    favoriteGenre: '', // New state
-    nextConcert: '', // New state
-    unforgettableExperience: '', // New state
-    favoriteAfterPartySpot: '', // New state
+    favoriteGenre: '',
+    nextConcert: '',
+    unforgettableExperience: '',
+    favoriteAfterPartySpot: '',
   });
 
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [favoriteArtist, setFavoriteArtist] = useState<Artist | null>(null);
+  const [favoriteAlbum, setFavoriteAlbum] = useState<Album | null>(null);
 
   const initialValues = useRef({
     tuneOfMonth: null as Song | null,
@@ -39,10 +56,10 @@ export default function EditProfile() {
     favoriteMusicArtists: '',
     favoriteAlbum: '',
     artistToSee: '',
-    favoriteGenre: '', // Added favoriteGenre to initialValues
-    nextConcert: '', // Added nextConcert to initialValues
-    unforgettableExperience: '', // Added unforgettableExperience to initialValues
-    favoriteAfterPartySpot: '', // Added favoriteAfterPartySpot to initialValues
+    favoriteGenre: '',
+    nextConcert: '',
+    unforgettableExperience: '',
+    favoriteAfterPartySpot: '',
   });
 
   useEffect(() => {
@@ -60,10 +77,10 @@ export default function EditProfile() {
             favoriteMusicArtists: userData.favoriteMusicArtists || '',
             favoriteAlbum: userData.favoriteAlbum || '',
             artistToSee: userData.artistToSee || '',
-            favoriteGenre: userData.favoriteGenre || '', // Added favoriteGenre to setUser
-            nextConcert: userData.nextConcert || '', // Added nextConcert to setUser
-            unforgettableExperience: userData.unforgettableExperience || '', // Added unforgettableExperience to setUser
-            favoriteAfterPartySpot: userData.favoriteAfterPartySpot || '', // Added favoriteAfterPartySpot to setUser
+            favoriteGenre: userData.favoriteGenre || '',
+            nextConcert: userData.nextConcert || '',
+            unforgettableExperience: userData.unforgettableExperience || '',
+            favoriteAfterPartySpot: userData.favoriteAfterPartySpot || '',
           });
 
           if (userData.tuneOfMonth) {
@@ -78,18 +95,29 @@ export default function EditProfile() {
             setTuneOfMonth(null);
           }
 
-          initialValues.current = {
-            tuneOfMonth: userData.tuneOfMonth ? JSON.parse(userData.tuneOfMonth) : null,
-            favoritePerformance: userData.favoritePerformance || '',
-            listenTo: userData.listenTo || '',
-            favoriteMusicArtists: userData.favoriteMusicArtists || '',
-            favoriteAlbum: userData.favoriteAlbum || '',
-            artistToSee: userData.artistToSee || '',
-            favoriteGenre: userData.favoriteGenre || '', // Added favoriteGenre to initialValues
-            nextConcert: userData.nextConcert || '', // Added nextConcert to initialValues
-            unforgettableExperience: userData.unforgettableExperience || '', // Added unforgettableExperience to initialValues
-            favoriteAfterPartySpot: userData.favoriteAfterPartySpot || '', // Added favoriteAfterPartySpot to initialValues
-          };
+          if (userData.favoriteAlbum) {
+            try {
+              const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
+              setFavoriteAlbum(parsedFavoriteAlbum);
+            } catch (error) {
+              console.error('Error parsing favoriteAlbum:', error);
+              setFavoriteAlbum(null);
+            }
+          } else {
+            setFavoriteAlbum(null);
+          }
+
+          if (userData.favoriteArtist) {
+            try {
+              const parsedFavoriteArtist = JSON.parse(userData.favoriteArtist);
+              setFavoriteArtist(parsedFavoriteArtist);
+            } catch (error) {
+              console.error('Error parsing favoriteArtist:', error);
+              setFavoriteArtist(null);
+            }
+          } else {
+            setFavoriteArtist(null);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -118,13 +146,14 @@ export default function EditProfile() {
         favoritePerformance: imageUrl,
         listenTo: user.listenTo,
         favoriteMusicArtists: user.favoriteMusicArtists,
-        favoriteAlbum: user.favoriteAlbum,
         artistToSee: user.artistToSee,
-        favoriteGenre: user.favoriteGenre, // Ensure this is saved
-        nextConcert: user.nextConcert, // Save to backend
-        unforgettableExperience: user.unforgettableExperience, // Save to backend
-        favoriteAfterPartySpot: user.favoriteAfterPartySpot, // Save to backend
+        favoriteGenre: user.favoriteGenre,
+        nextConcert: user.nextConcert,
+        unforgettableExperience: user.unforgettableExperience,
+        favoriteAfterPartySpot: user.favoriteAfterPartySpot,
         tuneOfMonth: JSON.stringify(tuneOfMonth),
+        favoriteArtist: favoriteArtist ? JSON.stringify(favoriteArtist) : null,
+        favoriteAlbum: favoriteAlbum ? JSON.stringify(favoriteAlbum) : null,
         updatedAt: new Date(),
       });
 
@@ -145,6 +174,16 @@ export default function EditProfile() {
 
   const handleSelectSong = (song: Song) => {
     setTuneOfMonth(song);
+    setHasChanges(true);
+  };
+
+  const handleSelectArtist = (artist: Artist) => {
+    setFavoriteArtist(artist);
+    setHasChanges(true);
+  };
+
+  const handleSelectAlbum = (album: Album) => {
+    setFavoriteAlbum(album);
     setHasChanges(true);
   };
 
@@ -203,56 +242,6 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Music Artist/s</Text>
-              <TextInput
-                style={styles.input}
-                value={user.favoriteMusicArtists}
-                onChangeText={(text) => handleInputChange('favoriteMusicArtists', text)}
-                placeholder="Enter your favorite music artists"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Album</Text>
-              <TextInput
-                style={styles.input}
-                value={user.favoriteAlbum}
-                onChangeText={(text) => handleInputChange('favoriteAlbum', text)}
-                placeholder="Enter your favorite album"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
-              <TextInput
-                style={styles.input}
-                value={user.artistToSee}
-                onChangeText={(text) => handleInputChange('artistToSee', text)}
-                placeholder="Enter the artist you would like to see"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Music Genre</Text>
-              <TextInput
-                style={styles.input}
-                value={user.favoriteGenre}
-                onChangeText={(text) => handleInputChange('favoriteGenre', text)}
-                placeholder="Enter your favorite music genre"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>What's the next concert or event you're excited about?</Text>
-              <TextInput
-                style={styles.input}
-                value={user.nextConcert}
-                onChangeText={(text) => handleInputChange('nextConcert', text)}
-                placeholder="Enter the next concert or event"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Describe your favorite concert experience and why</Text>
               <TextInput
                 style={styles.input}
@@ -272,6 +261,23 @@ export default function EditProfile() {
                 placeholder="Enter your favorite hangout spot"
                 multiline
               />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Favorite Artist</Text>
+              <SpotifySearch onSelectArtist={handleSelectArtist} onRemoveArtist={() => {}} selectedArtists={favoriteArtist ? [favoriteArtist] : []} />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Favorite Album</Text>
+              <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
+              {favoriteAlbum && (
+                <View style={styles.albumContainer}>
+                  <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
+                  <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
+                  <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+                </View>
+              )}
             </View>
 
             {hasChanges && (
@@ -297,8 +303,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 10,
-    left: 10, // Moved to the left
+    top: 50,
+    left: 20,
     padding: 10,
     backgroundColor: '#fba904',
     borderRadius: 5,
@@ -315,7 +321,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginTop: 50, // Adjust for back button
+    marginTop: 50,
   },
   inputContainer: {
     marginBottom: 20,
@@ -373,5 +379,64 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  artistContainer: {
+    marginTop: 10,
+  },
+  artistText: {
+    fontSize: 16,
+    color: '#542f11',
+  },
+  artistImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginTop: 10,
+  },
+  albumContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  albumImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  albumName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#542f11',
+  },
+  albumArtist: {
+    fontSize: 14,
+    color: '#666',
+  },
+  genreContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  genreButton: {
+    backgroundColor: 'rgba(55,189,213,0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 15,
+    marginBottom: 10,
+    width: '48%',
+    alignItems: 'center',
+  },
+  selectedGenreButton: {
+    backgroundColor: '#fba904',
+  },
+  genreButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedGenreButtonText: {
+    color: '#FFFFFF',
   },
 });

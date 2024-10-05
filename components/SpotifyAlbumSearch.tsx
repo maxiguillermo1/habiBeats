@@ -4,6 +4,10 @@ import axios from 'axios';
 import { encode } from 'base-64';
 import { Ionicons } from '@expo/vector-icons';
 
+// Remove this line
+// import { CLIENT_ID, CLIENT_SECRET } from '../config';
+
+// Add these constants directly in the file
 const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
 const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
 
