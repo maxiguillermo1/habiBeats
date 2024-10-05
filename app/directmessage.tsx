@@ -3,14 +3,13 @@
 
 // START of Mariann Grace Dizon Contribution
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator } from 'react-native';
 import { collection, addDoc, query, where, onSnapshot, orderBy, Timestamp, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-
 
 // Define the message structure
 interface Message {
@@ -24,24 +23,26 @@ interface Message {
 // Define the DirectMessageScreen component
 const DirectMessageScreen = () => {
     const { recipientId, recipientName } = useLocalSearchParams();
-    console.log(recipientId, recipientName);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const navigation = useNavigation();
     const [profileImageUrl, setProfileImageUrl] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         if (!auth.currentUser) return;
 
-        // Query to get all messages for the current user and the recipient
+        setIsLoading(true);
+
+        // Query to get messages between the current user and the specific recipient
         const q = query(
             collection(db, 'messages'),
-            where('participants', 'array-contains', auth.currentUser.uid),
+            where('participants', '==', [auth.currentUser.uid, recipientId].sort()),
             orderBy('timestamp', 'desc')
         );
         
         // Listen for new messages
         const unsubscribe = onSnapshot(q, async (snapshot) => {
-
             // Fetch the recipient's profile image
             const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', recipientId)));
             if (!userDoc.empty) {
@@ -56,10 +57,11 @@ const DirectMessageScreen = () => {
                 timestamp: doc.data().timestamp,
             }));
             setMessages(newMessages as Message[]);
+            setIsLoading(false);
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [recipientId]);
 
     // Function to send a message
     const sendMessage = async () => {
@@ -73,11 +75,23 @@ const DirectMessageScreen = () => {
             recipientName: recipientName, 
             recipientId: recipientId, // habibi is the recipient
             timestamp: Timestamp.now(),
-            participants: [auth.currentUser.uid, recipientId]
+            participants: [auth.currentUser.uid, recipientId].sort()
         });
 
         setNewMessage('');
     };
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007AFF" />
+                    <Text style={styles.loadingText}>Loading conversation...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -88,7 +102,7 @@ const DirectMessageScreen = () => {
                 </TouchableOpacity>
                 <View style={styles.navbarNameContainer}>
                     <Image
-                        source={{ uri: profileImageUrl }}
+                        source={{ uri: profileImageUrl || 'placeholder.png' }}
                         style={styles.profileImage}
                     />
                     <Text style={styles.navbarName}>{recipientName}</Text>
@@ -201,6 +215,16 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
         marginTop: 10,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#333',
     },
 });
 
