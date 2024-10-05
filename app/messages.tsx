@@ -43,6 +43,7 @@ const Messages = () => {
         
         // If the conversation is not already in the map, add it
         if (!conversationsMap.has(otherParticipant)) {
+          console.log(otherParticipant);
 
           // Fetch the other participant's profile data
           const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', otherParticipant)));
