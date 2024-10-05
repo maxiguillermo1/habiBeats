@@ -10,14 +10,32 @@ import { User } from './match-algorithm'; // import isMatch and User from match-
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebaseConfig'; 
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
-import { getFirestore, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc,  updateDoc } from "firebase/firestore"; // to store matches 
 
+
+// START of to updating matches hashmap for current user
+// Reyna Aguirre Contribution
+const updateUserMatch = async (currentUserId: string, matchedUserId: string, status: "liked" | "disliked") => {
+  const db = getFirestore(app);
+  const userDocRef = doc(db, "users", currentUserId); 
+
+  try {
+    await updateDoc(userDocRef, {
+      [`matches.${matchedUserId}`]: status  
+    });
+    console.log(`Match updated: ${matchedUserId} is ${status}`);
+  } catch (error) {
+    console.error("Error updating match status: ", error);
+  }
+};
+// END of to updating matches hashmap for current user
 
 // Match component definition
 const Match = () => {
   const [showMatchModal, setShowMatchModal] = useState(false);   // State to control the visibility of the match modal
   const [likeButtonColor, setLikeButtonColor] = useState('#1E1E1E');   // State to manage the color of the like and dislike buttons
   const [dislikeButtonColor, setDislikeButtonColor] = useState('#1E1E1E'); // dislike button color
+
   
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
@@ -35,6 +53,7 @@ const Match = () => {
   const [compatibleUsers, setCompatibleUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentUserImage, setCurrentUserImage] = useState<string | null>(null); // current user image
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -54,6 +73,7 @@ const Match = () => {
           setUser2(fetchedUsers.length > 1 ? fetchedUsers[1] : null);
           setCurrentIndex(1);
           setNoMoreUsers(false);
+          setCurrentUserImage(currentUser?.photoURL); // set the current user image
         } else {
           setNoMoreUsers(true);
         }
@@ -96,14 +116,35 @@ const Match = () => {
   // Handler for when the heart button is pressed
   const handleHeartPress = async () => {
     if (user1 && user2) {
-      if (user1 && user2) {
-        setLikeButtonColor('#fc6c85'); // Change to pink when liked
-        setShowMatchModal(true);
-        animateModal(true);
-      } else {
-        console.log("No match");
-        fetchNextUser(); // Load the next user profile if no match
+      setLikeButtonColor('#fc6c85'); // Change to pink when liked
+      setShowMatchModal(true);
+      animateModal(true);
+  
+      // Call updateUserMatch to mark user2 as "liked" by user1
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await updateUserMatch(currentUser.uid, user2.uid, "liked");
       }
+    }
+  };
+  
+  // Function to handle the close button press
+  const handleClosePress = async () => {
+    if (user1 && user2) {
+      setDislikeButtonColor('#de3c3c'); // Change to red when disliked
+  
+      // Call updateUserMatch to mark user2 as "disliked" by user1
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await updateUserMatch(currentUser.uid, user2.uid, "disliked");
+      }
+  
+      fetchNextUser(); // Load the next user profile
+      setTimeout(() => {
+        setDislikeButtonColor('#1E1E1E'); // Change back to original color
+      }, 1000);
     }
   };
 
@@ -126,13 +167,11 @@ const Match = () => {
     }
   }, [showMatchModal]);
 
-  // Function to handle the close button press
-  const handleClosePress = () => {
-    setDislikeButtonColor('#de3c3c'); // change to red
+  // Function to handle modal close
+  const handleModalClose = () => {
+    animateModal(false);
+    setShowMatchModal(false);
     fetchNextUser(); // Load the next user profile
-    setTimeout(() => {
-      setDislikeButtonColor('#1E1E1E'); // Change back to original color
-    }, 1000);
   };
 
   // UI rendering
@@ -209,10 +248,7 @@ const Match = () => {
       <Modal
         transparent={true}
         visible={showMatchModal}
-        onRequestClose={() => {
-          animateModal(false);
-          setShowMatchModal(false);
-        }}
+        onRequestClose={handleModalClose}
       >
         <Animated.View 
           style={[
@@ -231,7 +267,7 @@ const Match = () => {
             ]}
           >
             <View style={styles.modalHeader}>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setShowMatchModal(false)}>
+              <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
                 <Ionicons name="close" size={50} color="#1E1E1E" />
               </TouchableOpacity>
               <TouchableOpacity 
@@ -246,7 +282,7 @@ const Match = () => {
             </View>
             <View style={styles.profilePicContainer}>
               <Image
-                source={{ uri: user1?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
+                source={{ uri: currentUserImage || 'https://example.com/placeholder-profile.png' }}
                 style={styles.profilePic}
               />
               <Image
