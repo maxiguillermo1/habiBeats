@@ -9,6 +9,7 @@ export type RootStackParamList = {
   index: undefined;
   profile: undefined;
   profilesettings: undefined;
+  editprofile: undefined;
   DirectMessage: { recipientId: string; recipientName: string };
 };
 
@@ -23,6 +24,20 @@ export default function RootLayout() {
       <Stack.Screen name="profile" options={{ headerShown: false }} />
       {/* Define the profile settings screen with no header */}
       <Stack.Screen name="profilesettings" options={{ headerShown: false }} />
+      {/* Define the edit profile screen with no header */}
+      <Stack.Screen name="editprofile" options={{ headerShown: false }} />
+      {/* Define the settings screen with no header */}
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
+      {/* Define the email notifications screen with no header */}
+      <Stack.Screen name="settings/email-notifications" options={{ headerShown: false }} />
+      {/* Define the push notifications screen with no header */}
+      <Stack.Screen name="settings/push-notifications" options={{ headerShown: false }} />
+      {/* Define the change password screen with no header */}
+      <Stack.Screen name="settings/changepassword" options={{ headerShown: false }} />
+      {/* Define the block list screen with no header */}
+      <Stack.Screen name="settings/block-list" options={{ headerShown: false }} />
+      {/* Define the hidden words screen with no header */}
+      <Stack.Screen name="settings/hidden-words" options={{ headerShown: false }} />
     </Stack>
   );
 }

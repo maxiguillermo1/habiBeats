@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig'; // Adjust the import path as needed
 
 // START of Retriving User Data from subscripted (logged in) user
@@ -31,6 +31,11 @@ interface UserData {
   favoriteMusicArtists: string;
   favoriteAlbum: string;
   artistToSee: string;
+
+   // Reyna Aguirre:HashMap to store user matches with their status (liked or disliked)
+   matches: {
+    [key: string]: "liked" | "disliked";  // key: matched user's UID, value: status
+  };
 }
 
 
@@ -44,10 +49,20 @@ export function useAuth() {
       
       if (firebaseUser) { // if the user is logged in
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const unsubscribeDoc = onSnapshot(userDocRef, (docSnapshot) => {
+        const unsubscribeDoc = onSnapshot(userDocRef, async (docSnapshot) => {
           if (docSnapshot.exists()) {
             
-            setUserData(docSnapshot.data() as UserData);
+            const data = docSnapshot.data() as UserData;
+            
+            // Check if matches field exists
+            if (!data.matches) {
+              await updateDoc(userDocRef, {
+                matches: {}  // Initialize empty matches map if not present
+              });
+              data.matches = {};
+            }
+            
+            setUserData(data);
           } else {
             console.log("docSnapshot does not exist");
             setUserData(null);

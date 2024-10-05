@@ -5,7 +5,7 @@
 // START of Maxwell Guillermo Contribution
 
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, TextInput } from 'react-native';
+import { View, StyleSheet, SafeAreaView, TextInput, Text } from 'react-native';
 import TopNavBar from '../components/TopNavBar';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
@@ -35,6 +35,7 @@ const Search = () => {
           <Ionicons name="search" size={18} color="#000" style={styles.searchIcon} />
         </View>
       </View>
+      <Text style={styles.sectionTitle}>Suggestions</Text>
       <View style={styles.content}>
         <EventData />
       </View>
@@ -54,7 +55,8 @@ const styles = StyleSheet.create({
   },
   searchWrapper: {
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: 20, // Increased top margin
+    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -76,6 +78,14 @@ const styles = StyleSheet.create({
   searchIcon: {
     position: 'absolute',
     right: 10,
+  },
+  sectionTitle: {
+    marginLeft: 30,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#79ce54',
+    marginBottom: 10,
+    marginTop: 13.5,
   },
 });
 

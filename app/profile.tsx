@@ -6,10 +6,9 @@ import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollVi
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync } from '../scripts/notificationHandler';
-import { updateDoc } from 'firebase/firestore';
 
 interface Song {
   id: string;
@@ -18,19 +17,34 @@ interface Song {
   albumArt: string;
 }
 
+interface Album {
+  id: string;
+  name: string;
+  artist: string;
+  albumArt: string;
+}
+
+interface Artist {
+  id: string;
+  name: string;
+  picture: string;
+}
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
     name: 'Name not set',
     location: 'Location not set',
     profileImageUrl: '',
+    gender: '',
   });
 
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [listenTo, setListenTo] = useState('');
   const [favoriteMusicArtists, setFavoriteMusicArtists] = useState('');
-  const [favoriteAlbum, setFavoriteAlbum] = useState('');
+  const [favoriteAlbumData, setFavoriteAlbumData] = useState<Album | null>(null);
+  const [favoriteArtist, setFavoriteArtist] = useState<Artist | null>(null);
   const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
@@ -40,11 +54,11 @@ export default function Profile() {
   const [favoriteAfterPartySpot, setFavoriteAfterPartySpot] = useState('');
 
   useEffect(() => {
-    try {
+    const fetchUserData = async () => {
       const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('User not authenticated');
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      if (!currentUser) return;
 
+      const userDocRef = doc(db, 'users', currentUser.uid);
       const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           const userData = docSnapshot.data();
@@ -52,15 +66,14 @@ export default function Profile() {
             name: `${userData.firstName} ${userData.lastName}`,
             location: userData.location || 'Location not set',
             profileImageUrl: userData.profileImageUrl || '',
+            gender: userData.gender || '',
           });
-
-          // Ensure favoriteGenre is set
-          setFavoriteGenre(userData.favoriteGenre || '');
 
           if (userData.tuneOfMonth) {
             try {
               const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
               setTuneOfMonth(parsedTuneOfMonth);
+              setTuneOfMonthLoaded(true);
             } catch (error) {
               console.error('Error parsing tuneOfMonth:', error);
               setTuneOfMonth(null);
@@ -68,26 +81,46 @@ export default function Profile() {
           } else {
             setTuneOfMonth(null);
           }
-          setTuneOfMonthLoaded(true);
+
+          if (userData.favoriteAlbum) {
+            try {
+              const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
+              setFavoriteAlbumData(parsedFavoriteAlbum);
+            } catch (error) {
+              console.error('Error parsing favoriteAlbum:', error);
+              setFavoriteAlbumData(null);
+            }
+          } else {
+            setFavoriteAlbumData(null);
+          }
+
+          if (userData.favoriteArtist) {
+            try {
+              const parsedFavoriteArtist = JSON.parse(userData.favoriteArtist);
+              setFavoriteArtist(parsedFavoriteArtist);
+            } catch (error) {
+              console.error('Error parsing favoriteArtist:', error);
+              setFavoriteArtist(null);
+            }
+          } else {
+            setFavoriteArtist(null);
+          }
+
           setFavoritePerformance(userData.favoritePerformance || '');
           setListenTo(userData.listenTo || '');
           setFavoriteMusicArtists(userData.favoriteMusicArtists || '');
-          setFavoriteAlbum(userData.favoriteAlbum || '');
           setArtistToSee(userData.artistToSee || '');
+          setFavoriteGenre(userData.favoriteGenre || '');
           setNextConcert(userData.nextConcert || '');
           setUnforgettableExperience(userData.unforgettableExperience || '');
           setFavoriteAfterPartySpot(userData.favoriteAfterPartySpot || '');
         }
-      }, (error) => {
-        console.error('Error fetching user data:', error);
-        setTuneOfMonthLoaded(true);
       });
 
       return () => unsubscribe();
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setTuneOfMonthLoaded(true);
-    }
+    };
+
+    fetchUserData();
 
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
@@ -102,13 +135,11 @@ export default function Profile() {
     };
   }, []);
 
-  // Register for push notifications
   useEffect(() => {
     console.log("Registering for push notifications");
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         console.log("Push token:", token);
-        // Save the token to the user's document in Firestore
         const currentUser = auth.currentUser;
         if (currentUser) {
           const userDocRef = doc(db, 'users', currentUser.uid);
@@ -119,29 +150,60 @@ export default function Profile() {
   }, []);
 
   const handleSettingsPress = () => {
-    router.push('/profilesettings');
+    router.push('/settings');
   };
 
   const handleEditPress = () => {
     router.push('/editprofile');
   };
 
+  const getBorderColor = (gender: string) => {
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return '#37bdd5';
+      case 'female':
+        return '#fc6c85';
+      default:
+        return '#fba904';
+    }
+  };
+
+  const getTextColor = (gender: string) => {
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return '#37bdd5';
+      case 'female':
+        return '#fc6c85';
+      default:
+        return '#fba904';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         {user.profileImageUrl ? (
-          <Image
-            source={{ uri: user.profileImageUrl }}
-            style={styles.profilePicture}
-          />
+          <View style={[
+            styles.profileImageContainer,
+            { borderColor: getBorderColor(user.gender) }
+          ]}>
+            <Image
+              source={{ uri: user.profileImageUrl }}
+              style={styles.profilePicture}
+            />
+          </View>
         ) : (
-          <View style={[styles.profilePicture, styles.placeholderImage]} />
+          <View style={[
+            styles.profileImageContainer,
+            styles.placeholderImage,
+            { borderColor: getBorderColor(user.gender) }
+          ]} />
         )}
         <View style={styles.userInfo}>
           <Text style={styles.name}>{user.name}</Text>
           <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={12} color="#333" />
-            <Text style={styles.location}>{user.location}</Text>
+            <Ionicons name="location-outline" size={12} color={getTextColor(user.gender)} />
+            <Text style={[styles.location, { color: getTextColor(user.gender) }]}>{user.location}</Text>
           </View>
         </View>
         <View style={styles.headerButtons}>
@@ -192,9 +254,33 @@ export default function Profile() {
           </View>
 
           <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Favorite Artist</Text>
+            <View style={styles.inputContent}>
+              {favoriteArtist ? (
+                <View style={styles.artistContainer}>
+                  <Image source={{ uri: favoriteArtist.picture }} style={styles.artistImage} />
+                  <Text style={styles.artistName}>{favoriteArtist.name}</Text>
+                </View>
+              ) : (
+                <Text style={styles.inputText}>No favorite artist set</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Favorite Album</Text>
             <View style={styles.inputContent}>
-              <Text style={styles.inputText}>{favoriteAlbum || 'Not set'}</Text>
+              {favoriteAlbumData ? (
+                <View style={styles.albumContainer}>
+                  <Image source={{ uri: favoriteAlbumData.albumArt }} style={styles.albumArt} />
+                  <View style={styles.albumInfo}>
+                    <Text style={styles.albumName}>{favoriteAlbumData.name}</Text>
+                    <Text style={styles.albumArtist}>{favoriteAlbumData.artist}</Text>
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.inputText}>No favorite album set</Text>
+              )}
             </View>
           </View>
 
@@ -250,6 +336,43 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  artistContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  artistImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  artistName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fba904',
+  },
+  albumContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  albumArt: {
+    width: 60,
+    height: 60,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  albumInfo: {
+    flex: 1,
+  },
+  albumName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fba904',
+  },
+  albumArtist: {
+    fontSize: 14,
+    color: '#666',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
@@ -267,12 +390,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  profilePicture: {
+  profileImageContainer: {
+    borderWidth: 3,
+    borderRadius: 50, // Half of the width and height
+    overflow: 'hidden',
     width: 85,
     height: 85,
-    borderRadius: 50,
-    borderWidth: 7,
-    borderColor: '#fc6c85',
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
   },
   userInfo: {
     flex: 1,
@@ -286,7 +413,6 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 13,
-    color: '#fc6c85',
     marginLeft: 4,
   },
   settingsButton: {
@@ -339,10 +465,6 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
     paddingRight: 10,
   },
-  albumArt: {
-    width: 80,
-    height: 80,
-  },
   songContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,6 +488,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeholderImage: {
-    backgroundColor: '##f7e9da', // Or any color you prefer for the placeholder
+    backgroundColor: '#f7e9da',
   },
 });
