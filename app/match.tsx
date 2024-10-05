@@ -10,7 +10,7 @@ import { User } from './match-algorithm'; // import isMatch and User from match-
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebaseConfig'; 
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
-import { getFirestore, doc,  updateDoc } from "firebase/firestore"; // to store matches 
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore"; // to store matches 
 
 
 // START of to updating matches hashmap for current user
@@ -64,6 +64,16 @@ const Match = () => {
       setIsLoading(true);
 
       if (currentUser) {
+        // Fetch current user's profile image from Firestore
+        const db = getFirestore(app);
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setCurrentUserImage(userData.profileImageUrl || null);
+        }
+
         const fetchedUsers = await fetchCompatibleUsers();
         console.log("FETCHED USERS:", fetchedUsers.map(user => user.displayName));
         setCompatibleUsers(fetchedUsers); // fetch compatible users using the algorithm
@@ -73,7 +83,6 @@ const Match = () => {
           setUser2(fetchedUsers.length > 1 ? fetchedUsers[1] : null);
           setCurrentIndex(1);
           setNoMoreUsers(false);
-          setCurrentUserImage(currentUser?.photoURL); // set the current user image
         } else {
           setNoMoreUsers(true);
         }
