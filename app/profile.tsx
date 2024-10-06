@@ -42,9 +42,8 @@ export default function Profile() {
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [listenTo, setListenTo] = useState('');
-  const [favoriteMusicArtists, setFavoriteMusicArtists] = useState('');
   const [favoriteAlbumData, setFavoriteAlbumData] = useState<Album | null>(null);
-  const [favoriteArtist, setFavoriteArtist] = useState<Artist | null>(null);
+  const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
@@ -94,21 +93,20 @@ export default function Profile() {
             setFavoriteAlbumData(null);
           }
 
-          if (userData.favoriteArtist) {
+          if (userData.favoriteArtists) {
             try {
-              const parsedFavoriteArtist = JSON.parse(userData.favoriteArtist);
-              setFavoriteArtist(parsedFavoriteArtist);
+              const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
+              setFavoriteArtists(parsedFavoriteArtists);
             } catch (error) {
-              console.error('Error parsing favoriteArtist:', error);
-              setFavoriteArtist(null);
+              console.error('Error parsing favoriteArtists:', error);
+              setFavoriteArtists([]);
             }
           } else {
-            setFavoriteArtist(null);
+            setFavoriteArtists([]);
           }
 
           setFavoritePerformance(userData.favoritePerformance || '');
           setListenTo(userData.listenTo || '');
-          setFavoriteMusicArtists(userData.favoriteMusicArtists || '');
           setArtistToSee(userData.artistToSee || '');
           setFavoriteGenre(userData.favoriteGenre || '');
           setNextConcert(userData.nextConcert || '');
@@ -164,7 +162,7 @@ export default function Profile() {
       case 'female':
         return '#fc6c85';
       default:
-        return '#fba904';
+        return '#333';
     }
   };
 
@@ -175,7 +173,7 @@ export default function Profile() {
       case 'female':
         return '#fc6c85';
       default:
-        return '#fba904';
+        return '#333';
     }
   };
 
@@ -219,8 +217,8 @@ export default function Profile() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Tune of the Month</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Tune of the Month</Text>
               {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
                 <View style={styles.songContainer}>
                   <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
@@ -236,8 +234,8 @@ export default function Profile() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>My Favorite Performance</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>My Favorite Performance</Text>
               {favoritePerformance ? (
                 <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
               ) : (
@@ -247,29 +245,24 @@ export default function Profile() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Favorite Music Artist/s</Text>
             <View style={styles.inputContent}>
-              <Text style={styles.inputText}>{favoriteMusicArtists || 'Not set'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Favorite Artist</Text>
-            <View style={styles.inputContent}>
-              {favoriteArtist ? (
-                <View style={styles.artistContainer}>
-                  <Image source={{ uri: favoriteArtist.picture }} style={styles.artistImage} />
-                  <Text style={styles.artistName}>{favoriteArtist.name}</Text>
-                </View>
+              <Text style={styles.inputLabel}>Favorite Artists</Text>
+              {favoriteArtists.length > 0 ? (
+                favoriteArtists.map((artist) => (
+                  <View key={artist.id} style={styles.artistContainer}>
+                    <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                    <Text style={styles.artistName}>{artist.name}</Text>
+                  </View>
+                ))
               ) : (
-                <Text style={styles.inputText}>No favorite artist set</Text>
+                <Text style={styles.inputText}>No favorite artists set</Text>
               )}
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Favorite Album</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Favorite Album</Text>
               {favoriteAlbumData ? (
                 <View style={styles.albumContainer}>
                   <Image source={{ uri: favoriteAlbumData.albumArt }} style={styles.albumArt} />
@@ -285,43 +278,43 @@ export default function Profile() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>I Listen to Music to</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>I Listen to Music to</Text>
               <Text style={styles.inputText}>{listenTo || 'Not set'}</Text>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
               <Text style={styles.inputText}>{artistToSee || 'Not set'}</Text>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Favorite Music Genre</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Favorite Music Genre</Text>
               <Text style={styles.inputText}>{favoriteGenre || 'Not set'}</Text>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Next Concert or Event</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Next Concert or Event</Text>
               <Text style={styles.inputText}>{nextConcert || 'No upcoming concert set'}</Text>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Unforgettable Concert Experience</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Unforgettable Concert Experience</Text>
               <Text style={styles.inputText}>{unforgettableExperience || 'No experience shared'}</Text>
             </View>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Favorite Post-Event Hangout Spot</Text>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Favorite Post-Event Hangout Spot</Text>
               <Text style={styles.inputText}>{favoriteAfterPartySpot || 'No spot shared'}</Text>
             </View>
           </View>
@@ -341,25 +334,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   artistImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 10,
+    width: 65,
+    height: 65,
+    borderRadius: 50,
+    marginRight: 15,
+    marginLeft: 15,
+    marginTop: 4,
+    marginBottom: 4,
   },
   artistName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fba904',
+    color: '#333',
   },
   albumContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   albumArt: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 5,
-    marginRight: 10,
+    marginRight: 15,
+    marginLeft: 15,
   },
   albumInfo: {
     flex: 1,
@@ -367,10 +364,11 @@ const styles = StyleSheet.create({
   albumName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fba904',
+    color: '#333',
   },
   albumArtist: {
-    fontSize: 14,
+    marginTop: 1,
+    fontSize: 11,
     color: '#666',
   },
   container: {
@@ -422,27 +420,29 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 20,
-    paddingLeft: 50,
-    paddingRight: 50,
+    paddingLeft: 30,
+    paddingRight: 30,
   },
   inputContainer: {
-    marginBottom: 35,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#333',
   },
   inputContent: {
-    borderWidth: 3,
-    borderColor: '#f7e9da',
+    borderWidth: 15,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 15,
   },
   inputText: {
-    fontSize: 14,
-    color: '#fba904',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
   imageInput: {
     width: '100%',
@@ -468,19 +468,16 @@ const styles = StyleSheet.create({
   songContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 10,
     paddingRight: 90,
   },
-  songInfo: {
-    marginLeft: 10,
-  },
   songTitle: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#fba904',
+    color: '#333',
   },
   songArtist: {
-    fontSize: 10,
+    marginTop: 1,
+    fontSize: 11,
     color: '#333',
   },
   locationContainer: {
@@ -489,5 +486,7 @@ const styles = StyleSheet.create({
   },
   placeholderImage: {
     backgroundColor: '#f7e9da',
+  },
+  songInfo: {
   },
 });

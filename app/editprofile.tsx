@@ -34,7 +34,6 @@ export default function EditProfile() {
   const [user, setUser] = useState({
     favoritePerformance: '',
     listenTo: '',
-    favoriteMusicArtists: '',
     favoriteAlbum: '',
     artistToSee: '',
     favoriteGenre: '',
@@ -46,14 +45,13 @@ export default function EditProfile() {
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [favoriteArtist, setFavoriteArtist] = useState<Artist | null>(null);
   const [favoriteAlbum, setFavoriteAlbum] = useState<Album | null>(null);
+  const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
 
   const initialValues = useRef({
     tuneOfMonth: null as Song | null,
     favoritePerformance: '',
     listenTo: '',
-    favoriteMusicArtists: '',
     favoriteAlbum: '',
     artistToSee: '',
     favoriteGenre: '',
@@ -74,7 +72,6 @@ export default function EditProfile() {
           setUser({
             favoritePerformance: userData.favoritePerformance || '',
             listenTo: userData.listenTo || '',
-            favoriteMusicArtists: userData.favoriteMusicArtists || '',
             favoriteAlbum: userData.favoriteAlbum || '',
             artistToSee: userData.artistToSee || '',
             favoriteGenre: userData.favoriteGenre || '',
@@ -107,16 +104,16 @@ export default function EditProfile() {
             setFavoriteAlbum(null);
           }
 
-          if (userData.favoriteArtist) {
+          if (userData.favoriteArtists) {
             try {
-              const parsedFavoriteArtist = JSON.parse(userData.favoriteArtist);
-              setFavoriteArtist(parsedFavoriteArtist);
+              const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
+              setFavoriteArtists(parsedFavoriteArtists);
             } catch (error) {
-              console.error('Error parsing favoriteArtist:', error);
-              setFavoriteArtist(null);
+              console.error('Error parsing favoriteArtists:', error);
+              setFavoriteArtists([]);
             }
           } else {
-            setFavoriteArtist(null);
+            setFavoriteArtists([]);
           }
         }
       } catch (error) {
@@ -145,14 +142,13 @@ export default function EditProfile() {
       await updateDoc(userDocRef, {
         favoritePerformance: imageUrl,
         listenTo: user.listenTo,
-        favoriteMusicArtists: user.favoriteMusicArtists,
         artistToSee: user.artistToSee,
         favoriteGenre: user.favoriteGenre,
         nextConcert: user.nextConcert,
         unforgettableExperience: user.unforgettableExperience,
         favoriteAfterPartySpot: user.favoriteAfterPartySpot,
         tuneOfMonth: JSON.stringify(tuneOfMonth),
-        favoriteArtist: favoriteArtist ? JSON.stringify(favoriteArtist) : null,
+        favoriteArtists: JSON.stringify(favoriteArtists),
         favoriteAlbum: favoriteAlbum ? JSON.stringify(favoriteAlbum) : null,
         updatedAt: new Date(),
       });
@@ -178,7 +174,12 @@ export default function EditProfile() {
   };
 
   const handleSelectArtist = (artist: Artist) => {
-    setFavoriteArtist(artist);
+    setFavoriteArtists((prevArtists) => [...prevArtists, artist]);
+    setHasChanges(true);
+  };
+
+  const handleRemoveArtist = (artistId: string) => {
+    setFavoriteArtists((prevArtists) => prevArtists.filter(artist => artist.id !== artistId));
     setHasChanges(true);
   };
 
@@ -264,8 +265,21 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Artist</Text>
-              <SpotifySearch onSelectArtist={handleSelectArtist} onRemoveArtist={() => {}} selectedArtists={favoriteArtist ? [favoriteArtist] : []} />
+              <Text style={styles.inputLabel}>Favorite Artists</Text>
+              <SpotifySearch 
+                onSelectArtist={handleSelectArtist} 
+                onRemoveArtist={handleRemoveArtist} 
+                selectedArtists={favoriteArtists} 
+              />
+              {favoriteArtists.map((artist) => (
+                <View key={artist.id} style={styles.selectedArtistContainer}>
+                  <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                  <Text style={styles.artistName}>{artist.name}</Text>
+                  <TouchableOpacity onPress={() => handleRemoveArtist(artist.id)} style={styles.removeArtistButton}>
+                    <Text style={styles.removeArtistButtonText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
 
             <View style={styles.inputContainer}>
@@ -388,11 +402,13 @@ const styles = StyleSheet.create({
     color: '#542f11',
   },
   artistImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginTop: 10,
+    width: 50,
+    height: 50,
   },
+  // If there's another 'artistImage' property, rename it, for example:
+  // artistImageAlt: {
+  //   // ... other properties
+  // },
   albumContainer: {
     marginTop: 10,
     alignItems: 'center',
@@ -438,5 +454,31 @@ const styles = StyleSheet.create({
   },
   selectedGenreButtonText: {
     color: '#FFFFFF',
+  },
+  selectedArtistContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 10,
+  },
+  artistName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#542f11',
+  },
+  removeArtistButton: {
+    backgroundColor: '#fba904',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeArtistButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
