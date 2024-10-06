@@ -47,6 +47,7 @@ export default function EditProfile() {
   const [hasChanges, setHasChanges] = useState(false);
   const [favoriteAlbum, setFavoriteAlbum] = useState<Album | null>(null);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
+  const [musicPreference, setMusicPreference] = useState<string[]>([]);
 
   const initialValues = useRef({
     tuneOfMonth: null as Song | null,
@@ -115,6 +116,8 @@ export default function EditProfile() {
           } else {
             setFavoriteArtists([]);
           }
+
+          setMusicPreference(userData.musicPreference || []);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -150,6 +153,7 @@ export default function EditProfile() {
         tuneOfMonth: JSON.stringify(tuneOfMonth),
         favoriteArtists: JSON.stringify(favoriteArtists),
         favoriteAlbum: favoriteAlbum ? JSON.stringify(favoriteAlbum) : null,
+        musicPreference: musicPreference,
         updatedAt: new Date(),
       });
 
@@ -185,6 +189,17 @@ export default function EditProfile() {
 
   const handleSelectAlbum = (album: Album) => {
     setFavoriteAlbum(album);
+    setHasChanges(true);
+  };
+
+  const toggleMusicPreference = (genre: string) => {
+    setMusicPreference((prevPreferences) => {
+      if (prevPreferences.includes(genre)) {
+        return prevPreferences.filter((p) => p !== genre);
+      } else {
+        return [...prevPreferences, genre];
+      }
+    });
     setHasChanges(true);
   };
 
@@ -283,6 +298,31 @@ export default function EditProfile() {
                   <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
                 </View>
               )}
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Music Preference</Text>
+              <View style={styles.genreContainer}>
+                {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
+                  <TouchableOpacity
+                    key={genre}
+                    style={[
+                      styles.genreButton,
+                      musicPreference.includes(genre) && styles.selectedGenreButton,
+                    ]}
+                    onPress={() => toggleMusicPreference(genre)}
+                  >
+                    <Text
+                      style={[
+                        styles.genreButtonText,
+                        musicPreference.includes(genre) && styles.selectedGenreButtonText,
+                      ]}
+                    >
+                      {genre}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             {hasChanges && (
@@ -418,8 +458,7 @@ const styles = StyleSheet.create({
   genreContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
+    justifyContent: 'flex-start',
     marginBottom: 20,
   },
   genreButton: {
@@ -427,9 +466,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 15,
+    marginRight: 10,
     marginBottom: 10,
-    width: '48%',
-    alignItems: 'center',
   },
   selectedGenreButton: {
     backgroundColor: '#fba904',

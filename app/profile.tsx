@@ -47,7 +47,7 @@ export default function Profile() {
   const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
-  const [favoriteGenre, setFavoriteGenre] = useState('');
+  const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [nextConcert, setNextConcert] = useState('');
   const [unforgettableExperience, setUnforgettableExperience] = useState('');
   const [favoriteAfterPartySpot, setFavoriteAfterPartySpot] = useState('');
@@ -108,7 +108,7 @@ export default function Profile() {
           setFavoritePerformance(userData.favoritePerformance || '');
           setListenTo(userData.listenTo || '');
           setArtistToSee(userData.artistToSee || '');
-          setFavoriteGenre(userData.favoriteGenre || '');
+          setMusicPreference(userData.musicPreference || []);
           setNextConcert(userData.nextConcert || '');
           setUnforgettableExperience(userData.unforgettableExperience || '');
           setFavoriteAfterPartySpot(userData.favoriteAfterPartySpot || '');
@@ -293,8 +293,18 @@ export default function Profile() {
 
           <View style={styles.inputContainer}>
             <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Favorite Music Genre</Text>
-              <Text style={styles.inputText}>{favoriteGenre || 'Not set'}</Text>
+              <Text style={styles.inputLabel}>Music Preference</Text>
+              {musicPreference.length > 0 ? (
+                <View style={styles.musicPreferenceContainer}>
+                  {musicPreference.map((genre, index) => (
+                    <View key={index} style={styles.genreTag}>
+                      <Text style={styles.genreText}>{genre}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.inputText}>No music preferences set</Text>
+              )}
             </View>
           </View>
 
@@ -329,48 +339,6 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  artistContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  artistImage: {
-    width: 65,
-    height: 65,
-    borderRadius: 50,
-    marginRight: 15,
-    marginLeft: 15,
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  artistName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  albumContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  albumArt: {
-    width: 80,
-    height: 80,
-    borderRadius: 5,
-    marginRight: 15,
-    marginLeft: 15,
-  },
-  albumInfo: {
-    flex: 1,
-  },
-  albumName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  albumArtist: {
-    marginTop: 1,
-    fontSize: 11,
-    color: '#666',
-  },
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
@@ -390,7 +358,7 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     borderWidth: 3,
-    borderRadius: 50, // Half of the width and height
+    borderRadius: 50,
     overflow: 'hidden',
     width: 85,
     height: 85,
@@ -488,5 +456,64 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7e9da',
   },
   songInfo: {
+    flex: 1,
+  },
+  artistContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  artistImage: {
+    width: 65,
+    height: 65,
+    borderRadius: 50,
+    marginRight: 15,
+    marginLeft: 15,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  artistName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  albumContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  albumArt: {
+    width: 80,
+    height: 80,
+    borderRadius: 5,
+    marginRight: 15,
+    marginLeft: 15,
+  },
+  albumInfo: {
+    flex: 1,
+  },
+  albumName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  albumArtist: {
+    marginTop: 1,
+    fontSize: 11,
+    color: '#666',
+  },
+  musicPreferenceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  genreTag: {
+    backgroundColor: '#fba904',
+    borderRadius: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    margin: 3,
+  },
+  genreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
