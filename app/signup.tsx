@@ -5,12 +5,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
-import { app, auth } from "../firebaseConfig.js";
+import { app } from "../firebaseConfig.js";
 import { useRouter, Stack } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Font from 'expo-font'; // Sora SemiBold Font
-import { Checkbox } from 'react-native-paper'; // Import Checkbox for Profile Visibility
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated'; // Animation Library
+import * as Font from 'expo-font';
+import { Checkbox } from 'react-native-paper';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
+import * as Location from 'expo-location';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import Constants from 'expo-constants'; 
+import MapView, { Marker, Region } from 'react-native-maps';
+import 'react-native-get-random-values';
 
 // Loading Sora SemiBold Font
 async function loadFonts() {
@@ -81,6 +86,19 @@ export default function SignUp() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
   const [agePreference, setAgePreference] = useState<number>(0); // Age Preference Variable
   const router = useRouter();
+  const [currentLocationName, setCurrentLocationName] = useState('');
+  const [locationSelected, setLocationSelected] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    name: string;
+  } | null>(null);
+  const [region, setRegion] = useState({
+    latitude: 40.7128,
+    longitude: -74.0060,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
 
   // State variables to Store User Input for Animation 
   const landingSubtitleOpacity = useSharedValue(0);
@@ -89,19 +107,27 @@ export default function SignUp() {
   const subtitleTranslateY = useSharedValue(50);
 
   useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
+  
+      let location = await Location.getCurrentPositionAsync({});
+      setRegion({
+        ...region,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
 
-
+  useEffect(() => {
     landingSubtitleOpacity.value = withDelay(150, withSpring(1));
     landingSubtitleTranslateY.value = withDelay(150, withSpring(0));
     subtitleOpacity.value = withDelay(150, withSpring(1));
     subtitleTranslateY.value = withDelay(150, withSpring(0));
-
-    // if (step === 10) {
-    //   const timer = setTimeout(() => {
-    //     router.push("/login-signup");
-    //   }, 3000);
-    //   return () => clearTimeout(timer);
-    // }
   }, [step, router]);
 
   // START of Animated Styles
@@ -130,12 +156,14 @@ export default function SignUp() {
   // START of Jesus Donate Contribution 
   const handleSignUp = async () => {
     try {
+      console.log("Starting sign up process...");
       const auth = getAuth(app);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      console.log("User created:", user);
 
       const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
-      
+      console.log("Display name:", displayName);
       await updateProfile(user, {
         displayName: displayName
       });
@@ -157,8 +185,10 @@ export default function SignUp() {
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
+        location: selectedLocation?.name,
         uid: user.uid
       });
+      console.log("User document created successfully");
 
       // Firebase Error Handling
       setSuccessMessage("Sign up successful!");
@@ -198,7 +228,8 @@ export default function SignUp() {
         agePreference: { min: 21, max: 80 }, // automatically set age preference
         pronouns: pronouns,
         musicPreference: musicPreference,
-        matchIntention: matchIntention,
+        matchIntention: matchIntention, 
+        location: selectedLocation?.name,
         uid: userId
       }, { merge: true });
       
@@ -210,6 +241,57 @@ export default function SignUp() {
   };
   // END of Firebase Storing of User Data
   // END of Jesus Donate Contribution 
+
+
+  const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const addressComponents = data.results[0].address_components;
+        console.log(addressComponents);
+        const cityComponent = addressComponents.find(
+          (component: any) => component.types.includes('locality') || component.types.includes('administrative_area_level_3')
+        );
+        const stateComponent = addressComponents.find(
+          (component: any) => component.types.includes('administrative_area_level_1')
+        );
+        if (cityComponent && stateComponent) {
+          setCurrentLocationName(`${cityComponent.long_name}, ${stateComponent.short_name}`);
+          setLocationSelected(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+    }
+  }, []);
+  
+  const handleConfirmLocation = () => {
+    if (currentLocationName) {
+      setSelectedLocation({
+        latitude: region.latitude,
+        longitude: region.longitude,
+        name: currentLocationName
+      });
+      setLocationSelected(true);
+    }
+  };
+
+  const handleRegionChange = (newRegion: Region) => {
+    // Region is the current location of the map.
+    setRegion(newRegion);
+    // Is called when the region changes. Region is the current location of the map.
+    if (newRegion.latitude !== region.latitude && newRegion.longitude !== region.longitude) {
+      reverseGeocode(newRegion.latitude, newRegion.longitude);
+    }
+  };
+
+  const handleFinishSignUp = () => {
+    console.log("Finishing sign up...");
+    handleSignUp();
+  };
 
   // START Function to clear error message when user re-enters form
   // START of Mariann Grace Dizon Contribution
@@ -309,10 +391,22 @@ export default function SignUp() {
     else if (step === 10) {
       console.log("musicPreference:", musicPreference);
       if (musicPreference.length > 0) {
-        handleSignUp();
+        setStep(11);
       } else {
         setErrorMessage("Please select your music preference.");
       }
+    }
+    else if (step === 11) {
+      console.log("selectedLocation:", selectedLocation);
+      if (selectedLocation) {
+        setStep(12);
+      } else {
+        setErrorMessage("Please confirm a location before proceeding.");
+      }
+    }
+    else if (step === 12) {
+      console.log("Signing up user...");
+      handleFinishSignUp();
     }
   };
 
@@ -806,8 +900,44 @@ export default function SignUp() {
             )}
             {step === 11 && (
               <>
+                <Text style={styles.subtitle}>Where are you located?</Text>
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    region={region}
+                    onRegionChangeComplete={handleRegionChange}
+                  >
+                    <Marker coordinate={region} />
+                  </MapView>
+                  {currentLocationName && (
+                    <View style={styles.locationNameContainer}>
+                      <Text style={styles.locationNameText}>{currentLocationName}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity style={styles.confirmLocationButton} onPress={handleConfirmLocation}>
+                    <Text style={styles.confirmLocationButtonText}>Confirm Location</Text>
+                  </TouchableOpacity>
+                </View>
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                {locationSelected && (
+                  <>
+                    {/* Displays confirmed location */}
+                    <Text>My Location: {currentLocationName}</Text>
+                    <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                      <Text style={styles.buttonText}>Next</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </>
+            )}
+            {step === 12 && (
+              <>
                 <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
                 <Text style={styles.subtitleDescription}>Click the button below to finish signing up.</Text>
+                {/* Routes to the login page */}
+                <TouchableOpacity style={styles.button} onPress={handleNextStep}>
+                  <Text style={styles.buttonText}>Finish Sign Up</Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
@@ -1126,6 +1256,60 @@ const styles = StyleSheet.create({
   },
   selectedGenreButtonText: {
     color: '#FFFFFF',
+  },
+
+
+
+
+
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  map: {
+    width: '100%',
+    height: 300,
+  },
+  autocompleteContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+  },
+  autocompleteInput: {
+    fontSize: 16,
+  },
+  locationNameContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  locationNameText: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 10,
+    borderRadius: 5,
+    fontSize: 16,
+  },
+  confirmLocationButton: {
+    position: 'absolute',
+    bottom: 80,
+    alignSelf: 'center',
+    backgroundColor: '#fba904',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  confirmLocationButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  mapContainer: {
+    width: '100%',
+    height: 300,
   },
 });
 // END of Style Code
