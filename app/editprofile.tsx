@@ -271,15 +271,6 @@ export default function EditProfile() {
                 onRemoveArtist={handleRemoveArtist} 
                 selectedArtists={favoriteArtists} 
               />
-              {favoriteArtists.map((artist) => (
-                <View key={artist.id} style={styles.selectedArtistContainer}>
-                  <Image source={{ uri: artist.picture }} style={styles.artistImage} />
-                  <Text style={styles.artistName}>{artist.name}</Text>
-                  <TouchableOpacity onPress={() => handleRemoveArtist(artist.id)} style={styles.removeArtistButton}>
-                    <Text style={styles.removeArtistButtonText}>X</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
             </View>
 
             <View style={styles.inputContainer}>
@@ -405,10 +396,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
-  // If there's another 'artistImage' property, rename it, for example:
-  // artistImageAlt: {
-  //   // ... other properties
-  // },
   albumContainer: {
     marginTop: 10,
     alignItems: 'center',
@@ -467,18 +454,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#542f11',
-  },
-  removeArtistButton: {
-    backgroundColor: '#fba904',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeArtistButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
