@@ -220,13 +220,7 @@ export default function Profile() {
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Music Preference</Text>
               {musicPreference.length > 0 ? (
-                <View style={styles.musicPreferenceContainer}>
-                  {musicPreference.map((genre, index) => (
-                    <View key={index} style={styles.genreTag}>
-                      <Text style={styles.genreText}>{genre}</Text>
-                    </View>
-                  ))}
-                </View>
+                <Text style={styles.inputText}>{musicPreference.join(', ')}</Text>
               ) : (
                 <Text style={styles.inputText}>No music preferences set</Text>
               )}
@@ -345,7 +339,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 500,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -397,7 +391,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 10,
     color: '#333',
   },
   inputContent: {
@@ -498,21 +492,5 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontSize: 11,
     color: '#666',
-  },
-  musicPreferenceContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  genreTag: {
-    backgroundColor: '#fba904',
-    borderRadius: 15,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    margin: 3,
-  },
-  genreText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

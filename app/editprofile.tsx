@@ -304,6 +304,16 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Artist I'd Love to See Live</Text>
+              <TextInput
+                style={styles.input}
+                value={user.artistToSee}
+                onChangeText={(text) => handleInputChange('artistToSee', text)}
+                placeholder="Enter an artist you'd love to see live"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Describe your favorite concert experience and why</Text>
               <TextInput
                 style={styles.input}
