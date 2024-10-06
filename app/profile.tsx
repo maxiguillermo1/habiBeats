@@ -218,6 +218,23 @@ export default function Profile() {
         <View style={styles.content}>
           <View style={styles.inputContainer}>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Music Preference</Text>
+              {musicPreference.length > 0 ? (
+                <View style={styles.musicPreferenceContainer}>
+                  {musicPreference.map((genre, index) => (
+                    <View key={index} style={styles.genreTag}>
+                      <Text style={styles.genreText}>{genre}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.inputText}>No music preferences set</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Tune of the Month</Text>
               {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
                 <View style={styles.songContainer}>
@@ -229,17 +246,6 @@ export default function Profile() {
                 </View>
               ) : (
                 <Text style={styles.inputText}>No tune of the month set</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>My Favorite Performance</Text>
-              {favoritePerformance ? (
-                <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
-              ) : (
-                <Text style={styles.inputText}>No favorite performance set</Text>
               )}
             </View>
           </View>
@@ -279,6 +285,17 @@ export default function Profile() {
 
           <View style={styles.inputContainer}>
             <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>My Favorite Performance</Text>
+              {favoritePerformance ? (
+                <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
+              ) : (
+                <Text style={styles.inputText}>No favorite performance set</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>I Listen to Music to</Text>
               <Text style={styles.inputText}>{listenTo || 'Not set'}</Text>
             </View>
@@ -288,23 +305,6 @@ export default function Profile() {
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
               <Text style={styles.inputText}>{artistToSee || 'Not set'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Music Preference</Text>
-              {musicPreference.length > 0 ? (
-                <View style={styles.musicPreferenceContainer}>
-                  {musicPreference.map((genre, index) => (
-                    <View key={index} style={styles.genreTag}>
-                      <Text style={styles.genreText}>{genre}</Text>
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.inputText}>No music preferences set</Text>
-              )}
             </View>
           </View>
 
@@ -436,7 +436,6 @@ const styles = StyleSheet.create({
   songContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 90,
   },
   songTitle: {
     fontSize: 16,

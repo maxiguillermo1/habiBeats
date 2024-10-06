@@ -233,8 +233,54 @@ export default function EditProfile() {
         renderItem={() => (
           <View style={styles.content}>
             <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Music Preference</Text>
+              <View style={styles.genreContainer}>
+                {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
+                  <TouchableOpacity
+                    key={genre}
+                    style={[
+                      styles.genreButton,
+                      musicPreference.includes(genre) && styles.selectedGenreButton,
+                    ]}
+                    onPress={() => toggleMusicPreference(genre)}
+                  >
+                    <Text
+                      style={[
+                        styles.genreButtonText,
+                        musicPreference.includes(genre) && styles.selectedGenreButtonText,
+                      ]}
+                    >
+                      {genre}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Tune of the Month</Text>
               <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Favorite Artists</Text>
+              <SpotifySearch 
+                onSelectArtist={handleSelectArtist} 
+                onRemoveArtist={handleRemoveArtist} 
+                selectedArtists={favoriteArtists} 
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Favorite Album</Text>
+              <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
+              {favoriteAlbum && (
+                <View style={styles.albumContainer}>
+                  <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
+                  <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
+                  <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -277,52 +323,6 @@ export default function EditProfile() {
                 placeholder="Enter your favorite hangout spot"
                 multiline
               />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Artists</Text>
-              <SpotifySearch 
-                onSelectArtist={handleSelectArtist} 
-                onRemoveArtist={handleRemoveArtist} 
-                selectedArtists={favoriteArtists} 
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Album</Text>
-              <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
-              {favoriteAlbum && (
-                <View style={styles.albumContainer}>
-                  <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
-                  <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
-                  <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Music Preference</Text>
-              <View style={styles.genreContainer}>
-                {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
-                  <TouchableOpacity
-                    key={genre}
-                    style={[
-                      styles.genreButton,
-                      musicPreference.includes(genre) && styles.selectedGenreButton,
-                    ]}
-                    onPress={() => toggleMusicPreference(genre)}
-                  >
-                    <Text
-                      style={[
-                        styles.genreButtonText,
-                        musicPreference.includes(genre) && styles.selectedGenreButtonText,
-                      ]}
-                    >
-                      {genre}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
 
             {hasChanges && (
