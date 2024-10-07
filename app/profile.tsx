@@ -48,7 +48,6 @@ export default function Profile() {
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [favoriteAlbumData, setFavoriteAlbumData] = useState<Album | null>(null);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -127,18 +126,6 @@ export default function Profile() {
     };
 
     fetchUserData();
-
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true);
-    });
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-    });
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
   }, []);
 
   useEffect(() => {
@@ -307,7 +294,7 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomNavBarContainer, isKeyboardVisible && { paddingBottom: 0 }]}>
+      <View style={styles.bottomNavBarContainer}>
         <BottomNavBar />
       </View>
     </SafeAreaView>

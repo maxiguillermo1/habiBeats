@@ -64,17 +64,23 @@ export default function EditProfile() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
 
   const promptOptions = [
-    "What do you look for in a perfect event experience?",
     "Are you more of a front row or back row person at concerts? Why?",
-    "If you could have dinner with any musician, dead or alive, who would it be and why?",
-    "What's the most memorable concert you've ever attended?",
-    "If you could only listen to one album for the rest of your life, what would it be?",
     "How do you prepare for an event? Any special gear or outfits?",
+    "How do you usually find out about upcoming concerts or events?",
+    "If you could have dinner with any musician, dead or alive, who would it be and why?",
+    "If you could only listen to one album for the rest of your life, what would it be?",
+    "What do you look for in a perfect event experience?",
     "What's one event or concert you're still hoping to attend one day?",
-    "What's the next concert or event you're excited about?",
-    "What's the most underrated album you've ever listened to?",
+    "What’s one piece of advice you would give to someone attending their first concert or event?",
+    "What's one thing you always bring to an event that others might overlook?",
+    "What's the best concert or event you've attended alone, and why was it worth it?",
+    "What's the longest distance you've traveled to attend an event?",
+    "What's the most memorable concert you've ever attended?",
+    "What’s the most memorable merch or souvenir you’ve collected from an event?",
     "What's the most surprising thing you've seen happen at a live event?",
-    "What's your favorite post-event hangout spot or after-party?",
+    "What's the most underrated album you've ever listened to?",
+    "What's the next concert or event you're excited about?",
+    "What's your favorite post-event hangout spot or after-party?"
   ];
 
   const initialValues = useRef({
@@ -272,7 +278,7 @@ export default function EditProfile() {
   };
 
   const handleAddPrompt = () => {
-    if (prompts.length < 5) {
+    if (prompts.length < 8) {
       setPrompts([...prompts, { question: '', answer: '' }]);
       setHasChanges(true);
     }
@@ -301,7 +307,7 @@ export default function EditProfile() {
   };
 
   const handleBackPress = () => {
-    router.push('/profile');
+    router.back();
   };
 
   return (
@@ -385,7 +391,7 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/5)</Text>
+              <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/8)</Text>
               {prompts.map((prompt, index) => (
                 <View key={index} style={styles.promptContainer}>
                   <PromptSelector
@@ -405,7 +411,7 @@ export default function EditProfile() {
                   )}
                 </View>
               ))}
-              {prompts.length < 5 && (
+              {prompts.length < 8 && (
                 <TouchableOpacity style={styles.addPromptButton} onPress={handleAddPrompt}>
                   <Text style={styles.addPromptButtonText}>+</Text>
                 </TouchableOpacity>
@@ -450,6 +456,7 @@ const styles = StyleSheet.create({
     padding: 10,
     position: 'absolute',
     marginBottom: 10,
+    zIndex: 1,
   },
   headerTitle: {
     fontSize: 20,
