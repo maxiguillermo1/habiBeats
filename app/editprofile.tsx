@@ -2,12 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, Image, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth, db, storage } from '../firebaseConfig';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, deleteField } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import SearchSong from '../components/search-song';
 import SpotifySearch from '../components/SpotifySearch';
 import SpotifyAlbumSearch from '../components/SpotifyAlbumSearch';
+import { Picker } from '@react-native-picker/picker';
+import { PromptSelector } from '../components/PromptSelector';
+
+interface Prompt {
+  question: string;
+  answer: string;
+}
 
 interface Song {
   id: string;
@@ -48,6 +55,21 @@ export default function EditProfile() {
   const [favoriteAlbum, setFavoriteAlbum] = useState<Album | null>(null);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+
+  const promptOptions = [
+    "What do you look for in a perfect event experience?",
+    "Are you more of a front row or back row person at concerts? Why?",
+    "If you could have dinner with any musician, dead or alive, who would it be and why?",
+    "What's the most memorable concert you've ever attended?",
+    "If you could only listen to one album for the rest of your life, what would it be?",
+    "How do you prepare for an event? Any special gear or outfits?",
+    "What’s one event or concert you’re still hoping to attend one day?",
+    "What’s the next concert or event you’re excited about?",
+    "What's the most underrated album you've ever listened to?",
+    "What’s the most surprising thing you’ve seen happen at a live event?",
+    "What's your favorite post-event hangout spot or after-party?",
+  ];
 
   const initialValues = useRef({
     tuneOfMonth: null as Song | null,
@@ -118,6 +140,10 @@ export default function EditProfile() {
           }
 
           setMusicPreference(userData.musicPreference || []);
+          
+          // Fetch prompts from Firebase
+          const fetchedPrompts = userData.prompts || [];
+          setPrompts(Object.entries(fetchedPrompts).map(([question, answer]) => ({ question, answer: answer as string })));
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -142,6 +168,14 @@ export default function EditProfile() {
         imageUrl = await getDownloadURL(imageRef);
       }
 
+      // Prepare prompts data for Firebase
+      const promptsData = prompts.reduce((acc: { [key: string]: string }, prompt) => {
+        if (prompt.question && prompt.answer) {
+          acc[prompt.question] = prompt.answer;
+        }
+        return acc;
+      }, {});
+
       await updateDoc(userDocRef, {
         favoritePerformance: imageUrl,
         listenTo: user.listenTo,
@@ -150,10 +184,11 @@ export default function EditProfile() {
         nextConcert: user.nextConcert,
         unforgettableExperience: user.unforgettableExperience,
         favoriteAfterPartySpot: user.favoriteAfterPartySpot,
-        tuneOfMonth: JSON.stringify(tuneOfMonth),
+        tuneOfMonth: tuneOfMonth ? JSON.stringify(tuneOfMonth) : null,
         favoriteArtists: JSON.stringify(favoriteArtists),
         favoriteAlbum: favoriteAlbum ? JSON.stringify(favoriteAlbum) : null,
         musicPreference: musicPreference,
+        prompts: promptsData,
         updatedAt: new Date(),
       });
 
@@ -220,6 +255,42 @@ export default function EditProfile() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri);
       handleInputChange('favoritePerformance', result.assets[0].uri);
+    }
+  };
+
+  const handlePromptChange = (index: number, field: 'question' | 'answer', value: string) => {
+    const newPrompts = [...prompts];
+    newPrompts[index][field] = value;
+    setPrompts(newPrompts);
+    setHasChanges(true);
+  };
+
+  const handleAddPrompt = () => {
+    if (prompts.length < 5) {
+      setPrompts([...prompts, { question: '', answer: '' }]);
+      setHasChanges(true);
+    }
+  };
+
+  const handleRemovePrompt = async (index: number) => {
+    try {
+      const removedPrompt = prompts[index];
+      const newPrompts = prompts.filter((_, i) => i !== index);
+      setPrompts(newPrompts);
+      setHasChanges(true);
+
+      // Remove the prompt from Firebase
+      if (removedPrompt.question) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('User not authenticated');
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userDocRef, {
+          [`prompts.${removedPrompt.question}`]: deleteField()
+        });
+      }
+    } catch (error) {
+      console.error('Error removing prompt:', error);
+      Alert.alert('Error', 'Failed to remove prompt');
     }
   };
 
@@ -297,47 +368,32 @@ export default function EditProfile() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>I Listen to Music to</Text>
-              <TextInput
-                style={styles.input}
-                value={user.listenTo}
-                onChangeText={(text) => handleInputChange('listenTo', text)}
-                placeholder="Enter your music listening reasons"
-              />
+              <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/5)</Text>
+              {prompts.map((prompt, index) => (
+                <View key={index} style={styles.promptContainer}>
+                  <PromptSelector
+                    value={prompt.question}
+                    onSelect={(question) => handlePromptChange(index, 'question', question)}
+                    onRemove={() => handleRemovePrompt(index)}
+                    options={promptOptions}
+                  />
+                  {prompt.question && (
+                    <TextInput
+                      style={styles.promptInput}
+                      value={prompt.answer}
+                      onChangeText={(text) => handlePromptChange(index, 'answer', text)}
+                      placeholder="Write your answer here"
+                      multiline
+                    />
+                  )}
+                </View>
+              ))}
+              {prompts.length < 5 && (
+                <TouchableOpacity style={styles.addPromptButton} onPress={handleAddPrompt}>
+                  <Text style={styles.addPromptButtonText}>+</Text>
+                </TouchableOpacity>
+              )}
             </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Artist I'd Love to See Live</Text>
-              <TextInput
-                style={styles.input}
-                value={user.artistToSee}
-                onChangeText={(text) => handleInputChange('artistToSee', text)}
-                placeholder="Enter an artist you'd love to see live"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Describe your favorite concert experience and why</Text>
-              <TextInput
-                style={styles.input}
-                value={user.unforgettableExperience}
-                onChangeText={(text) => handleInputChange('unforgettableExperience', text)}
-                placeholder="Describe your experience"
-                multiline
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>What's your favorite post-event hangout spot or after-party?</Text>
-              <TextInput
-                style={styles.input}
-                value={user.favoriteAfterPartySpot}
-                onChangeText={(text) => handleInputChange('favoriteAfterPartySpot', text)}
-                placeholder="Enter your favorite hangout spot"
-                multiline
-              />
-            </View>
-
             {hasChanges && (
               <View style={styles.saveButtonContainer}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -407,7 +463,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden', // Add this line
+    overflow: 'hidden',
   },
   imageInput: {
     width: '100%',
@@ -415,7 +471,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    resizeMode: 'cover', // Add this line
+    resizeMode: 'cover',
   },
   imageInputText: {
     fontSize: 18,
@@ -505,5 +561,51 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#542f11',
+  },
+  promptContainer: {
+    marginBottom: 20,
+  },
+  promptPicker: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  promptInput: {
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    color: '#542f11',
+    minHeight: 100,
+  },
+  promptSelectorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  removePromptButton: {
+    backgroundColor: '#ff6b6b',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
+  removePromptButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  addPromptButton: {
+    backgroundColor: '#fba904',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+  },
+  addPromptButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });

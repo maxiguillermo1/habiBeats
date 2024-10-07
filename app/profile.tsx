@@ -30,6 +30,11 @@ interface Artist {
   picture: string;
 }
 
+interface Prompt {
+  question: string;
+  answer: string;
+}
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
@@ -41,81 +46,84 @@ export default function Profile() {
 
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [favoritePerformance, setFavoritePerformance] = useState('');
-  const [listenTo, setListenTo] = useState('');
   const [favoriteAlbumData, setFavoriteAlbumData] = useState<Album | null>(null);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
-  const [artistToSee, setArtistToSee] = useState('');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
-  const [nextConcert, setNextConcert] = useState('');
-  const [unforgettableExperience, setUnforgettableExperience] = useState('');
-  const [favoriteAfterPartySpot, setFavoriteAfterPartySpot] = useState('');
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('User not authenticated');
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            setUser({
+              name: `${userData.firstName} ${userData.lastName}`,
+              location: userData.location || 'Location not set',
+              profileImageUrl: userData.profileImageUrl || '',
+              gender: userData.gender || '',
+            });
 
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const userData = docSnapshot.data();
-          setUser({
-            name: `${userData.firstName} ${userData.lastName}`,
-            location: userData.location || 'Location not set',
-            profileImageUrl: userData.profileImageUrl || '',
-            gender: userData.gender || '',
-          });
-
-          if (userData.tuneOfMonth) {
-            try {
-              const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
-              setTuneOfMonth(parsedTuneOfMonth);
-              setTuneOfMonthLoaded(true);
-            } catch (error) {
-              console.error('Error parsing tuneOfMonth:', error);
+            if (userData.tuneOfMonth) {
+              try {
+                const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
+                setTuneOfMonth(parsedTuneOfMonth);
+                setTuneOfMonthLoaded(true);
+              } catch (error) {
+                console.error('Error parsing tuneOfMonth:', error);
+                setTuneOfMonth(null);
+              }
+            } else {
               setTuneOfMonth(null);
             }
-          } else {
-            setTuneOfMonth(null);
-          }
 
-          if (userData.favoriteAlbum) {
-            try {
-              const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
-              setFavoriteAlbumData(parsedFavoriteAlbum);
-            } catch (error) {
-              console.error('Error parsing favoriteAlbum:', error);
+            if (userData.favoriteAlbum) {
+              try {
+                const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
+                setFavoriteAlbumData(parsedFavoriteAlbum);
+              } catch (error) {
+                console.error('Error parsing favoriteAlbum:', error);
+                setFavoriteAlbumData(null);
+              }
+            } else {
               setFavoriteAlbumData(null);
             }
-          } else {
-            setFavoriteAlbumData(null);
-          }
 
-          if (userData.favoriteArtists) {
-            try {
-              const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
-              setFavoriteArtists(parsedFavoriteArtists);
-            } catch (error) {
-              console.error('Error parsing favoriteArtists:', error);
+            if (userData.favoriteArtists) {
+              try {
+                const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
+                setFavoriteArtists(parsedFavoriteArtists);
+              } catch (error) {
+                console.error('Error parsing favoriteArtists:', error);
+                setFavoriteArtists([]);
+              }
+            } else {
               setFavoriteArtists([]);
             }
-          } else {
-            setFavoriteArtists([]);
+
+            setFavoritePerformance(userData.favoritePerformance || '');
+            setMusicPreference(userData.musicPreference || []);
+
+            // Fetch prompts from Firebase
+            const fetchedPrompts = userData.prompts || {};
+            const promptsArray = Object.entries(fetchedPrompts).map(([question, answer]) => ({
+              question,
+              answer: answer as string
+            }));
+            setPrompts(promptsArray);
           }
+        });
 
-          setFavoritePerformance(userData.favoritePerformance || '');
-          setListenTo(userData.listenTo || '');
-          setArtistToSee(userData.artistToSee || '');
-          setMusicPreference(userData.musicPreference || []);
-          setNextConcert(userData.nextConcert || '');
-          setUnforgettableExperience(userData.unforgettableExperience || '');
-          setFavoriteAfterPartySpot(userData.favoriteAfterPartySpot || '');
-        }
-      });
-
-      return () => unsubscribe();
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
     };
 
     fetchUserData();
@@ -288,40 +296,14 @@ export default function Profile() {
             </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>I Listen to Music to</Text>
-              <Text style={styles.inputText}>{listenTo || 'Not set'}</Text>
+          {prompts.map((prompt, index) => (
+            <View key={index} style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>{prompt.question}</Text>
+                <Text style={styles.inputText}>{prompt.answer}</Text>
+              </View>
             </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>If I Could See Any Artist, Dead or Alive, It Would Be</Text>
-              <Text style={styles.inputText}>{artistToSee || 'Not set'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Next Concert or Event</Text>
-              <Text style={styles.inputText}>{nextConcert || 'No upcoming concert set'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Unforgettable Concert Experience</Text>
-              <Text style={styles.inputText}>{unforgettableExperience || 'No experience shared'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Favorite Post-Event Hangout Spot</Text>
-              <Text style={styles.inputText}>{favoriteAfterPartySpot || 'No spot shared'}</Text>
-            </View>
-          </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -491,6 +473,18 @@ const styles = StyleSheet.create({
   albumArtist: {
     marginTop: 1,
     fontSize: 11,
+    color: '#666',
+  },
+  promptContainer: {
+    marginBottom: 1,
+  },
+  promptQuestion: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  promptAnswer: {
+    fontSize: 20,
     color: '#666',
   },
 });
