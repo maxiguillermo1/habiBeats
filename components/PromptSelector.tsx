@@ -1,3 +1,6 @@
+// PromptSelector.tsx
+// Mariann Grace Dizon
+
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 

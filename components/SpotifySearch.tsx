@@ -1,3 +1,6 @@
+// SpotifySearch.tsx
+// Mariann Grace Dizon
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, StyleSheet } from 'react-native';
 import axios from 'axios';

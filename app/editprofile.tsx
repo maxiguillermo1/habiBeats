@@ -1,3 +1,6 @@
+// editprofile.tsx
+// Mariann Grace Dizon
+
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, Image, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
