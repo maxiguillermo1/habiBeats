@@ -287,8 +287,11 @@ export default function EditProfile() {
               <Text style={styles.inputLabel}>Favorite Performance</Text>
               <TouchableOpacity onPress={pickImage} style={styles.imageInputPlaceholder}>
                 <Text style={styles.imageInputText}>Choose a Photo</Text>
-                {image && (
-                  <Image source={{ uri: image }} style={styles.imageInput} />
+                {(image || user.favoritePerformance) && (
+                  <Image 
+                    source={{ uri: image || user.favoritePerformance }} 
+                    style={styles.imageInput} 
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -396,23 +399,23 @@ const styles = StyleSheet.create({
     color: '#542f11',
   },
   imageInputPlaceholder: {
-    width: '100%',
-    height: 250,
+    width: 200,
+    height: 200,
     backgroundColor: '#f0f0f0',
     borderColor: '#fff',
     borderRadius: 10,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+    overflow: 'hidden', // Add this line
   },
   imageInput: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
     position: 'absolute',
     top: 0,
     left: 0,
+    resizeMode: 'cover', // Add this line
   },
   imageInputText: {
     fontSize: 18,
