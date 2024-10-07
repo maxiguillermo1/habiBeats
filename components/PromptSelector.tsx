@@ -58,9 +58,9 @@ export const PromptSelector: React.FC<PromptSelectorProps> = ({ value, onSelect,
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
   },
   selectButton: {
     flex: 1,
@@ -85,7 +85,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#fff8f0',
+    marginTop: 40,
   },
   optionItem: {
     backgroundColor: '#fff',
@@ -98,11 +99,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   closeButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#fc6c85',
     borderRadius: 20,
     padding: 10,
     elevation: 2,
-    marginTop: 15,
+    marginTop: 20,
+    marginBottom: 40,
   },
   closeButtonText: {
     color: 'white',

@@ -10,6 +10,8 @@ import SpotifySearch from '../components/SpotifySearch';
 import SpotifyAlbumSearch from '../components/SpotifyAlbumSearch';
 import { Picker } from '@react-native-picker/picker';
 import { PromptSelector } from '../components/PromptSelector';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Prompt {
   question: string;
@@ -38,6 +40,7 @@ interface Album {
 
 export default function EditProfile() {
   const router = useRouter();
+  const navigation = useNavigation();
   const [user, setUser] = useState({
     favoritePerformance: '',
     listenTo: '',
@@ -64,10 +67,10 @@ export default function EditProfile() {
     "What's the most memorable concert you've ever attended?",
     "If you could only listen to one album for the rest of your life, what would it be?",
     "How do you prepare for an event? Any special gear or outfits?",
-    "What’s one event or concert you’re still hoping to attend one day?",
-    "What’s the next concert or event you’re excited about?",
+    "What's one event or concert you're still hoping to attend one day?",
+    "What's the next concert or event you're excited about?",
     "What's the most underrated album you've ever listened to?",
-    "What’s the most surprising thing you’ve seen happen at a live event?",
+    "What's the most surprising thing you've seen happen at a live event?",
     "What's your favorite post-event hangout spot or after-party?",
   ];
 
@@ -294,15 +297,26 @@ export default function EditProfile() {
     }
   };
 
+  const handleBackPress = () => {
+    router.push('/profile');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.push('/profile')}>
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
       <FlatList
         data={[{ key: 'content' }]}
         renderItem={() => (
           <View style={styles.content}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={handleBackPress}
+              >
+                <Ionicons name="chevron-back-outline" size={24} color="black" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Edit Profile</Text>
+            </View>
+            
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Music Preference</Text>
               <View style={styles.genreContainer}>
@@ -409,126 +423,53 @@ export default function EditProfile() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
   },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    padding: 10,
-    backgroundColor: '#fba904',
-    borderRadius: 5,
-    zIndex: 1,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
   },
   content: {
     flex: 1,
-    marginTop: 50,
+    marginLeft: 30,
+    marginRight: 30,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  backButton: {
+    padding: 10,
+    position: 'absolute',
+    marginBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#542f11',
+    textAlign: 'center',
+    flex: 1,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 1,
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#fba904',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-    color: '#542f11',
-  },
-  imageInputPlaceholder: {
-    width: 200,
-    height: 200,
-    backgroundColor: '#f0f0f0',
-    borderColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  imageInput: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    resizeMode: 'cover',
-  },
-  imageInputText: {
-    fontSize: 18,
-    color: '#999',
-    zIndex: 1,
-  },
-  saveButtonContainer: {
     marginTop: 20,
-    alignItems: 'center',
-  },
-  saveButton: {
-    backgroundColor: '#79ce54',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  artistContainer: {
-    marginTop: 10,
-  },
-  artistText: {
-    fontSize: 16,
-    color: '#542f11',
-  },
-  artistImage: {
-    width: 50,
-    height: 50,
-  },
-  albumContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  albumImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
     marginBottom: 10,
-  },
-  albumName: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#542f11',
-  },
-  albumArtist: {
-    fontSize: 14,
-    color: '#666',
   },
   genreContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   genreButton: {
     backgroundColor: 'rgba(55,189,213,0.2)',
@@ -542,12 +483,115 @@ const styles = StyleSheet.create({
     backgroundColor: '#fba904',
   },
   genreButtonText: {
-    color: '#000',
+    color: '#542f11',
     fontSize: 14,
     fontWeight: '600',
   },
   selectedGenreButtonText: {
     color: '#FFFFFF',
+  },
+  imageInputPlaceholder: {
+    width: 200,
+    height: 200,
+    backgroundColor: '#f0f0f0',
+    borderColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    alignSelf: 'center', // Center horizontally
+    marginVertical: 10, // Add some vertical margin
+  },
+  imageInputText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    zIndex: 1,
+    textAlign: 'center', // Center the text
+  },
+  imageInput: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    resizeMode: 'contain', // Change to 'contain' to ensure the entire image is visible
+    borderRadius: 10,
+  },
+  promptContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  promptInput: {
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    color: '#542f11',
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  addPromptButton: {
+    backgroundColor: '#fba904',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  addPromptButtonText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  saveButtonContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#79ce54',
+    paddingVertical: 15,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  albumContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  albumImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  albumName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#542f11',
+    marginTop: 10,
+  },
+  albumArtist: {
+    fontSize: 14,
+    color: '#666',
+  },
+  artistContainer: {
+    marginTop: 10,
+  },
+  artistText: {
+    fontSize: 16,
+    color: '#542f11',
+  },
+  artistImage: {
+    width: 50,
+    height: 50,
   },
   selectedArtistContainer: {
     flexDirection: 'row',
@@ -562,22 +606,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#542f11',
   },
-  promptContainer: {
-    marginBottom: 20,
-  },
   promptPicker: {
     backgroundColor: '#fff',
     borderRadius: 8,
     marginBottom: 10,
-  },
-  promptInput: {
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-    color: '#542f11',
-    minHeight: 100,
   },
   promptSelectorContainer: {
     flexDirection: 'row',
@@ -594,18 +626,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  addPromptButton: {
-    backgroundColor: '#fba904',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-  },
-  addPromptButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+  input: {
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    color: '#542f11',
   },
 });
