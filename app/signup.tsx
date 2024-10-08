@@ -88,6 +88,8 @@ export default function SignUp() {
   const router = useRouter();
   const [currentLocationName, setCurrentLocationName] = useState('');
   const [locationSelected, setLocationSelected] = useState(false);
+  const [displayLocation, setDisplayLocation] = useState<string>(''); // Display Location Variable
+  const [locationVisible, setLocationVisible] = useState<boolean>(true); // Location Visibility Variable
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -163,6 +165,7 @@ export default function SignUp() {
       console.log("User created:", user);
 
       const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
+      setDisplayLocation(`${locationVisible ? selectedLocation?.name : 'N/A'}`); // Checks for Location Visibility Boolean
       console.log("Display name:", displayName);
       await updateProfile(user, {
         displayName: displayName
@@ -186,6 +189,8 @@ export default function SignUp() {
         musicPreference: musicPreference,
         matchIntention: matchIntention,
         location: selectedLocation?.name,
+        displayLocation: `${locationVisible ? selectedLocation?.name : 'N/A'}`,
+        locationVisible: locationVisible,
         uid: user.uid
       });
       console.log("User document created successfully");
@@ -223,6 +228,7 @@ export default function SignUp() {
         displayName: lastNameVisible ? `${firstName} ${lastName}` : firstName,
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
+        locationVisible: locationVisible,
         gender: gender,
         genderPreference: genderPreference,
         agePreference: { min: 21, max: 80 }, // automatically set age preference
@@ -230,6 +236,7 @@ export default function SignUp() {
         musicPreference: musicPreference,
         matchIntention: matchIntention, 
         location: selectedLocation?.name,
+        displayLocation: `${locationVisible ? selectedLocation?.name : 'N/A'}`,
         uid: userId
       }, { merge: true });
       
@@ -928,6 +935,23 @@ export default function SignUp() {
                     </TouchableOpacity>
                   </>
                 )}
+                {/* Checkbox for last name visibility */}
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => setLocationVisible(!locationVisible)}
+                  >
+                    <Checkbox
+                      status={locationVisible ? 'checked' : 'unchecked'}
+                      onPress={() => setLocationVisible(!locationVisible)}
+                      color="#fba904"
+                    />
+                    {locationVisible && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={styles.checkboxLabel}>location visible on profile</Text>
+                </View>
               </>
             )}
             {step === 12 && (

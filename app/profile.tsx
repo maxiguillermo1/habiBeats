@@ -63,8 +63,8 @@ export default function Profile() {
           if (docSnapshot.exists()) {
             const userData = docSnapshot.data();
             setUser({
-              name: `${userData.firstName} ${userData.lastName}`,
-              location: userData.location || 'Location not set',
+              name: userData.displayName || `${userData.firstName} ${userData.lastName}`,
+              location: userData.displayLocation || 'Location not set',
               profileImageUrl: userData.profileImageUrl || '',
               gender: userData.gender || '',
             });

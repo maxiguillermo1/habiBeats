@@ -20,9 +20,9 @@ const Settings = () => {
   const auth = getAuth();
 
   // Existing state variables
-  const [showLastName, setShowLastName] = useState(true);
-  const [showLocation, setShowLocation] = useState(true);
-  const [showMyEvents, setShowMyEvents] = useState(true);
+  const [lastNameVisible, setLastNameVisible] = useState(true);
+  const [locationVisible, setLocationVisible] = useState(true);
+  const [myEventsVisible, setMyEventsVisible] = useState(true);
 
   // New state variables from profilesettings.tsx
   const [profileImage, setProfileImage] = useState<string>('');
@@ -69,11 +69,13 @@ const Settings = () => {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setName(`${userData.firstName} ${userData.lastName}`);
-        setLocation(userData.location || 'Location not set');
+        setName(userData.displayName || `${userData.firstName} ${userData.lastName}`);
+        setLocation(userData.displayLocation || 'Location not set');
         setProfileImage(userData.profileImageUrl || '');
         setUserGender(userData.gender || 'other');
-        console.log('Fetched user gender:', userData.gender); // Add this line
+        setLastNameVisible(userData.lastNameVisible !== false); // Default to true if not set
+        setLocationVisible(userData.locationVisible !== false); // Default to true if not set
+        console.log('Fetched user gender:', userData.gender);
       }
     }
   };
@@ -369,6 +371,40 @@ const Settings = () => {
     // Implement logic to edit display name
   };
 
+  // Toggle last name visibility
+  // Jesus Donate
+  const handlelastNameToggle = async (value: boolean) => {
+    console.log('Show last name toggle value:', value);
+    setLastNameVisible(value);
+
+    // Only runs if the user is authenticated
+    if (auth.currentUser) {
+
+      // Gets the first and last name of the user
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      let firstName = '';
+      let lastName = '';
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        firstName = userData.firstName || '';
+        lastName = userData.lastName || '';
+      }
+
+      // Updates the user's last name visibility and display name in user's document
+      try {
+        await updateDoc(userDocRef, {
+          lastName: value,
+          displayName: value ? `${firstName} ${lastName}` : firstName
+        });
+        setName(value ? `${firstName} ${lastName}` : firstName);
+        console.log('Show last name preference updated successfully');
+      } catch (error) {
+        console.error('Error updating show last name preference:', error);
+      }
+    }
+  };
+
   const handleEditProfilePicture = () => {
     // Implement logic to edit profile picture
   };
@@ -377,31 +413,71 @@ const Settings = () => {
     // Implement logic to edit location
   };
 
+  // Toggle location visibility
+  // Jesus Donate
+  const handleShowLocationToggle = async (value: boolean) => {
+    setLocationVisible(value);
+
+    // Only runs if the user is authenticated
+    if (auth.currentUser) {
+
+      // Gets the location of the user
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      let location = '';
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        location = userData.location || 'N/A';
+      }
+
+      // Updates the user's location visibility
+      try {
+        await updateDoc(userDocRef, {
+          showLocation: value,
+          displayLocation: value ? `${location}` : 'N/A'
+        });
+        setLocation(value ? `${location}` : 'N/A');
+        console.log('Show location preference updated successfully');
+      } catch (error) {
+        console.error('Error updating show location preference:', error);
+      }
+    }
+  };
+
   // Update this function
   const handleBackPress = () => {
     navigation.goBack();
   };
 
+  // Jesus Donate - Display Name is used for the user's display name
   const handleSaveNameChange = async () => {
-    setName(tempName);
+    // Changes name, even if is authenticated or not
+    
     setIsEditingName(false);
+    let firstName = '';
+    let lastName = '';
     // Update name in Firestore
     if (auth.currentUser) {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       const nameParts = tempName.split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ');
+      firstName = nameParts[0];
+      lastName = nameParts.slice(1).join(' ');
       await updateDoc(userDocRef, {
         firstName: firstName,
         lastName: lastName,
-        displayName: tempName
+        // If the user has their last name hidden, then the display name is just the first name
+        displayName: lastNameVisible ? tempName : firstName
       });
+      // Update the name state with the new display name
     }
+
+    setName(lastNameVisible ? tempName : firstName);
+    console.log('Inside handleSaveNameChange:', lastName, lastName ? tempName : firstName);
   };
 
   const handleSaveLocationChange = async () => {
     if (tempLocation) {
-      setLocation(tempLocation);
+      setLocation(locationVisible ? tempLocation : 'N/A');
       setIsEditingLocation(false);
 
       // Save the new location to Firestore
@@ -409,7 +485,8 @@ const Settings = () => {
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
         try {
           await updateDoc(userDocRef, {
-            location: tempLocation
+            location: tempLocation,
+            displayLocation: locationVisible ? tempLocation : 'N/A'
           });
           console.log('Location updated successfully in Firestore');
         } catch (error) {
@@ -472,7 +549,7 @@ const Settings = () => {
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingName(true)}>
-          <Text style={styles.settingTitle}>Change Display Name</Text>
+          <Text style={styles.settingTitle}>Change Name</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
@@ -518,19 +595,19 @@ const Settings = () => {
 
         <View style={styles.settingItem}>
           <Text style={styles.settingTitle}>Show Last Name</Text>
-          <Switch value={showLastName} onValueChange={setShowLastName} />
+          <Switch value={lastNameVisible} onValueChange={handlelastNameToggle} />
         </View>
         <View style={styles.divider} />
 
         <View style={styles.settingItem}>
           <Text style={styles.settingTitle}>Show Location</Text>
-          <Switch value={showLocation} onValueChange={setShowLocation} />
+          <Switch value={locationVisible} onValueChange={handleShowLocationToggle} />
         </View>
         <View style={styles.divider} />
 
         <View style={styles.settingItem}>
           <Text style={styles.settingTitle}>Show My Events</Text>
-          <Switch value={showMyEvents} onValueChange={setShowMyEvents} />
+          <Switch value={myEventsVisible} onValueChange={setMyEventsVisible} />
         </View>
         <View style={styles.divider} />
 
@@ -790,12 +867,12 @@ const Settings = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Display Name</Text>
+            <Text style={styles.modalTitle}>Change Name</Text>
             <TextInput
               style={styles.input}
               value={tempName}
               onChangeText={setTempName}
-              placeholder="Enter new display name"
+              placeholder="Enter new name"
             />
             <TouchableOpacity style={styles.button} onPress={handleSaveNameChange}>
               <Text style={styles.buttonText}>Save</Text>

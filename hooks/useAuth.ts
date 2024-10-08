@@ -23,7 +23,6 @@ interface UserData {
   matchIntention: string;
   musicPreference: string[];
   pronounsVisible: boolean;
-  lastNameVisible: boolean;
   profileImageUrl: string;
   tuneOfMonth: string;
   favoritePerformance: string;
@@ -31,6 +30,10 @@ interface UserData {
   favoriteMusicArtists: string;
   favoriteAlbum: string;
   artistToSee: string;
+  displayLocation: string;
+  lastNameVisible: boolean;
+  locationVisible: boolean;
+  myEventsVisible: boolean;
 
    // Reyna Aguirre:HashMap to store user matches with their status (liked or disliked)
    matches: {
