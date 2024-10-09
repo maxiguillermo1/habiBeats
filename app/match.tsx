@@ -77,10 +77,31 @@ const Match = () => {
 
         const fetchedUsers = await fetchCompatibleUsers();
         console.log("FETCHED USERS:", fetchedUsers.map(user => user.displayName));
+        
+        const mutuallyCompatibleUsers = await Promise.all(
+          fetchedUsers.map(async (user) => {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            const userData = userDocSnap.data() as User;
+    
+            // Check if `user` has interacted with `currentUser`
+            const currentUserMatchStatus = userData.matches?.[currentUser.uid];
+            
+            // Only include users who have either not interacted with the current user or liked them
+            if (!currentUserMatchStatus || currentUserMatchStatus === "liked") {
+              console.log(`${user.displayName} is mutually compatible.`);
+              return user;
+            } else {
+              console.log(`${user.displayName} is not mutually compatible, skipping.`);
+              return null;
+            }
+          })
+        );
+        const compatibleUsers = mutuallyCompatibleUsers.filter((user): user is User => user !== null);
         setCompatibleUsers(fetchedUsers); // fetch compatible users using the algorithm
 
-        if (fetchedUsers.length > 0) {
-          setUser2(fetchedUsers[0]);
+        if (compatibleUsers.length > 0) {
+          setUser2(compatibleUsers[0]);
           setCurrentIndex(0);  // Start at the first user in compatibleUsers
           setNoMoreUsers(false);
         } else {
@@ -96,8 +117,27 @@ const Match = () => {
     // START of fetch a random user (user2) contribution
     const fetchNextUser = async () => {
       if (currentIndex < compatibleUsers.length - 1) {
-        setCurrentIndex(prevIndex => prevIndex + 1);
-        setUser2(compatibleUsers[currentIndex + 1]);
+        let nextIndex = currentIndex + 1;
+        let nextUser = compatibleUsers[nextIndex];
+    
+        // Retrieve `user2`'s data to check interaction
+        const db = getFirestore(app);
+        const userDocRef = doc(db, "users", nextUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        const nextUserData = userDocSnap.data() as User;
+    
+        // Check if `user2` has liked or disliked the current user
+        const currentUserMatchStatus = user1?.uid ? nextUserData.matches?.[user1.uid] : undefined;
+        const isMutuallyCompatible = !currentUserMatchStatus || currentUserMatchStatus === "liked";
+    
+        if (isMutuallyCompatible) {
+          setCurrentIndex(nextIndex);
+          setUser2(nextUser);
+        } else {
+          // Skip to the next user if not mutually compatible
+          setCurrentIndex(prevIndex => prevIndex + 1);
+          fetchNextUser();
+        }
       } else {
         setUser2(null);
         setNoMoreUsers(true);
@@ -127,7 +167,7 @@ const Match = () => {
     if (user2) {
       setLikeButtonColor('#fc6c85'); // Change to pink when liked
       setShowMatchModal(true);
-      animateModal(true);
+      // animateModal(true);
 
       console.log("heart pressed");
   
@@ -136,6 +176,30 @@ const Match = () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
         await updateUserMatch(currentUser.uid, user2.uid, "liked");
+      }
+
+      // check if user2 has liked user1
+      const db = getFirestore(app);
+      const user2DocRef = doc(db, "users", user2.uid);
+      const user2DocSnap = await getDoc(user2DocRef);
+
+      if (user2DocSnap.exists()) {
+        const user2Data = user2DocSnap.data() as User;
+        const user2MatchStatus = currentUser ? user2Data.matches?.[currentUser.uid] : undefined;
+
+        // If both users liked each other, show the match modal
+        if (user2MatchStatus === "liked" && currentUser) {
+          console.log(`It's a match! ${currentUser.uid} and ${user2.uid} liked each other.`);
+          setShowMatchModal(true);
+          animateModal(true);
+        } else {
+          console.log(`No mutual like yet. ${user2.uid} has not liked ${currentUser?.uid}`);
+          animateModal(false);
+          // fetchNextUser();
+          setLikeButtonColor('#1E1E1E');
+        }
+      } else {
+        console.error("User2 document not found in Firestore.");
       }
     }
   };
@@ -244,7 +308,7 @@ const Match = () => {
           <TouchableOpacity 
             style={[styles.actionButton, styles.dislikeButton, { backgroundColor: 'rgba(255, 0, 0, 0.2)' }]} // Light red background for testing
             onPress={() => {
-              console.log("Close button pressed"); 
+              // console.log("Close button pressed"); 
               handleClosePress();
             }}
           >
@@ -258,7 +322,7 @@ const Match = () => {
           <TouchableOpacity 
             style={[styles.actionButton, styles.likeButton, { backgroundColor: 'rgba(0, 255, 0, 0.2)' }]} // Light green background for testing
             onPress={() => {
-              console.log("Heart button pressed");
+              // console.log("Heart button pressed");
               handleHeartPress();
             }}
           >
