@@ -21,6 +21,9 @@ export interface User {
     latitude?: number;  // optional if already geocoded
     longitude?: number; // optional if already geocoded
     favoritePerformance: string;
+    matches?: {
+      [uid: string]: "liked" | "disliked";
+    };
   }
   // function structure for compatibility
   // 1. gender compatibility
@@ -38,7 +41,7 @@ export interface User {
   // 1. gender compatibility
   export const isGenderCompatible = (user1: User, user2: User): boolean => {
     if (!user1?.gender || !user2?.gender || !user1?.genderPreference || !user2?.genderPreference) {
-      console.log('Gender compatibility: false (missing data)');
+      // console.log('Gender compatibility: false (missing data)');
       return false;
     }
     const user1Compatible =
@@ -47,33 +50,33 @@ export interface User {
       user2.genderPreference === "both" || user2.genderPreference === user1.gender;
   
     const result = user1Compatible && user2Compatible;
-    console.log(`Gender compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
+    // console.log(`Gender compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result;
   };
 
   // 2. age compatibility
   export const isAgeCompatible = (user1: User, user2: User): boolean => {
     if (!user1?.age || !user2?.age || !user1?.agePreference || !user2?.agePreference) {
-      console.log('Age compatibility: false (missing data)');
+      // console.log('Age compatibility: false (missing data)');
       return false;
     }
     const user1AgeInRange = user2.age >= user1.agePreference.min && user2.age <= user1.agePreference.max;
     const user2AgeInRange = user1.age >= user2.agePreference.min && user1.age <= user2.agePreference.max;
   
     const result = user1AgeInRange && user2AgeInRange;
-    console.log(`Age compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
+    // console.log(`Age compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result;
   };
 
   // 3. music compatibility
   export const isMusicCompatible = (user1: User, user2: User): boolean => {
     if (!user1?.musicPreference || !user2?.musicPreference) {
-      console.log('Music compatibility: false (missing data)');
+      // console.log('Music compatibility: false (missing data)');
       return false;
     }
     const sharedGenres = user1.musicPreference.filter(genre => user2.musicPreference.includes(genre));
     const result = sharedGenres.length > 0;
-    console.log(`Music compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
+    // console.log(`Music compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result; // true if they share at least one music genre overlaps between users
   };
 
@@ -118,20 +121,20 @@ export interface User {
   // check if two users are within a 50-mile radius
   export const isLocationSimilar = async (user1: User, user2: User): Promise<boolean> => {
     if (!user1?.location || !user2?.location) {
-      console.log('Location similarity: false (missing data)');
+      // console.log('Location similarity: false (missing data)');
       return false;
     }
     let user1LatLon = user1.latitude && user1.longitude ? { latitude: user1.latitude, longitude: user1.longitude } : await getLatLonFromLocation(user1.location);
     let user2LatLon = user2.latitude && user2.longitude ? { latitude: user2.latitude, longitude: user2.longitude } : await getLatLonFromLocation(user2.location);
   
     if (!user1LatLon || !user2LatLon) {
-      console.log('Location similarity: false (unable to get coordinates)');
+      // console.log('Location similarity: false (unable to get coordinates)');
       return false;
     }
   
     const distance = haversineDistance(user1LatLon.latitude, user1LatLon.longitude, user2LatLon.latitude, user2LatLon.longitude);
     const result = distance <= 50;
-    console.log(`Location similarity for ${user1.displayName} and ${user2.displayName}: ${result}`);
+    // console.log(`Location similarity for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result; // true if distance is less than 50 miles
   };
 
@@ -139,11 +142,11 @@ export interface User {
   // 5. match intention compatibility
   export const isMatchIntentionCompatible = (user1: User, user2: User): boolean => {
     if (!user1?.matchIntention || !user2?.matchIntention) {
-      console.log('Match intention compatibility: false (missing data)');
+      //console.log('Match intention compatibility: false (missing data)');
       return false;
     }
     const result = user1.matchIntention === user2.matchIntention;
-    console.log(`Match intention compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
+    // console.log(`Match intention compatibility for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result;
 };
 
@@ -159,7 +162,7 @@ export const isMatch = async (user1: User, user2: User): Promise<boolean> => {
   
     // Only return true if both gender and match intention are compatible
     const result = genderCompatible || ageCompatible || matchIntentionCompatible || musicCompatible || locationSimilar;
-    console.log(`Overall match: ${result}`);
+    // console.log(`Overall match: ${result}`);
     return result; // changed to OR to allow for more matches FIXME
   };
 
@@ -170,7 +173,6 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
   const db = getFirestore();
   const auth = getAuth();
   const currentUser = auth.currentUser;
-
   if (!currentUser) throw new Error("No authenticated user found");
 
   // query to get users from firestore aside from current user
@@ -178,15 +180,36 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
   const userQuery = query(usersRef, where("uid", "!=", currentUser.uid)); 
 
   try {
-    const querySnapshot = await getDocs(userQuery);
-    const user1 = await getCurrentUserData(currentUser.uid); 
-
+    const user1 = await getCurrentUserData(currentUser.uid);
     if (!user1) throw new Error("Current user data not found");
+
+    // get list of already interacted UIDs 
+    const interactedUIDs = new Set(
+      Object.keys(user1.matches ?? {}).filter((uid) =>
+        user1.matches?.[uid] && ["liked", "disliked"].includes(user1.matches[uid]!)
+      )
+    );
+
+    // query users that are not in the interactedUIDs set
+    const querySnapshot = await getDocs(userQuery);
+
+    console.log("Fetched users:", querySnapshot.docs.map((doc) => doc.data().displayName));
+    console.log("Already interacted users:", Array.from(interactedUIDs).map(uid => {
+      const user = querySnapshot.docs.find(doc => doc.id === uid);
+      return user ? user.data().displayName : uid;
+    }));
 
     const potentialMatches = await Promise.all(
       querySnapshot.docs.map(async (doc) => {
         const user2 = doc.data() as User;
+
+        if (interactedUIDs.has(user2.uid)) { 
+          console.log(`User ${user2.displayName} skipped (already interacted)`);
+          return null; 
+        }
+        
         const isCompatible = await isMatch(user1, user2);
+        console.log(`Compatibility result for ${user1.displayName} and ${user2.displayName}: ${isCompatible}`);
         return isCompatible ? user2 : null;
       })
     );

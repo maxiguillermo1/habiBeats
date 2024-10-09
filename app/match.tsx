@@ -70,7 +70,8 @@ const Match = () => {
         const userDocSnap = await getDoc(userDocRef);
         
         if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
+          const userData = userDocSnap.data() as User;
+          setUser1(userData);
           setCurrentUserImage(userData.profileImageUrl || null);
         }
 
@@ -79,9 +80,8 @@ const Match = () => {
         setCompatibleUsers(fetchedUsers); // fetch compatible users using the algorithm
 
         if (fetchedUsers.length > 0) {
-          setUser1(fetchedUsers[0]);
-          setUser2(fetchedUsers.length > 1 ? fetchedUsers[1] : null);
-          setCurrentIndex(1);
+          setUser2(fetchedUsers[0]);
+          setCurrentIndex(0);  // Start at the first user in compatibleUsers
           setNoMoreUsers(false);
         } else {
           setNoMoreUsers(true);
@@ -124,10 +124,12 @@ const Match = () => {
     
   // Handler for when the heart button is pressed
   const handleHeartPress = async () => {
-    if (user1 && user2) {
+    if (user2) {
       setLikeButtonColor('#fc6c85'); // Change to pink when liked
       setShowMatchModal(true);
       animateModal(true);
+
+      console.log("heart pressed");
   
       // Call updateUserMatch to mark user2 as "liked" by user1
       const auth = getAuth(app);
@@ -140,9 +142,9 @@ const Match = () => {
   
   // Function to handle the close button press
   const handleClosePress = async () => {
-    if (user1 && user2) {
+    if (user2) {
       setDislikeButtonColor('#de3c3c'); // Change to red when disliked
-  
+      console.log("close pressed");
       // Call updateUserMatch to mark user2 as "disliked" by user1
       const auth = getAuth(app);
       const currentUser = auth.currentUser;
@@ -201,7 +203,7 @@ const Match = () => {
           <>
             <View style={styles.header}>
               <Image
-                source={{ uri: user2.profileImageUrl }}
+                source={{ uri: user2.profileImageUrl && user2.profileImageUrl.trim() !== "" ? user2.profileImageUrl : 'https://example.com/placeholder-profile.png' }}
                 style={styles.profilePic}
               />
               <View style={styles.userInfo}>
@@ -222,7 +224,7 @@ const Match = () => {
             <View style={styles.userInfo}>
               <Text style={styles.sectionTitle}>Favorite Performance</Text>
               <Image
-                source={{ uri: user2.favoritePerformance }}
+                source={{ uri: user2.favoritePerformance && user2.favoritePerformance.trim() !== "" ? user2.favoritePerformance : 'https://example.com/placeholder-performance.png' }}
                 style={styles.promptImage}
               />
             </View>
@@ -238,20 +240,32 @@ const Match = () => {
 
       {/* Action buttons (like and dislike) */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.dislikeButton]} 
-          onPress={handleClosePress}
-        >
-          <Ionicons name="close" size={50} color={dislikeButtonColor} />
-        </TouchableOpacity>
+        <View pointerEvents="box-none">
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.dislikeButton, { backgroundColor: 'rgba(255, 0, 0, 0.2)' }]} // Light red background for testing
+            onPress={() => {
+              console.log("Close button pressed"); 
+              handleClosePress();
+            }}
+          >
+            <Ionicons name="close" size={40} color={dislikeButtonColor} />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.spacer} />
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.likeButton]} 
-          onPress={handleHeartPress}
-        >
-          <Ionicons name="heart" size={40} color={likeButtonColor} />
-        </TouchableOpacity>
-      </View>
+
+        <View pointerEvents="box-none">
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.likeButton, { backgroundColor: 'rgba(0, 255, 0, 0.2)' }]} // Light green background for testing
+            onPress={() => {
+              console.log("Heart button pressed");
+              handleHeartPress();
+            }}
+          >
+            <Ionicons name="heart" size={40} color={likeButtonColor} />
+          </TouchableOpacity>
+        </View>
+    </View>
 
       {/* Match modal */}
       <Modal
