@@ -394,11 +394,11 @@ const Settings = () => {
       // Updates the user's last name visibility and display name in user's document
       try {
         await updateDoc(userDocRef, {
-          lastName: value,
+          lastNameVisible: value,
           displayName: value ? `${firstName} ${lastName}` : firstName
         });
         setName(value ? `${firstName} ${lastName}` : firstName);
-        console.log('Show last name preference updated successfully');
+        console.log(value ? `${firstName} ${lastName}` : firstName);
       } catch (error) {
         console.error('Error updating show last name preference:', error);
       }
@@ -433,7 +433,7 @@ const Settings = () => {
       // Updates the user's location visibility
       try {
         await updateDoc(userDocRef, {
-          showLocation: value,
+          locationVisible: value,
           displayLocation: value ? `${location}` : 'N/A'
         });
         setLocation(value ? `${location}` : 'N/A');
