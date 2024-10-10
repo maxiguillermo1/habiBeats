@@ -161,7 +161,8 @@ export const isMatch = async (user1: User, user2: User): Promise<boolean> => {
     ]);
   
     // Only return true if both gender and match intention are compatible
-    const result = genderCompatible || ageCompatible || matchIntentionCompatible || musicCompatible || locationSimilar;
+    // const result = genderCompatible && ageCompatible && matchIntentionCompatible && musicCompatible && locationSimilar;
+    const result = genderCompatible && matchIntentionCompatible && locationSimilar;
     // console.log(`Overall match: ${result}`);
     return result; // changed to OR to allow for more matches FIXME
   };
@@ -192,17 +193,18 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
 
     // query users that are not in the interactedUIDs set
     const querySnapshot = await getDocs(userQuery);
-
+    console.log("STARTING MATCHING QUERY")
     console.log("Fetched users:", querySnapshot.docs.map((doc) => doc.data().displayName));
-    console.log("Already interacted users:", Array.from(interactedUIDs).map(uid => {
+    /*console.log("Already interacted users:", Array.from(interactedUIDs).map(uid => {
       const user = querySnapshot.docs.find(doc => doc.id === uid);
       return user ? user.data().displayName : uid;
-    }));
+    })); */
 
     const potentialMatches = await Promise.all(
       querySnapshot.docs.map(async (doc) => {
         const user2 = doc.data() as User;
 
+        // skip users that are already interacted
         if (interactedUIDs.has(user2.uid)) { 
           console.log(`User ${user2.displayName} skipped (already interacted)`);
           return null; 

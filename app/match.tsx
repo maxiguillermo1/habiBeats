@@ -76,7 +76,7 @@ const Match = () => {
         }
 
         const fetchedUsers = await fetchCompatibleUsers();
-        console.log("FETCHED USERS:", fetchedUsers.map(user => user.displayName));
+        console.log("INIT FETCHED USERS:", fetchedUsers.map(user => user.displayName));
         
         const mutuallyCompatibleUsers = await Promise.all(
           fetchedUsers.map(async (user) => {
@@ -89,7 +89,7 @@ const Match = () => {
             
             // Only include users who have either not interacted with the current user or liked them
             if (!currentUserMatchStatus || currentUserMatchStatus === "liked") {
-              console.log(`${user.displayName} is mutually compatible.`);
+              console.log(`${user.displayName} COULD BE mutually compatible as ${user.displayName} has not interacted with ${currentUser.displayName} yet OR has liked ${currentUser.displayName}.`);
               return user;
             } else {
               console.log(`${user.displayName} is not mutually compatible, skipping.`);
@@ -98,7 +98,7 @@ const Match = () => {
           })
         );
         const compatibleUsers = mutuallyCompatibleUsers.filter((user): user is User => user !== null);
-        setCompatibleUsers(fetchedUsers); // fetch compatible users using the algorithm
+        setCompatibleUsers(compatibleUsers); // fetch compatible users using the algorithm
 
         if (compatibleUsers.length > 0) {
           setUser2(compatibleUsers[0]);
@@ -117,8 +117,8 @@ const Match = () => {
     // START of fetch a random user (user2) contribution
     const fetchNextUser = async () => {
       if (currentIndex < compatibleUsers.length - 1) {
-        let nextIndex = currentIndex + 1;
-        let nextUser = compatibleUsers[nextIndex];
+        const nextIndex = currentIndex + 1;
+        const nextUser = compatibleUsers[nextIndex];
     
         // Retrieve `user2`'s data to check interaction
         const db = getFirestore(app);
@@ -135,7 +135,7 @@ const Match = () => {
           setUser2(nextUser);
         } else {
           // Skip to the next user if not mutually compatible
-          setCurrentIndex(prevIndex => prevIndex + 1);
+          setCurrentIndex(nextIndex);
           fetchNextUser();
         }
       } else {
@@ -189,11 +189,11 @@ const Match = () => {
 
         // If both users liked each other, show the match modal
         if (user2MatchStatus === "liked" && currentUser) {
-          console.log(`It's a match! ${currentUser.uid} and ${user2.uid} liked each other.`);
+          console.log(`It's a match! ${currentUser.displayName} and ${user2.displayName} liked each other.`);
           setShowMatchModal(true);
           animateModal(true);
         } else {
-          console.log(`No mutual like yet. ${user2.uid} has not liked ${currentUser?.uid}`);
+          console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
           animateModal(false);
           // fetchNextUser();
           setLikeButtonColor('#1E1E1E');
