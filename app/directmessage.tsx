@@ -2,9 +2,9 @@
 // Mariann Grace Dizon
 
 // START of Mariann Grace Dizon Contribution
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator } from 'react-native';
-import { collection, addDoc, query, where, onSnapshot, orderBy, Timestamp, getDocs } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
@@ -28,58 +28,107 @@ const DirectMessageScreen = () => {
     const navigation = useNavigation();
     const [profileImageUrl, setProfileImageUrl] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const flatListRef = useRef<FlatList>(null);
 
     useEffect(() => {
         if (!auth.currentUser) return;
 
         setIsLoading(true);
 
-        // Query to get messages between the current user and the specific recipient
-        const q = query(
-            collection(db, 'messages'),
-            where('participants', '==', [auth.currentUser.uid, recipientId].sort()),
-            orderBy('timestamp', 'desc')
-        );
-        
-        // Listen for new messages
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            // Fetch the recipient's profile image
-            const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', recipientId)));
-            if (!userDoc.empty) {
-                setProfileImageUrl(userDoc.docs[0].data().profileImageUrl || '');
-            }   
+        const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
+        const conversationRef = doc(db, 'conversations', conversationId);
 
-            const newMessages = snapshot.docs.map(doc => ({
-                id: doc.id,
-                message: doc.data().text,
-                senderId: doc.data().senderId,
-                recipientId: doc.data().recipientId,
-                timestamp: doc.data().timestamp,
-            }));
-            setMessages(newMessages as Message[]);
+        const unsubscribe = onSnapshot(conversationRef, async (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const conversationData = docSnapshot.data();
+                setMessages(conversationData.messages?.sort((a: Message, b: Message) => a.timestamp - b.timestamp) || []);
+
+                if (!profileImageUrl) {
+                    const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', recipientId)));
+                    if (!userDoc.empty) {
+                        setProfileImageUrl(userDoc.docs[0].data().profileImageUrl || '');
+                    }
+                }
+            } else {
+                await setDoc(conversationRef, {
+                    messages: []
+                });
+            }
             setIsLoading(false);
         });
 
         return () => unsubscribe();
     }, [recipientId]);
 
-    // Function to send a message
     const sendMessage = async () => {
         if (newMessage.trim() === '' || !auth.currentUser) return;
 
-        // Add the message to the database
-        await addDoc(collection(db, 'messages'), {
-            text: newMessage,
-            senderId: auth.currentUser.uid, // user sends the message
-            senderName: auth.currentUser.displayName,
-            recipientName: recipientName, 
-            recipientId: recipientId, // habibi is the recipient
-            timestamp: Timestamp.now(),
-            participants: [auth.currentUser.uid, recipientId].sort()
-        });
+        const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
+        const conversationRef = doc(db, 'conversations', conversationId);
+
+        const newMessageObj = {
+            message: newMessage,
+            senderId: auth.currentUser.uid,
+            recipientId: recipientId,
+            timestamp: Timestamp.now()
+        };
+
+        // Check if the conversation already exists
+        const conversationDoc = await getDoc(conversationRef);
+        const isNewConversation = conversationDoc.data()?.messages.length === 0;
+        console.log("Is new conversation:", isNewConversation);
+
+        if (isNewConversation) {
+            // Create new conversation document
+            await setDoc(conversationRef, {
+                messages: [newMessageObj]
+            });
+
+            // Update both users' conversationIds
+            await updateUsersConversationIds(auth.currentUser.uid, recipientId as string, conversationId);
+        } else {
+            // Add message to existing conversation
+            await updateDoc(conversationRef, {
+                messages: arrayUnion(newMessageObj)
+            });
+        }
 
         setNewMessage('');
     };
+
+    const updateUsersConversationIds = async (userId1: string, userId2: string, conversationId: string) => {
+        const updateUser = async (userId: string, otherUserId: string) => {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const conversationIds = userData.conversationIds || {};
+                
+                if (!conversationIds[otherUserId]) {
+                    await updateDoc(userRef, {
+                        [`conversationIds.${otherUserId}`]: conversationId
+                    });
+                }
+                console.log(`Conversation ID for ${otherUserId}:`, conversationIds[otherUserId]);
+            }
+        };
+
+        await Promise.all([
+            updateUser(userId1, userId2),
+            updateUser(userId2, userId1)
+        ]);
+    };
+
+    const scrollToBottom = () => {
+        if (flatListRef.current && messages.length > 0) {
+            flatListRef.current.scrollToEnd({ animated: true });
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     if (isLoading) {
         return (
@@ -109,14 +158,15 @@ const DirectMessageScreen = () => {
                 </View>
             </View>
             <FlatList
+                ref={flatListRef}
                 data={messages}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
                         <Text style={styles.messageText}>{item.message}</Text>
                     </View>
                 )}
-                inverted
+                contentContainerStyle={styles.messageList}
             />
             <View style={styles.inputContainer}>
                 <TextInput
@@ -225,6 +275,10 @@ const styles = StyleSheet.create({
         marginTop: 10,
         fontSize: 16,
         color: '#333',
+    },
+    messageList: {
+        flexGrow: 1,
+        justifyContent: 'flex-end',
     },
 });
 

@@ -223,17 +223,15 @@ const Match = () => {
     }
   };
 
-  // Handler for when the message button is pressed in the modal
-  const handleMessagePress = () => {
-    // Navigate to messages screen
-    router.push('/messages');
-  };
 
-  // Handler for when the message icon button is pressed on the top right
-  const handleMessageIconPress = () => {
-    // Navigate to messages screen
-    router.push('/messages');
+  // Function to navigate to the direct message screen  
+  const navigateToDirectMessage = (recipientId: string, recipientName: string) => {
+    router.push({
+      pathname: '/directmessage',
+      params: { recipientId, recipientName },
+    });
   };
+  
 
   // Effect to reset like button color when modal is closed
   useEffect(() => {
@@ -361,7 +359,7 @@ const Match = () => {
                 style={styles.messageButton} 
                 onPress={() => {
                   setShowMatchModal(false);
-                  router.push('/messages');
+                  navigateToDirectMessage(user2?.uid || '', user2?.displayName || '');
                 }}
               >
                 <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
