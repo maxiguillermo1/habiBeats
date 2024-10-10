@@ -80,6 +80,7 @@ const Settings = () => {
     }
   };
 
+  // START of Reyna Aguirre Contribution
   const handleLogout = () => {
     Alert.alert(
       "Log Out",
@@ -131,7 +132,8 @@ const Settings = () => {
       ]
     );
   };
-
+  // END of Reyna Aguirre Contribution
+  
   // New functions from profilesettings.tsx
 
   const uploadImageToFirebase = async (uri: string) => {

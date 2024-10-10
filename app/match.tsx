@@ -2,7 +2,7 @@
 // Mariann Grace Dizon and Reyna Aguirre
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,8 +33,8 @@ const updateUserMatch = async (currentUserId: string, matchedUserId: string, sta
 // Match component definition
 const Match = () => {
   const [showMatchModal, setShowMatchModal] = useState(false);   // State to control the visibility of the match modal
-  const [likeButtonColor, setLikeButtonColor] = useState('#1E1E1E');   // State to manage the color of the like and dislike buttons
-  const [dislikeButtonColor, setDislikeButtonColor] = useState('#1E1E1E'); // dislike button color
+  const [likeButtonColor, setLikeButtonColor] = useState('#fff8f0');   // State to manage the color of the like and dislike buttons
+  const [dislikeButtonColor, setDislikeButtonColor] = useState('#fff8f0'); // dislike button color
 
   
   // Using useRouter hook to get the router instance for navigation
@@ -196,7 +196,7 @@ const Match = () => {
           console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
           animateModal(false);
           // fetchNextUser();
-          setLikeButtonColor('#1E1E1E');
+          setLikeButtonColor('#fff8f0');
         }
       } else {
         console.error("User2 document not found in Firestore.");
@@ -223,6 +223,80 @@ const Match = () => {
     }
   };
 
+  // Functions to reset matches
+  const confirmResetMatches = () => {
+    Alert.alert(
+      "Confirm Reset Matches",
+      "are you sure you want to reset current match statuses?",
+      [
+        {
+          text: "cancel",
+          style: "cancel"
+        },
+        {
+          text: "yes",
+          onPress: () => resetMatches()
+        }
+      ]
+    );
+  };
+
+  const resetMatches = async () => {
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+  
+    if (currentUser) {
+      const db = getFirestore(app);
+      const userDocRef = doc(db, "users", currentUser.uid);
+  
+      try {
+        await updateDoc(userDocRef, { matches: {} });
+        console.log("User matches reset successfully");
+        
+        // Clear local state
+        setCompatibleUsers([]);
+        setUser2(null);
+        setNoMoreUsers(false);
+        setCurrentIndex(0);
+  
+        console.log("Fetching new compatible users after reset");
+        const fetchedUsers = await fetchCompatibleUsers();
+        console.log("Fetched users:", fetchedUsers.map(user => user.displayName));
+  
+        const mutuallyCompatibleUsers = await Promise.all(
+          fetchedUsers.map(async (user) => {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            const userData = userDocSnap.data() as User;
+    
+            // All users should be compatible after reset, so we don't need to check matches
+            return user;
+          })
+        );
+  
+        const compatibleUsers = mutuallyCompatibleUsers.filter((user): user is User => user !== null);
+        console.log("Compatible users after reset:", compatibleUsers.map(user => user.displayName));
+        
+        setCompatibleUsers(compatibleUsers);
+  
+        if (compatibleUsers.length > 0) {
+          setUser2(compatibleUsers[0]);
+          setCurrentIndex(0);
+          setNoMoreUsers(false);
+          console.log("Initial user set after reset:", compatibleUsers[0].displayName);
+        } else {
+          setNoMoreUsers(true);
+          console.log("No compatible users found after reset");
+        }
+  
+      } catch (error) {
+        console.error("Error resetting user matches: ", error);
+      }
+    } else {
+      console.log("No current user authenticated");
+    }
+  };
+
 
   // Function to navigate to the direct message screen  
   const navigateToDirectMessage = (recipientId: string, recipientName: string) => {
@@ -236,7 +310,7 @@ const Match = () => {
   // Effect to reset like button color when modal is closed
   useEffect(() => {
     if (!showMatchModal) {
-      setLikeButtonColor('#1E1E1E'); // Change back to original color
+      setLikeButtonColor('#fff8f0'); // Change back to original color
     }
   }, [showMatchModal]);
 
@@ -251,6 +325,17 @@ const Match = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Reset Matches Button */}
+      <TouchableOpacity
+        style={styles.resetButton}
+        onPress={() => {
+          console.log("Reset button pressed");
+          confirmResetMatches();
+        }}
+      >
+        <Ionicons name="refresh" size={30} color="#0e1514" />
+      </TouchableOpacity>
 
       {/* User2 Profile */}
       <ScrollView 
@@ -304,7 +389,7 @@ const Match = () => {
       <View style={styles.actionButtons}>
         <View pointerEvents="box-none">
           <TouchableOpacity 
-            style={[styles.actionButton, styles.dislikeButton, { backgroundColor: 'rgba(255, 0, 0, 0.2)' }]} // Light red background for testing
+            style={[styles.actionButton, styles.dislikeButton, { backgroundColor: '#de3c3c' }]} // Light red background for testing
             onPress={() => {
               // console.log("Close button pressed"); 
               handleClosePress();
@@ -318,7 +403,7 @@ const Match = () => {
 
         <View pointerEvents="box-none">
           <TouchableOpacity 
-            style={[styles.actionButton, styles.likeButton, { backgroundColor: 'rgba(0, 255, 0, 0.2)' }]} // Light green background for testing
+            style={[styles.actionButton, styles.likeButton, { backgroundColor: '#79ce54' }]} // Light green background for testing
             onPress={() => {
               // console.log("Heart button pressed");
               handleHeartPress();
@@ -548,6 +633,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 25,
     padding: 20,
+  },
+  resetButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1, 
+    padding: 10, 
+    backgroundColor: 'transparent', 
+    borderRadius: 10,
+
   },
 });
 

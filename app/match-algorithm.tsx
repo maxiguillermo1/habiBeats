@@ -2,6 +2,7 @@
 // Reyna Aguirre
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import * as Location from 'expo-location';
 
 // user data
 export interface User {
@@ -82,59 +83,63 @@ export interface User {
 
   // 4. location compatibility
   // function to get latitude and longitude using Nominatim (OpenStreetMap API)
-  export const getLatLonFromLocation = async (location: string): Promise<{ latitude: number; longitude: number } | null> => {
-    const apiUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`;
-    
-    // fetch the data from the API
+  // Function to get latitude and longitude using device GPS (expo-location)
+  export const getLatLonFromLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
     try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.length > 0) {
-            const { lat, lon } = data[0];
-            return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
-        }
-        console.log('getLatLonFromLocation: null (No result found)');
-        return null;  // No result found
-    } catch (error) {
-        console.error('Error fetching geolocation:', error);
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        // console.log('Permission to access location was denied');
         return null;
+      }
+
+      // Get the current device location
+      const deviceLocation = await Location.getCurrentPositionAsync({});
+      // console.log('Device GPS result:', deviceLocation.coords);
+      return {
+        latitude: deviceLocation.coords.latitude,
+        longitude: deviceLocation.coords.longitude,
+      };
+    } catch (error) {
+      console.error('Error getting location:', error);
+      return null;
     }
   };
-  // haversine formula to calculate distance
+
+  // Location compatibility function using Haversine formula
   export const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-   
     const R = 3958.8; // Radius of Earth in miles
     const toRad = (value: number) => (value * Math.PI) / 180;
 
-    // convert latitude and longitude to radians
     const dlat = toRad(lat2 - lat1);
     const dlon = toRad(lon2 - lon1);
-    const a =
-        Math.sin(dlat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dlon / 2) ** 2;
-
+    const a = Math.sin(dlat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dlon / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
     return R * c; // distance in miles
   };
-  // check if two users are within a 50-mile radius
+
+// Check if two users are within a 50-mile radius
   export const isLocationSimilar = async (user1: User, user2: User): Promise<boolean> => {
     if (!user1?.location || !user2?.location) {
-      // console.log('Location similarity: false (missing data)');
       return false;
     }
-    let user1LatLon = user1.latitude && user1.longitude ? { latitude: user1.latitude, longitude: user1.longitude } : await getLatLonFromLocation(user1.location);
-    let user2LatLon = user2.latitude && user2.longitude ? { latitude: user2.latitude, longitude: user2.longitude } : await getLatLonFromLocation(user2.location);
-  
+
+    // Get coordinates for user1 and user2 if not already available
+    let user1LatLon = user1.latitude && user1.longitude
+      ? { latitude: user1.latitude, longitude: user1.longitude }
+      : await getLatLonFromLocation();
+    let user2LatLon = user2.latitude && user2.longitude
+      ? { latitude: user2.latitude, longitude: user2.longitude }
+      : await getLatLonFromLocation();
+
     if (!user1LatLon || !user2LatLon) {
-      // console.log('Location similarity: false (unable to get coordinates)');
       return false;
     }
-  
+
+    // Calculate distance
     const distance = haversineDistance(user1LatLon.latitude, user1LatLon.longitude, user2LatLon.latitude, user2LatLon.longitude);
     const result = distance <= 50;
-    // console.log(`Location similarity for ${user1.displayName} and ${user2.displayName}: ${result}`);
     return result; // true if distance is less than 50 miles
   };
 
