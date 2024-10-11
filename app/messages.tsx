@@ -1,11 +1,11 @@
 // messages.tsx
-// Maxwell Guillermo
+// Jesus Donate
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, Timestamp, deleteDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -32,6 +32,8 @@ const Messages = () => {
   const [newMatches, setNewMatches] = useState<NewMatch[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMatches, setIsLoadingMatches] = useState(true);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
   // Fetch existing conversations from Firestore
   const fetchConversations = useCallback(async () => {
@@ -77,6 +79,9 @@ const Messages = () => {
         }
       }
     }
+
+    // Sort conversations by timestamp in descending order (most recent is on top)
+    conversationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
     setConversations(conversationsData);
     setIsLoadingConversations(false);
@@ -157,6 +162,45 @@ const Messages = () => {
     return Math.floor(seconds) + " seconds ago";
   };
 
+  const handleLongPress = (conversation: Conversation) => {
+    setSelectedConversation(conversation);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!selectedConversation || !auth.currentUser) return;
+
+    const currentUserId = auth.currentUser.uid;
+    const recipientId = selectedConversation.recipientId;
+    const conversationId = [currentUserId, recipientId].sort().join('-');
+
+    try {
+      // Delete the conversation document
+      await deleteDoc(doc(db, 'conversations', conversationId));
+
+      // Update current user's conversationIds
+      const currentUserRef = doc(db, 'users', currentUserId);
+      await updateDoc(currentUserRef, {
+        [`conversationIds.${recipientId}`]: deleteField()
+      });
+
+      // Update recipient's conversationIds
+      const recipientRef = doc(db, 'users', recipientId);
+      await updateDoc(recipientRef, {
+        [`conversationIds.${currentUserId}`]: deleteField()
+      });
+
+      // Remove the conversation from the local state
+      setConversations(conversations.filter(conv => conv.recipientId !== recipientId));
+
+      setIsDeleteModalVisible(false);
+      setSelectedConversation(null);
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      Alert.alert("Error", "Failed to delete conversation. Please try again.");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -170,6 +214,7 @@ const Messages = () => {
               key={conversation.recipientId} 
               style={styles.messageItem}
               onPress={() => navigateToDirectMessage(conversation.recipientId, conversation.friendName)}
+              onLongPress={() => handleLongPress(conversation)}
             >
               <Image 
                 source={{ uri: conversation.profileImageUrl }} 
@@ -205,6 +250,32 @@ const Messages = () => {
         )}
       </ScrollView>
       <BottomNavBar />
+      <Modal
+        transparent={true}
+        visible={isDeleteModalVisible}
+        onRequestClose={() => setIsDeleteModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Conversation</Text>
+            <Text style={styles.modalText}>Are you sure you want to delete this conversation?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsDeleteModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={handleDeleteConversation}
+              >
+                <Text style={styles.modalButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -268,6 +339,49 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#666',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+  },
+  deleteButton: {
+    backgroundColor: '#ff6b6b',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

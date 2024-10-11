@@ -74,6 +74,7 @@ const Settings = () => {
         setUserGender(userData.gender || 'other');
         setLastNameVisible(userData.lastNameVisible !== false); // Default to true if not set
         setLocationVisible(userData.locationVisible !== false); // Default to true if not set
+        setMyEventsVisible(userData.myEventsVisible !== false); // Default to true if not set
         console.log('Fetched user gender:', userData.gender);
       }
     }
@@ -432,6 +433,24 @@ const Settings = () => {
     }
   };
 
+  // Toggle my events visibility
+  // Jesus Donate
+  const handleMyEventsToggle = async (value: boolean) => {
+    setMyEventsVisible(value);
+  
+    if (auth.currentUser) {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      try {
+        await updateDoc(userDocRef, {
+          myEventsVisible: value
+        });
+        console.log('Show my events preference updated successfully');
+      } catch (error) {
+        console.error('Error updating show my events preference:', error);
+      }
+    }
+  };
+
   // Update this function
   const handleBackPress = () => {
     navigation.goBack();
@@ -595,7 +614,7 @@ const Settings = () => {
 
         <View style={styles.settingItem}>
           <Text style={styles.settingTitle}>Show My Events</Text>
-          <Switch value={myEventsVisible} onValueChange={setMyEventsVisible} />
+          <Switch value={myEventsVisible} onValueChange={handleMyEventsToggle} />
         </View>
         <View style={styles.divider} />
 

@@ -1,15 +1,16 @@
 // directmessage.tsx
-// Mariann Grace Dizon
+// Jesus Donate
 
-// START of Mariann Grace Dizon Contribution
+// START of Jesus Donate Contribution
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 
 // Define the message structure
 interface Message {
@@ -29,6 +30,8 @@ const DirectMessageScreen = () => {
     const [profileImageUrl, setProfileImageUrl] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const flatListRef = useRef<FlatList>(null);
+    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -61,13 +64,16 @@ const DirectMessageScreen = () => {
     }, [recipientId]);
 
     const sendMessage = async () => {
-        if (newMessage.trim() === '' || !auth.currentUser) return;
+        const message = newMessage
+        setNewMessage('');
+
+        if (message.trim() === '' || !auth.currentUser) return;
 
         const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
         const conversationRef = doc(db, 'conversations', conversationId);
 
         const newMessageObj = {
-            message: newMessage,
+            message: message,
             senderId: auth.currentUser.uid,
             recipientId: recipientId,
             timestamp: Timestamp.now()
@@ -93,7 +99,6 @@ const DirectMessageScreen = () => {
             });
         }
 
-        setNewMessage('');
     };
 
     const updateUsersConversationIds = async (userId1: string, userId2: string, conversationId: string) => {
@@ -118,6 +123,56 @@ const DirectMessageScreen = () => {
             updateUser(userId1, userId2),
             updateUser(userId2, userId1)
         ]);
+    };
+
+    const handleLongPress = (message: Message) => {
+        if (message.senderId === auth.currentUser?.uid) {
+            setSelectedMessage(message);
+            setIsDeleteModalVisible(true);
+        }
+    };
+
+    // Deletes a message from the conversation sent by the current user
+    const handleDeleteMessage = async () => {
+        if (!selectedMessage || !auth.currentUser) return;
+
+        const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
+        const conversationRef = doc(db, 'conversations', conversationId);
+
+        try {
+            // Fetch the current messages from Firestore
+            const conversationDoc = await getDoc(conversationRef);
+            if (!conversationDoc.exists()) {
+                throw new Error("Conversation not found");
+            }
+
+            const currentMessages = conversationDoc.data().messages || [];
+
+            // Find the index of the message to delete
+            const messageIndex = currentMessages.findIndex(
+                (msg: Message) => 
+                    msg.message === selectedMessage.message && 
+                    msg.senderId === selectedMessage.senderId
+            );
+
+            if (messageIndex === -1) {
+                throw new Error("Message not found");
+            }
+
+            // Remove the message from the array
+            currentMessages.splice(messageIndex, 1);
+
+            // Update Firestore with the new messages array
+            await updateDoc(conversationRef, { messages: currentMessages });
+
+            // Update local state
+            setMessages(currentMessages);
+            setIsDeleteModalVisible(false);
+            setSelectedMessage(null);
+        } catch (error) {
+            console.error("Error deleting message:", error);
+            Alert.alert("Error", "Failed to delete message. Please try again.");
+        }
     };
 
     const scrollToBottom = () => {
@@ -145,6 +200,7 @@ const DirectMessageScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
+            {/* This view is for the navbar which contains the back button, profile image, and name of the recipient */}
             <View style={styles.navbar}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="black" />
@@ -157,14 +213,22 @@ const DirectMessageScreen = () => {
                     <Text style={styles.navbarName}>{recipientName}</Text>
                 </View>
             </View>
+
+            {/* This is the flatlist that displays the messages */}
             <FlatList
                 ref={flatListRef}
                 data={messages}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
-                    <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
-                        <Text style={styles.messageText}>{item.message}</Text>
-                    </View>
+                    // When the user long presses on a message, the delete modal is shown
+                    <TouchableOpacity
+                        onLongPress={() => handleLongPress(item)}
+                        delayLongPress={500}
+                    >
+                        <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
+                            <Text style={styles.messageText}>{item.message}</Text>
+                        </View>
+                    </TouchableOpacity>
                 )}
                 contentContainerStyle={styles.messageList}
             />
@@ -179,6 +243,32 @@ const DirectMessageScreen = () => {
                     <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
+            <Modal
+                transparent={true}
+                visible={isDeleteModalVisible}
+                onRequestClose={() => setIsDeleteModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Delete Message</Text>
+                        <Text style={styles.modalText}>Are you sure you want to delete this message?</Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => setIsDeleteModalVisible(false)}
+                            >
+                                <Text style={styles.modalButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.deleteButton]}
+                                onPress={handleDeleteMessage}
+                            >
+                                <Text style={styles.modalButtonText}>Delete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -279,6 +369,49 @@ const styles = StyleSheet.create({
     messageList: {
         flexGrow: 1,
         justifyContent: 'flex-end',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    modalText: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+    },
+    modalButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+    },
+    cancelButton: {
+        backgroundColor: '#ccc',
+    },
+    deleteButton: {
+        backgroundColor: '#ff6b6b',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });
 
