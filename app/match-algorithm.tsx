@@ -167,7 +167,7 @@ export const isMatch = async (user1: User, user2: User): Promise<boolean> => {
   
     // Only return true if both gender and match intention are compatible
     // const result = genderCompatible && ageCompatible && matchIntentionCompatible && musicCompatible && locationSimilar;
-    const result = genderCompatible && matchIntentionCompatible && locationSimilar;
+    const result = genderCompatible || matchIntentionCompatible || locationSimilar;
     // console.log(`Overall match: ${result}`);
     return result; // changed to OR to allow for more matches FIXME
   };

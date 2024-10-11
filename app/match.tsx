@@ -166,7 +166,7 @@ const Match = () => {
   const handleHeartPress = async () => {
     if (user2) {
       setLikeButtonColor('#fc6c85'); // Change to pink when liked
-      setShowMatchModal(true);
+      // setShowMatchModal(true);
       // animateModal(true);
 
       console.log("heart pressed");
@@ -174,6 +174,7 @@ const Match = () => {
       // Call updateUserMatch to mark user2 as "liked" by user1
       const auth = getAuth(app);
       const currentUser = auth.currentUser;
+
       if (currentUser) {
         await updateUserMatch(currentUser.uid, user2.uid, "liked");
       }
@@ -194,8 +195,7 @@ const Match = () => {
           animateModal(true);
         } else {
           console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
-          animateModal(false);
-          // fetchNextUser();
+          fetchNextUser();
           setLikeButtonColor('#fff8f0');
         }
       } else {
@@ -207,7 +207,7 @@ const Match = () => {
   // Function to handle the close button press
   const handleClosePress = async () => {
     if (user2) {
-      setDislikeButtonColor('#de3c3c'); // Change to red when disliked
+      setDislikeButtonColor('#0e1514'); // Change to red when disliked
       console.log("close pressed");
       // Call updateUserMatch to mark user2 as "disliked" by user1
       const auth = getAuth(app);
@@ -218,7 +218,7 @@ const Match = () => {
   
       fetchNextUser(); // Load the next user profile
       setTimeout(() => {
-        setDislikeButtonColor('#1E1E1E'); // Change back to original color
+        setDislikeButtonColor('#fff8f0'); // Change back to original color
       }, 1000);
     }
   };
@@ -327,6 +327,21 @@ const Match = () => {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
+      {/* reset button */}
+      { noMoreUsers && (
+        <View style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => {
+              console.log("Reset button pressed");
+              confirmResetMatches();
+            }}
+          >
+            <Ionicons name="refresh" size={40} color="#0e1514" />
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <View style={styles.header}>
         {user2 && (
           <>
@@ -348,17 +363,7 @@ const Match = () => {
             </View>
           </>
         )}
-        {noMoreUsers && (
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => {
-              console.log("Reset button pressed");
-              confirmResetMatches();
-            }}
-          >
-            <Ionicons name="refresh" size={30} color="#0e1514" />
-          </TouchableOpacity>
-        )}
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -523,10 +528,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    zIndex: 1,
-    padding: 10,
-    backgroundColor: 'transparent',
-    borderRadius: 10,
+    zIndex: 10, // Ensure it's above other elements
+    paddingTop: 30,
   },
   scrollContent: {
     flexGrow: 1,
