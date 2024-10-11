@@ -322,99 +322,102 @@ const Match = () => {
   };
 
   // UI rendering
+  // Mariann Grace Dizon
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Reset Matches Button */}
-      <TouchableOpacity
-        style={styles.resetButton}
-        onPress={() => {
-          console.log("Reset button pressed");
-          confirmResetMatches();
-        }}
-      >
-        <Ionicons name="refresh" size={30} color="#0e1514" />
-      </TouchableOpacity>
+      <View style={styles.header}>
+        {user2 && (
+          <>
+            <View style={[
+              styles.profileImageContainer,
+              { borderColor: getBorderColor(user2.gender) }
+            ]}>
+              <Image
+                source={{ uri: user2.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
+                style={styles.profilePicture}
+              />
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.name}>{user2.displayName}</Text>
+              <View style={styles.locationContainer}>
+                <Ionicons name="location-outline" size={12} color={getTextColor(user2.gender)} />
+                <Text style={[styles.location, { color: getTextColor(user2.gender) }]}>{user2.location}</Text>
+              </View>
+            </View>
+          </>
+        )}
+        {noMoreUsers && (
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => {
+              console.log("Reset button pressed");
+              confirmResetMatches();
+            }}
+          >
+            <Ionicons name="refresh" size={30} color="#0e1514" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      {/* User2 Profile */}
-      <ScrollView 
-        style={styles.content}
-        contentContainerStyle={{ alignItems: 'center' }} 
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {isLoading ? (
-          <View>
+          <View style={styles.messageContainer}>
             <Text style={styles.message}>loading users ...</Text>
           </View>
         ) : user2 ? (
-          <>
-            <View style={styles.header}>
-              <Image
-                source={{ uri: user2.profileImageUrl && user2.profileImageUrl.trim() !== "" ? user2.profileImageUrl : 'https://example.com/placeholder-profile.png' }}
-                style={styles.profilePic}
-              />
-              <View style={styles.userInfo}>
-                <Text style={styles.displayName}>{user2.displayName}</Text>
-                <Text style={styles.location}>{user2.location}</Text>
+          <View style={styles.content}>
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Music Preference</Text>
+                <Text style={styles.inputText}>
+                  {Array.isArray(user2.musicPreference) 
+                    ? user2.musicPreference.join(', ') 
+                    : user2.musicPreference || 'No preferences set'}
+                </Text>
               </View>
             </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.sectionTitle}>Music Preference</Text>
-              <Text style={styles.genre}>
-                {Array.isArray(user2.musicPreference) 
-                  ? user2.musicPreference.join('      ') 
-                  : user2.musicPreference || 'No preferences set'}
-              </Text>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Performance</Text>
+                {user2.favoritePerformance ? (
+                  <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
+                ) : (
+                  <Text style={styles.inputText}>No favorite performance set</Text>
+                )}
+              </View>
             </View>
 
-  
-            <View style={styles.userInfo}>
-              <Text style={styles.sectionTitle}>Favorite Performance</Text>
-              <Image
-                source={{ uri: user2.favoritePerformance && user2.favoritePerformance.trim() !== "" ? user2.favoritePerformance : 'https://example.com/placeholder-performance.png' }}
-                style={styles.promptImage}
-              />
-            </View>
-          </>
+            {/* Add more sections here similar to profile.tsx if needed */}
+          </View>
         ) : noMoreUsers ? (
-          <View>
+          <View style={styles.messageContainer}>
             <Text style={styles.message}>no more matches for now !</Text>
           </View>
         ) : null}
       </ScrollView>
 
-
-
       {/* Action buttons (like and dislike) */}
       <View style={styles.actionButtons}>
-        <View pointerEvents="box-none">
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.dislikeButton, { backgroundColor: '#de3c3c' }]} // Light red background for testing
-            onPress={() => {
-              // console.log("Close button pressed"); 
-              handleClosePress();
-            }}
-          >
-            <Ionicons name="close" size={40} color={dislikeButtonColor} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.dislikeButton]}
+          onPress={handleClosePress}
+        >
+          <Ionicons name="close" size={40} color={dislikeButtonColor} />
+        </TouchableOpacity>
 
-        <View style={styles.spacer} />
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.likeButton]}
+          onPress={handleHeartPress}
+        >
+          <Ionicons name="heart" size={40} color={likeButtonColor} />
+        </TouchableOpacity>
+      </View>
+      {/* END of Action buttons (like and dislike) */}
 
-        <View pointerEvents="box-none">
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.likeButton, { backgroundColor: '#79ce54' }]} // Light green background for testing
-            onPress={() => {
-              // console.log("Heart button pressed");
-              handleHeartPress();
-            }}
-          >
-            <Ionicons name="heart" size={40} color={likeButtonColor} />
-          </TouchableOpacity>
-        </View>
-    </View>
-
-      {/* Match modal */}
+      {/* START of Match modal */}
       <Modal
         transparent={true}
         visible={showMatchModal}
@@ -464,24 +467,105 @@ const Match = () => {
           </Animated.View>
         </Animated.View>
       </Modal>
+      {/* END of Match modal */}
 
-      {/* Bottom navigation bar */}
       <BottomNavBar />
     </SafeAreaView>
   );
 };
+// END of Mariann Grace Dizon Contribution
+// END of UI rendering
 
-// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
   },
-  content: {
-    flex: 1,
-    padding: 30,
-  },
   header: {
+    flexDirection: 'row',
+    paddingLeft: 40,
+    paddingRight: 30,
+    paddingTop: 20,
+    paddingBottom: 15,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  profileImageContainer: {
+    borderWidth: 3,
+    borderRadius: 50,
+    overflow: 'hidden',
+    width: 85,
+    height: 85,
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: 20,
+  },
+  name: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  location: {
+    fontSize: 13,
+    marginLeft: 4,
+  },
+  resetButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 1,
+    padding: 10,
+    backgroundColor: 'transparent',
+    borderRadius: 10,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100,
+  },
+  content: {
+    paddingTop: 20,
+    paddingLeft: 40,
+    paddingRight: 30,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputContent: {
+    borderWidth: 15,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  inputText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  imageInput: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10,
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   message: {
@@ -489,58 +573,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
-    marginTop: 50,
-    marginBottom: 10,
     fontStyle: 'italic',
-  },
-  profilePic: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    marginBottom: 25,
-  },
-  name: {
-    fontSize: 35, 
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#0e1514',
-    marginTop: 10,
-  },
-  age: {
-    fontSize: 20,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  location: {
-    fontSize: 16,
-    color: 'rgba(14,21,20,0.5)',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  tuneOfMonth: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#37bdd5',
-  },
-  sectionContent: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 10,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -560,17 +593,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dislikeButton: {
-    position: 'absolute',
-    left: 20,
-    bottom: 30,
+    backgroundColor: '#de3c3c',
   },
   likeButton: {
-    position: 'absolute',
-    right: 20,
-    bottom: 30,
-  },
-  spacer: {
-    flex: 1,
+    backgroundColor: '#79ce54',
   },
   modalContainer: {
     flex: 1,
@@ -589,8 +615,8 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
+    alignItems: 'center',
+    padding: 10,
   },
   modalTitle: {
     fontSize: 38,
@@ -608,10 +634,6 @@ const styles = StyleSheet.create({
   profilePicContainer: {
     alignItems: 'center',
     marginBottom: 50,
-  },
-  userInfo: {
-    alignItems: 'center',
-    marginBottom: 40,
   },
   displayName: {
     fontSize: 30,
@@ -634,16 +656,34 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     padding: 20,
   },
-  resetButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 1, 
-    padding: 10, 
-    backgroundColor: 'transparent', 
-    borderRadius: 10,
-
+  profilePic: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
 });
+
+// Helper functions
+const getBorderColor = (gender: string) => {
+  switch (gender?.toLowerCase()) {
+    case 'male':
+      return '#37bdd5';
+    case 'female':
+      return '#fc6c85';
+    default:
+      return '#333';
+  }
+};
+
+const getTextColor = (gender: string) => {
+  switch (gender?.toLowerCase()) {
+    case 'male':
+      return '#37bdd5';
+    case 'female':
+      return '#fc6c85';
+    default:
+      return '#333';
+  }
+};
 
 export default Match;
