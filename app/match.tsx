@@ -458,17 +458,17 @@ const Match = () => {
                 <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
               </TouchableOpacity>
             </View>
-            <View style={styles.profilePicContainer}>
+            <View style={styles.modalBody}>
               <Image
                 source={{ uri: currentUserImage || 'https://example.com/placeholder-profile.png' }}
-                style={styles.profilePic}
+                style={styles.modalProfilePic}
               />
+              <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
               <Image
                 source={{ uri: user2?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
-                style={styles.profilePic}
+                style={styles.modalProfilePic}
               />
             </View>
-            <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
           </Animated.View>
         </Animated.View>
       </Modal>
@@ -606,27 +606,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
   },
   modalContent: {
     backgroundColor: '#79ce54',
     padding: 20,
     borderRadius: 40,
     alignItems: 'center',
-    width: '90%',
-    maxHeight: '90%',
+    width: 350,
+    height: 750,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 20,
+  },
+  modalBody: {
     alignItems: 'center',
-    padding: 10,
+    justifyContent: 'center', // Changed from 'space-between' to 'center'
+    flex: 1,
   },
   modalTitle: {
-    fontSize: 38,
+    fontSize: 40,
     fontWeight: '800',
-    marginTop: 20,
-    marginBottom: 20,
-    color:'#1E1E1E',
+    color: '#1E1E1E',
+    textAlign: 'center',
+    marginVertical: 30, // Added margin to create some space around the text
+  },
+  modalProfilePic: {
+    width: 190,
+    height: 190,
+    borderRadius: 110,
+    marginVertical: 10,
   },
   messageButton: {
     padding: 10,
