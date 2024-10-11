@@ -11,7 +11,6 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig'; // Ensure this import is correct
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import PushNotificationsSettings from './settings/push-notifications';
-import EmailNotificationsSettings from './settings/emailnotifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
 
@@ -112,21 +111,8 @@ const Settings = () => {
         {
           text: "Delete",
           style: "destructive",
-          onPress: async () => {
-            if (!auth.currentUser) {
-              console.error('No authenticated user found');
-              return;
-            }
-          
-            try {
-              await deleteDoc(doc(db, 'users', auth.currentUser.uid));
-              await auth.currentUser.delete();
-              console.log('User account deleted successfully');
-              navigation.navigate('login-signup' as never);
-            } catch (error) {
-              console.error('Error deleting user account:', error);
-              Alert.alert('Error', 'Failed to delete account. Please try again.');
-            }
+          onPress: () => {
+            navigation.navigate('post-delete-survey' as never); // Navigate to the survey screen
           }
         }
       ]

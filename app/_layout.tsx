@@ -38,6 +38,8 @@ export default function RootLayout() {
       <Stack.Screen name="settings/block-list" options={{ headerShown: false }} />
       {/* Define the hidden words screen with no header */}
       <Stack.Screen name="settings/hidden-words" options={{ headerShown: false }} />
+      {/* Define the delete survey screen with no header */}
+      <Stack.Screen name="post-delete-survey" options={{ headerShown: false }} />
     </Stack>
   );
 }
