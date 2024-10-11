@@ -361,7 +361,7 @@ export default function EditProfile() {
               <SpotifySearch 
                 onSelectArtist={handleSelectArtist} 
                 onRemoveArtist={handleRemoveArtist} 
-                selectedArtists={favoriteArtists} 
+                selectedArtists={favoriteArtists}
               />
             </View>
 

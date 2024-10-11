@@ -25,39 +25,72 @@ interface SpotifySearchProps {
 const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveArtist, selectedArtists }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Artist[]>([]);
-  const [accessToken, setAccessToken] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [tokenExpirationTime, setTokenExpirationTime] = useState(0);
 
   const getSpotifyAccessToken = async () => {
-    const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
-    const response = await axios.post('https://accounts.spotify.com/api/token', 
-      'grant_type=client_credentials',
-      {
-        headers: {
-          'Authorization': `Basic ${authString}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-    setAccessToken(response.data.access_token);
+    const currentTime = Date.now();
+    if (accessToken && tokenExpirationTime > currentTime) {
+      return accessToken;
+    }
+
+    try {
+      const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
+      const response = await axios.post('https://accounts.spotify.com/api/token', 
+        'grant_type=client_credentials',
+        {
+          headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+      const newAccessToken = response.data.access_token;
+      const newExpirationTime = currentTime + (response.data.expires_in * 1000);
+      setAccessToken(newAccessToken);
+      setTokenExpirationTime(newExpirationTime);
+      console.log('New access token obtained:', newAccessToken);
+      return newAccessToken;
+    } catch (error) {
+      console.error('Error getting Spotify access token:', (error as Error).message);
+      throw error;
+    }
   };
 
   const searchSpotifyArtists = async (query: string) => {
-    if (!accessToken) await getSpotifyAccessToken();
-    const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`,
-      {
+    try {
+      const token = await getSpotifyAccessToken();
+      console.log('Access token obtained:', token);
+
+      const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`;
+      console.log('Request URL:', url);
+
+      const response = await axios.get(url, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${token}`,
         },
+      });
+
+      console.log('Spotify API response:', response.data);
+
+      const artists = response.data.artists.items.map((artist: any) => ({
+        id: artist.id,
+        name: artist.name,
+        picture: artist.images[0]?.url || '',
+      }));
+      setSearchResults(artists);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error searching Spotify artists:');
+        console.error('Status:', error.response?.status);
+        console.error('Data:', error.response?.data);
+        console.error('Headers:', error.response?.headers);
+      } else {
+        console.error('Unexpected error:', error);
       }
-    );
-    const artists = response.data.artists.items.map((artist: any) => ({
-      id: artist.id,
-      name: artist.name,
-      picture: artist.images[0]?.url || '',
-    }));
-    setSearchResults(artists);
+      // Handle the error appropriately, e.g., show an error message to the user
+    }
   };
 
   const handleSearch = () => {

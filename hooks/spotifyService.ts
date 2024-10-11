@@ -1,39 +1,67 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { encode } from 'base-64';
 
 const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
 const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
 
 let accessToken = '';
+let tokenExpirationTime = 0;
 
 const getSpotifyAccessToken = async () => {
-  if (accessToken) return accessToken;
+  const currentTime = Date.now();
+  if (accessToken && tokenExpirationTime > currentTime) {
+    return accessToken;
+  }
 
-  const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
-  const response = await axios.post('https://accounts.spotify.com/api/token', 
-    'grant_type=client_credentials',
-    {
-      headers: {
-        'Authorization': `Basic ${authString}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+  try {
+    const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
+    const response = await axios.post('https://accounts.spotify.com/api/token', 
+      'grant_type=client_credentials',
+      {
+        headers: {
+          'Authorization': `Basic ${authString}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+    accessToken = response.data.access_token;
+    tokenExpirationTime = currentTime + (response.data.expires_in * 1000);
+    console.log('New access token obtained:', accessToken);
+    return accessToken;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Error getting Spotify access token:', error.response?.data || error.message);
+    } else {
+      console.error('Error getting Spotify access token:', error);
     }
-  );
-  accessToken = response.data.access_token;
-  return accessToken;
+    throw error;
+  }
 };
 
 export const searchSpotifyArtists = async (query: string) => {
-  const token = await getSpotifyAccessToken();
-  const response = await axios.get(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`,
-    {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+  try {
+    const token = await getSpotifyAccessToken();
+    console.log('Access token obtained:', token); // Log the token for debugging
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log('Spotify API response:', response.data); // Log the response for debugging
+    return response.data.artists.items;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Error searching Spotify artists:', error.response?.data || error.message);
+    } else {
+      console.error('Error searching Spotify artists:', error);
     }
-  );
-  return response.data.artists.items;
+    throw error;
+  }
 };
 
 export const fetchUserData = async () => {

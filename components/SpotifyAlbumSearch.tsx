@@ -42,22 +42,27 @@ const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }
   };
 
   const searchSpotifyAlbums = async (query: string) => {
-    if (!accessToken) await getSpotifyAccessToken();
-    const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      }
-    );
-    const albums = response.data.albums.items.map((album: any) => ({
-      id: album.id,
-      name: album.name,
-      artist: album.artists[0].name,
-      albumArt: album.images[0]?.url || '',
-    }));
-    setSearchResults(albums);
+    try {
+      if (!accessToken) await getSpotifyAccessToken();
+      const response = await axios.get(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const albums = response.data.albums.items.map((album: any) => ({
+        id: album.id,
+        name: album.name,
+        artist: album.artists[0].name,
+        albumArt: album.images[0]?.url || '',
+      }));
+      setSearchResults(albums);
+    } catch (error) {
+      console.error('Error searching Spotify albums:', error);
+      // Handle the error appropriately, e.g., show an error message to the user
+    }
   };
 
   const handleSearch = () => {
