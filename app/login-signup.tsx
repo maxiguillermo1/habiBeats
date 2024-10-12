@@ -195,7 +195,7 @@ export default function LoginSignup() {
   };
 
   const handleForgotPassword = () => {
-    router.push("/forgotpassword");
+    router.push("/forgot-password");
   };
 
   const handleBackPress = () => {
