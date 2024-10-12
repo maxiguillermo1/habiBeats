@@ -1,5 +1,5 @@
 // editprofile.tsx
-// Mariann Grace Dizon & Max
+// Mariann Grace Dizon & Maxwell Guillermo
 
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -17,6 +17,8 @@ import { PromptSelector } from '../components/PromptSelector';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+// START of defining interfaces for Prompt, Song, Artist, and Album
+// START of Mariann Grace Dizon Contribution 
 interface Prompt {
   question: string;
   answer: string;
@@ -41,7 +43,11 @@ interface Album {
   artist: string;
   albumArt: string;
 }
+// END of defining interfaces for Prompt, Song, Artist, and Album
+// END of Mariann Grace Dizon Contribution 
 
+// START of defining the EditProfile component
+// START of Mariann Grace Dizon Contribution 
 export default function EditProfile() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -219,29 +225,46 @@ export default function EditProfile() {
     setUser((prevUser) => ({ ...prevUser, [field]: value }));
     setHasChanges(true);
   };
+  // END of defining the EditProfile component
+  // END of Mariann Grace Dizon Contribution 
 
+  // START of function to handle song selection
   // START of Maxwell Guillermo Contribution
   const handleSelectSong = (song: Song) => {
     setTuneOfMonth(song);
     setHasChanges(true);
   };
   // END of Maxwell Guillermo Contribution
-
+  // END of function to handle song selection
+  // START of function to handle artist selection
+  // START of Mariann Grace Dizon Contribution
   const handleSelectArtist = (artist: Artist) => {
     setFavoriteArtists((prevArtists) => [...prevArtists, artist]);
     setHasChanges(true);
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to handle artist selection
 
+  // START of function to handle artist removal
+  // START of Mariann Grace Dizon Contribution
   const handleRemoveArtist = (artistId: string) => {
     setFavoriteArtists((prevArtists) => prevArtists.filter(artist => artist.id !== artistId));
     setHasChanges(true);
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to handle artist removal
 
+  // START of function to handle album selection
+  // START of Mariann Grace Dizon Contribution
   const handleSelectAlbum = (album: Album) => {
     setFavoriteAlbum(album);
     setHasChanges(true);
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to handle album selection
 
+  // START of function to toggle music preference
+  // START of Mariann Grace Dizon Contribution
   const toggleMusicPreference = (genre: string) => {
     setMusicPreference((prevPreferences) => {
       if (prevPreferences.includes(genre)) {
@@ -252,7 +275,11 @@ export default function EditProfile() {
     });
     setHasChanges(true);
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to toggle music preference
 
+  // START of function to pick an image
+  // START of Mariann Grace Dizon Contribution
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -272,21 +299,33 @@ export default function EditProfile() {
       handleInputChange('favoritePerformance', result.assets[0].uri);
     }
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to pick an image
 
+  // START of function to handle prompt change
+  // START of Mariann Grace Dizon Contribution
   const handlePromptChange = (index: number, field: 'question' | 'answer', value: string) => {
     const newPrompts = [...prompts];
     newPrompts[index][field] = value;
     setPrompts(newPrompts);
     setHasChanges(true);
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to handle prompt change
 
+  // START of function to add a prompt
+  // START of Mariann Grace Dizon Contribution
   const handleAddPrompt = () => {
     if (prompts.length < 8) {
       setPrompts([...prompts, { question: '', answer: '' }]);
       setHasChanges(true);
     }
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to add a prompt
 
+  // START of function to remove a prompt
+  // START of Mariann Grace Dizon Contribution
   const handleRemovePrompt = async (index: number) => {
     try {
       const removedPrompt = prompts[index];
@@ -308,11 +347,18 @@ export default function EditProfile() {
       Alert.alert('Error', 'Failed to remove prompt');
     }
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to remove a prompt
 
+  // START of function to handle back press
+  // START of Mariann Grace Dizon Contribution
   const handleBackPress = () => {
     router.back();
   };
+  // END of Mariann Grace Dizon Contribution
+  // END of function to handle back press
 
+  // START of Mariann Grace Dizon Contribution
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -353,14 +399,16 @@ export default function EditProfile() {
                 ))}
               </View>
             </View>
+            // END of Mariann Grace Contribution
 
+            // START of Maxwell Guillermo Contribution
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Tune of the Month</Text>
-              // START of Maxwell Guillermo Contribution
               <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
-              // END of Maxwell Guillermo Contribution
             </View>
+            // END of Maxwell Guillermo Contribution
 
+            // START of Mariann Grace Dizon Contribution
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Favorite Artists</Text>
               <SpotifySearch 
@@ -437,6 +485,7 @@ export default function EditProfile() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -515,14 +564,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    alignSelf: 'center', // Center horizontally
-    marginVertical: 10, // Add some vertical margin
+    alignSelf: 'center',
+    marginVertical: 10,
   },
   imageInputText: {
     fontSize: 18,
     color: '#FFFFFF',
     zIndex: 1,
-    textAlign: 'center', // Center the text
+    textAlign: 'center',
   },
   imageInput: {
     width: '100%',
@@ -530,7 +579,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    resizeMode: 'contain', // Change to 'contain' to ensure the entire image is visible
+    resizeMode: 'contain',
     borderRadius: 10,
   },
   promptContainer: {
@@ -650,3 +699,4 @@ const styles = StyleSheet.create({
     color: '#542f11',
   },
 });
+// END of Mariann Grace Contribution

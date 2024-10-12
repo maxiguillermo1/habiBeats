@@ -1,5 +1,5 @@
 // messages.tsx
-// Jesus Donate
+// Jesus Donate and Maxwell Guillermo
 
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
@@ -221,6 +221,8 @@ const Messages = () => {
   };
   // END of Jesus Donate Contributation
 
+  // START of Messages component rendering
+  // START of Maxwell Guillermo Contribution
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -306,6 +308,8 @@ const Messages = () => {
     </SafeAreaView>
   );
 };
+  // END of Messages component rendering
+  // END of Maxwell Guillermo Contribution
 
 // Define styles for the Messages component
 const styles = StyleSheet.create({

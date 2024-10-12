@@ -1,6 +1,7 @@
 // profile.tsx
 // Mariann Grace Dizon
 
+// START of Profile component imports and type definitions
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,7 +35,9 @@ interface Prompt {
   question: string;
   answer: string;
 }
+// END of Profile component imports and type definitions
 
+// START of Profile component definition and state initialization
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState({
@@ -51,7 +54,9 @@ export default function Profile() {
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+// END of Profile component definition and state initialization
 
+// START of useEffect hooks for fetching user data and registering push notifications
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -141,7 +146,9 @@ export default function Profile() {
       }
     });
   }, []);
+// END of useEffect hooks for fetching user data and registering push notifications
 
+// START of helper functions for navigation and styling
   const handleSettingsPress = () => {
     router.push('/settings');
   };
@@ -171,7 +178,9 @@ export default function Profile() {
         return '#333';
     }
   };
+// END of helper functions for navigation and styling
 
+// START of Profile component render
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -300,7 +309,9 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
+// END of Profile component render
 
+// START of StyleSheet definition
 const styles = StyleSheet.create({
   container: {
     flex: 1,

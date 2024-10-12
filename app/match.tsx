@@ -30,19 +30,22 @@ const updateUserMatch = async (currentUserId: string, matchedUserId: string, sta
 };
 // END of to updating matches hashmap for current user
 
-// Match component definition
+
+// START of Match component definition and state initialization
+// START of Mariann Grace Dizon Contribution
 const Match = () => {
   const [showMatchModal, setShowMatchModal] = useState(false);   // State to control the visibility of the match modal
-  const [likeButtonColor, setLikeButtonColor] = useState('#fff8f0');   // State to manage the color of the like and dislike buttons
-  const [dislikeButtonColor, setDislikeButtonColor] = useState('#fff8f0'); // dislike button color
+  const [likeButtonColor, setLikeButtonColor] = useState('#fff8f0');   // State to manage the color of the like button
+  const [dislikeButtonColor, setDislikeButtonColor] = useState('#fff8f0'); // State to manage the color of the dislike button
 
-  
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
 
-  // functions for animation values
+  // Animation values for scale and opacity
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
+// END of Match component definition and state initialization
+// END of Mariann Grace Dizon Contribution
 
 
   //  START of fetch two users from Firestore
@@ -147,6 +150,8 @@ const Match = () => {
     // END of Reyna Aguirre Contribution
   
 
+  // START of modal animation functions
+  // START of Mariann Grace Dizon Contribution
   // Function to animate the modal
   const animateModal = (visible: boolean) => {
     Animated.parallel([
@@ -161,7 +166,11 @@ const Match = () => {
       }),
     ]).start();
   };
+  // END of modal animation functions
+  // END of Mariann Grace Dizon Contribution
     
+  // START of heart button press handler
+  // START of Mariann Grace Dizon Contribution
   // Handler for when the heart button is pressed
   const handleHeartPress = async () => {
     if (user2) {
@@ -203,8 +212,11 @@ const Match = () => {
       }
     }
   };
+  // END of heart button press handler
+  // END of Mariann Grace Dizon Contribution
   
-  // Function to handle the close button press
+  // START of close button press handler
+  // START of Mariann Grace Dizon Contribution
   const handleClosePress = async () => {
     if (user2) {
       setDislikeButtonColor('#0e1514'); // Change to red when disliked
@@ -222,8 +234,11 @@ const Match = () => {
       }, 1000);
     }
   };
+  // END of close button press handler
+  // END of Mariann Grace Dizon Contribution
 
-  // Functions to reset matches
+  // START of match reset functions
+  // START of Reyna Aguirre Contribution
   const confirmResetMatches = () => {
     Alert.alert(
       "Confirm Reset Matches",
@@ -296,8 +311,11 @@ const Match = () => {
       console.log("No current user authenticated");
     }
   };
+  // END of match reset functions
+  // END of Reyna Aguirre Contribution
 
-
+  // START of navigation function
+  // START of Mariann Grace Dizon Contribution
   // Function to navigate to the direct message screen  
   const navigateToDirectMessage = (recipientId: string, recipientName: string) => {
     router.push({
@@ -305,21 +323,30 @@ const Match = () => {
       params: { recipientId, recipientName },
     });
   };
+  // END of navigation function
+  // END of Mariann Grace Dizon Contribution
   
-
+  // START of like button color reset effect
+  // START of Mariann Grace Dizon Contribution
   // Effect to reset like button color when modal is closed
   useEffect(() => {
     if (!showMatchModal) {
       setLikeButtonColor('#fff8f0'); // Change back to original color
     }
   }, [showMatchModal]);
+  // END of like button color reset effect
+  // END of Mariann Grace Dizon Contribution
 
+  // START of modal close handler
+  // START of Mariann Grace Dizon Contribution
   // Function to handle modal close
   const handleModalClose = () => {
     animateModal(false);
     setShowMatchModal(false);
     fetchNextUser(); // Load the next user profile
   };
+  // END of modal close handler
+  // END of Mariann Grace Dizon Contribution
 
   // UI rendering
   // Mariann Grace Dizon

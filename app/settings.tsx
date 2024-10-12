@@ -198,6 +198,7 @@ const Settings = () => {
       Alert.alert("Error", "Failed to update profile picture. Please try again.");
     }
   };
+  // END of Image Picker Functionality
   // END of Mariann Grace Dizon Contribution
 
   // START of Email Change OTP Generation and Sending

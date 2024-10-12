@@ -224,6 +224,8 @@ const DirectMessageScreen = () => {
     }
     // END of Jesus Donate Contribution
 
+    // START of rendering the DirectMessageScreen component
+    // START of Mariann Grace Dizon Contribution
     return (
         <SafeAreaView style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -300,6 +302,8 @@ const DirectMessageScreen = () => {
             </Modal>
         </SafeAreaView>
     );
+    // END of rendering the DirectMessageScreen component
+    // END of Mariann Grace Dizon Contribution
 };
 
 // Define the styles for the DirectMessageScreen
@@ -444,6 +448,5 @@ const styles = StyleSheet.create({
     },
 });
 
-// Export the DirectMessageScreen component
-export default DirectMessageScreen;
+export default DirectMessageScreen; // Export the DirectMessageScreen component
 // END of Mariann Grace Dizon Contribution

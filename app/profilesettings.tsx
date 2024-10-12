@@ -97,10 +97,14 @@ export default function ProfileSettings() {
   // END of Updating User Email in Firestore
   // END of Jesus Donate Contribution
   
-  // Function to handle back button press
+  
+  // START of Navigation Handler
+  // START of Mariann Grace Dizon Contribution
   const handleBackPress = () => {
     router.back();
   };
+  // END of Navigation Handler
+  // END of Mariann Grace Dizon Contribution
 
   // START of Uploading Image to Firebase
   // START of Jesus Donate Contribution
@@ -123,7 +127,7 @@ export default function ProfileSettings() {
   // END of Jesus Donate Contribution
 
   // START of Picking Image from Camera Roll
-  // Start of Grace Mariann Dizon Contribution
+  // Start of Mariann Grace Dizon Contribution
   const handleImagePicker = async (setImageFunction: React.Dispatch<React.SetStateAction<string>>) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -152,12 +156,14 @@ export default function ProfileSettings() {
     }
   };
   // END of Picking Image from Camera Roll
-  // END of Grace Mariann Dizon Contribution
+  // END of Mariann Grace Dizon Contribution
 
-  // Function to handle profile picture edit
+  
+  // START of Handling Profile Picture Edit and Save Changes
+  // START of Mariann Grace Dizon Contribution
   const handleEditProfilePicture = () => setModalVisible(true);
 
-  // Function to handle saving changes
+  
   const handleSave = () => {
     console.log('Saving changes...');
     router.replace({
@@ -170,6 +176,8 @@ export default function ProfileSettings() {
       }
     });
   };
+  // END of Handling Profile Picture Edit and Save Changes
+  // END of Mariann Grace Dizon Contribution
 
   // START Function to Handle Logout
   // START of Reyna Aguirre Contribution
