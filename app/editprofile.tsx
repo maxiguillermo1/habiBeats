@@ -16,6 +16,7 @@ import { Picker } from '@react-native-picker/picker';
 import { PromptSelector } from '../components/PromptSelector';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 
 // START of defining interfaces for Prompt, Song, Artist, and Album
 // START of Mariann Grace Dizon Contribution 
@@ -70,6 +71,7 @@ export default function EditProfile() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
 
+  // Define promptOptions as an array of strings
   const promptOptions = [
     "Are you more of a front row or back row person at concerts? Why?",
     "How do you prepare for an event? Any special gear or outfits?",
@@ -361,127 +363,129 @@ export default function EditProfile() {
   // START of Mariann Grace Dizon Contribution
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={[{ key: 'content' }]}
-        renderItem={() => (
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBackPress}
-              >
-                <Ionicons name="chevron-back-outline" size={24} color="black" />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Edit Profile</Text>
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Music Preference</Text>
-              <View style={styles.genreContainer}>
-                {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
-                  <TouchableOpacity
-                    key={genre}
-                    style={[
-                      styles.genreButton,
-                      musicPreference.includes(genre) && styles.selectedGenreButton,
-                    ]}
-                    onPress={() => toggleMusicPreference(genre)}
-                  >
-                    <Text
-                      style={[
-                        styles.genreButtonText,
-                        musicPreference.includes(genre) && styles.selectedGenreButtonText,
-                      ]}
-                    >
-                      {genre}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <FlatList
+          data={[{ key: 'content' }]}
+          renderItem={() => (
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={handleBackPress}
+                >
+                  <Ionicons name="chevron-back-outline" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Edit Profile</Text>
               </View>
-            </View>
-            // END of Mariann Grace Contribution
-
-            // START of Maxwell Guillermo Contribution
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Tune of the Month</Text>
-              <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
-            </View>
-            // END of Maxwell Guillermo Contribution
-
-            // START of Mariann Grace Dizon Contribution
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Artists</Text>
-              <SpotifySearch 
-                onSelectArtist={handleSelectArtist} 
-                onRemoveArtist={handleRemoveArtist} 
-                selectedArtists={favoriteArtists}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Album</Text>
-              <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
-              {favoriteAlbum && (
-                <View style={styles.albumContainer}>
-                  <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
-                  <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
-                  <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Music Preference</Text>
+                <View style={styles.genreContainer}>
+                  {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
+                    <TouchableOpacity
+                      key={genre}
+                      style={[
+                        styles.genreButton,
+                        musicPreference.includes(genre) && styles.selectedGenreButton,
+                      ]}
+                      onPress={() => toggleMusicPreference(genre)}
+                    >
+                      <Text
+                        style={[
+                          styles.genreButtonText,
+                          musicPreference.includes(genre) && styles.selectedGenreButtonText,
+                        ]}
+                      >
+                        {genre}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              )}
-            </View>
+              </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Favorite Performance</Text>
-              <TouchableOpacity onPress={pickImage} style={styles.imageInputPlaceholder}>
-                <Text style={styles.imageInputText}>Choose a Photo</Text>
-                {(image || user.favoritePerformance) && (
-                  <Image 
-                    source={{ uri: image || user.favoritePerformance }} 
-                    style={styles.imageInput} 
-                  />
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Tune of the Month</Text>
+                <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
+              </View>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Favorite Artists</Text>
+                <SpotifySearch 
+                  onSelectArtist={handleSelectArtist} 
+                  onRemoveArtist={handleRemoveArtist} 
+                  selectedArtists={favoriteArtists}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Favorite Album</Text>
+                <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
+                {favoriteAlbum && (
+                  <View style={styles.albumContainer}>
+                    <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
+                    <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
+                    <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+                  </View>
                 )}
-              </TouchableOpacity>
-            </View>
+              </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/8)</Text>
-              {prompts.map((prompt, index) => (
-                <View key={index} style={styles.promptContainer}>
-                  <PromptSelector
-                    value={prompt.question}
-                    onSelect={(question) => handlePromptChange(index, 'question', question)}
-                    onRemove={() => handleRemovePrompt(index)}
-                    options={promptOptions}
-                  />
-                  {prompt.question && (
-                    <TextInput
-                      style={styles.promptInput}
-                      value={prompt.answer}
-                      onChangeText={(text) => handlePromptChange(index, 'answer', text)}
-                      placeholder="Write your answer here"
-                      multiline
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Favorite Performance</Text>
+                <TouchableOpacity onPress={pickImage} style={styles.imageInputPlaceholder}>
+                  <Text style={styles.imageInputText}>Choose a Photo</Text>
+                  {(image || user.favoritePerformance) && (
+                    <Image 
+                      source={{ uri: image || user.favoritePerformance }} 
+                      style={styles.imageInput} 
                     />
                   )}
-                </View>
-              ))}
-              {prompts.length < 8 && (
-                <TouchableOpacity style={styles.addPromptButton} onPress={handleAddPrompt}>
-                  <Text style={styles.addPromptButtonText}>+</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {hasChanges && (
-              <View style={styles.saveButtonContainer}>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
                 </TouchableOpacity>
               </View>
-            )}
-          </View>
-        )}
-        keyExtractor={(item) => item.key}
-        contentContainerStyle={styles.scrollContent}
-      />
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/8)</Text>
+                {prompts.map((prompt, index) => (
+                  <View key={index} style={styles.promptContainer}>
+                    <PromptSelector
+                      value={prompt.question}
+                      onSelect={(question) => handlePromptChange(index, 'question', question)}
+                      onRemove={() => handleRemovePrompt(index)}
+                      options={promptOptions}
+                    />
+                    {prompt.question && (
+                      <TextInput
+                        style={styles.promptInput}
+                        value={prompt.answer}
+                        onChangeText={(text) => handlePromptChange(index, 'answer', text)}
+                        placeholder="Write your answer here"
+                        multiline
+                      />
+                    )}
+                  </View>
+                ))}
+                {prompts.length < 8 && (
+                  <TouchableOpacity style={styles.addPromptButton} onPress={handleAddPrompt}>
+                    <Text style={styles.addPromptButtonText}>+</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {hasChanges && (
+                <View style={styles.saveButtonContainer}>
+                  <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          keyExtractor={(item) => item.key}
+          contentContainerStyle={styles.scrollContent}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

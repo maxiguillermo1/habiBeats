@@ -1,8 +1,8 @@
 // directmessage.tsx
-// Jesus Donate
+// Jesus Donate & Mariann Grace Dizon
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useLocalSearchParams } from 'expo-router';
@@ -262,7 +262,10 @@ const DirectMessageScreen = () => {
                 contentContainerStyle={styles.messageList}
             />
             {/* This is the input container for the message input and send button */}
-            <View style={styles.inputContainer}>
+            <KeyboardAvoidingView
+                style={styles.inputContainer}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
                 <TextInput
                     style={styles.input}
                     value={newMessage}
@@ -272,13 +275,16 @@ const DirectMessageScreen = () => {
                 <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
                     <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
-            </View>
+            </KeyboardAvoidingView>
             {/* This is the delete modal that is shown when the user long presses on a message */}
             <Modal
                 transparent={true}
                 visible={isDeleteModalVisible}
                 onRequestClose={() => setIsDeleteModalVisible(false)}
             >
+                //END of Mariann Grace Dizon contribution
+
+                // START of Jesus Donate contribution
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Delete Message</Text>
@@ -299,13 +305,14 @@ const DirectMessageScreen = () => {
                         </View>
                     </View>
                 </View>
+                // END of Jesus Donate contribution
             </Modal>
         </SafeAreaView>
     );
     // END of rendering the DirectMessageScreen component
-    // END of Mariann Grace Dizon Contribution
 };
 
+// START of Mariann Grace Dizon Contribution
 // Define the styles for the DirectMessageScreen
 const styles = StyleSheet.create({
     container: {
