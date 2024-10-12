@@ -1,42 +1,54 @@
 // SpotifySearch.tsx
 // Mariann Grace Dizon
 
+// START of Spotify Artist Search Component
+// START of Mariann Grace Dizon Contribution
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { encode } from 'base-64';
 import { Ionicons } from '@expo/vector-icons';
 
+// Spotify API credentials
+// Note: In a production environment, these should be stored securely and not exposed in the client-side code
 const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
 const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
 
+// Define the structure for an artist object
 interface Artist {
   id: string;
   name: string;
   picture: string;
 }
 
+// Props for the SpotifySearch component
 interface SpotifySearchProps {
   onSelectArtist: (artist: Artist) => void;
   onRemoveArtist: (artistId: string) => void;
   selectedArtists: Artist[];
 }
 
+// SpotifySearch component for searching and selecting artists
 const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveArtist, selectedArtists }) => {
+  // State variables
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Artist[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [accessToken, setAccessToken] = useState('');
   const [tokenExpirationTime, setTokenExpirationTime] = useState(0);
 
+  // Function to obtain or refresh the Spotify access token
   const getSpotifyAccessToken = async () => {
     const currentTime = Date.now();
+    // Check if the current token is still valid
     if (accessToken && tokenExpirationTime > currentTime) {
       return accessToken;
     }
 
     try {
+      // Encode client credentials for authorization
       const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
+      // Request a new access token
       const response = await axios.post('https://accounts.spotify.com/api/token', 
         'grant_type=client_credentials',
         {
@@ -48,6 +60,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
       );
       const newAccessToken = response.data.access_token;
       const newExpirationTime = currentTime + (response.data.expires_in * 1000);
+      // Update state with new token and expiration time
       setAccessToken(newAccessToken);
       setTokenExpirationTime(newExpirationTime);
       console.log('New access token obtained:', newAccessToken);
@@ -58,14 +71,17 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
     }
   };
 
+  // Function to search for artists on Spotify
   const searchSpotifyArtists = async (query: string) => {
     try {
       const token = await getSpotifyAccessToken();
       console.log('Access token obtained:', token);
 
+      // Construct the search URL
       const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`;
       console.log('Request URL:', url);
 
+      // Make the API request to Spotify
       const response = await axios.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -74,6 +90,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
 
       console.log('Spotify API response:', response.data);
 
+      // Transform the API response into our Artist interface
       const artists = response.data.artists.items.map((artist: any) => ({
         id: artist.id,
         name: artist.name,
@@ -81,6 +98,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
       }));
       setSearchResults(artists);
     } catch (error) {
+      // Detailed error logging
       if (axios.isAxiosError(error)) {
         console.error('Error searching Spotify artists:');
         console.error('Status:', error.response?.status);
@@ -89,15 +107,17 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
       } else {
         console.error('Unexpected error:', error);
       }
-      // Handle the error appropriately, e.g., show an error message to the user
+      // TODO: Handle the error appropriately, e.g., show an error message to the user
     }
   };
 
+  // Function to handle the search button press
   const handleSearch = () => {
     if (searchQuery.trim() === '') return;
     searchSpotifyArtists(searchQuery);
   };
 
+  // Function to handle artist selection
   const handleSelectArtist = (artist: Artist) => {
     onSelectArtist(artist);
     setModalVisible(false);
@@ -105,11 +125,13 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
 
   return (
     <View style={styles.container}>
+      {/* Search box that opens the modal when pressed */}
       <TouchableOpacity style={styles.searchBox} onPress={() => setModalVisible(true)}>
         <Text style={styles.placeholderText}>Search for an artist</Text>
         <Ionicons name="search" size={24} color="#999" />
       </TouchableOpacity>
 
+      {/* List of selected artists */}
       <FlatList
         data={selectedArtists}
         keyExtractor={(item) => item.id}
@@ -124,6 +146,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
         )}
       />
 
+      {/* Modal for artist search */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -132,6 +155,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            {/* Search input and button */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -143,6 +167,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
                 <Ionicons name="search" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
+            {/* List of search results */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
@@ -156,6 +181,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
                 </TouchableOpacity>
               )}
             />
+            {/* Close button for the modal */}
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -166,6 +192,7 @@ const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveA
   );
 };
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -245,3 +272,6 @@ const styles = StyleSheet.create({
 });
 
 export default SpotifySearch;
+
+// END of Spotify Artist Search Component
+// END of Mariann Grace Dizon Contribution

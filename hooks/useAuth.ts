@@ -1,3 +1,6 @@
+// useAuth.ts
+// Jesus Donate
+
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';

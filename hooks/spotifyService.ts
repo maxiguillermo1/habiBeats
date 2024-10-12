@@ -1,3 +1,8 @@
+// spotifyService.ts
+// Mariann Grace Dizon
+
+// START of Spotify API Integration and User Data Fetching
+// START of Mariann Grace Dizon Contribution
 import axios, { AxiosError } from 'axios';
 import { encode } from 'base-64';
 
@@ -85,3 +90,6 @@ export const fetchUserData = async () => {
     throw error;
   }
 };
+
+// END of Spotify API Integration and User Data Fetching
+// END of Mariann Grace Dizon Contribution
