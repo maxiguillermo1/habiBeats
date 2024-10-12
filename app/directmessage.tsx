@@ -225,91 +225,90 @@ const DirectMessageScreen = () => {
     // END of Jesus Donate Contribution
 
     // START of rendering the DirectMessageScreen component
-    // START of Mariann Grace Dizon Contribution
+    // START of Mariann Grace Dizon Contribution and Jesus Donate
     return (
-        <SafeAreaView style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
-            {/* This view is for the navbar which contains the back button, profile image, and name of the recipient */}
-            <View style={styles.navbar}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <View style={styles.navbarNameContainer}>
-                    <Image
-                        source={{ uri: profileImageUrl || 'placeholder.png' }}
-                        style={styles.profileImage}
-                    />
-                    <Text style={styles.navbarName}>{recipientName}</Text>
-                </View>
-            </View>
-
-            {/* This is the flatlist that displays the messages */}
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    // When the user long presses on a message, the delete modal is shown
-                    <TouchableOpacity
-                        onLongPress={() => handleLongPress(item)}
-                        delayLongPress={500}
-                    >
-                        <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
-                            <Text style={styles.messageText}>{item.message}</Text>
-                        </View>
+        <View style={{ flex: 1, backgroundColor: '#fff8f0' }}>
+            <SafeAreaView style={styles.container}>
+                <Stack.Screen options={{ headerShown: false }} />
+                {/* This view is for the navbar which contains the back button, profile image, and name of the recipient */}
+                <View style={styles.navbar}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="black" />
                     </TouchableOpacity>
-                )}
-                contentContainerStyle={styles.messageList}
-            />
-            {/* This is the input container for the message input and send button */}
-            <KeyboardAvoidingView
-                style={styles.inputContainer}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-                <TextInput
-                    style={styles.input}
-                    value={newMessage}
-                    onChangeText={setNewMessage}
-                    placeholder="Type a message..."
-                />
-                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                    <Text style={styles.sendButtonText}>Send</Text>
-                </TouchableOpacity>
-            </KeyboardAvoidingView>
-            {/* This is the delete modal that is shown when the user long presses on a message */}
-            <Modal
-                transparent={true}
-                visible={isDeleteModalVisible}
-                onRequestClose={() => setIsDeleteModalVisible(false)}
-            >
-                //END of Mariann Grace Dizon contribution
-
-                // START of Jesus Donate contribution
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Delete Message</Text>
-                        <Text style={styles.modalText}>Are you sure you want to delete this message?</Text>
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.cancelButton]}
-                                onPress={() => setIsDeleteModalVisible(false)}
-                            >
-                                <Text style={styles.modalButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.deleteButton]}
-                                onPress={handleDeleteMessage}
-                            >
-                                <Text style={styles.modalButtonText}>Delete</Text>
-                            </TouchableOpacity>
-                        </View>
+                    <View style={styles.navbarNameContainer}>
+                        <Image
+                            source={{ uri: profileImageUrl || 'placeholder.png' }}
+                            style={styles.profileImage}
+                        />
+                        <Text style={styles.navbarName}>{recipientName}</Text>
                     </View>
                 </View>
-                // END of Jesus Donate contribution
-            </Modal>
-        </SafeAreaView>
+
+                {/* This is the flatlist that displays the messages */}
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item }) => (
+                        // When the user long presses on a message, the delete modal is shown
+                        <TouchableOpacity
+                            onLongPress={() => handleLongPress(item)}
+                            delayLongPress={500}
+                        >
+                            <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
+                                <Text style={styles.messageText}>{item.message}</Text>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    contentContainerStyle={styles.messageList}
+                />
+                {/* This is the input container for the message input and send button */}
+                <KeyboardAvoidingView
+                    style={styles.inputContainer}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <TextInput
+                        style={styles.input}
+                        value={newMessage}
+                        onChangeText={setNewMessage}
+                        placeholder="Type a message..."
+                    />
+                    <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                        <Text style={styles.sendButtonText}>Send</Text>
+                    </TouchableOpacity>
+                </KeyboardAvoidingView>
+                {/* This is the delete modal that is shown when the user long presses on a message */}
+                <Modal
+                    transparent={true}
+                    visible={isDeleteModalVisible}
+                    onRequestClose={() => setIsDeleteModalVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Delete Message</Text>
+                            <Text style={styles.modalText}>Are you sure you want to delete this message?</Text>
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.cancelButton]}
+                                    onPress={() => setIsDeleteModalVisible(false)}
+                                >
+                                    <Text style={styles.modalButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.deleteButton]}
+                                    onPress={handleDeleteMessage}
+                                >
+                                    <Text style={styles.modalButtonText}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            </SafeAreaView>
+        </View>
     );
     // END of rendering the DirectMessageScreen component
+    // END of Mariann Grace Dizon Contribution and Jesus Donate
 };
 
 // START of Mariann Grace Dizon Contribution
@@ -317,12 +316,17 @@ const DirectMessageScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F0F0F0',
+        backgroundColor: '#fff8f0',
+        marginLeft: 10,  // Keep the left margin
+        marginRight: 10, // Keep the right margin
     },
     inputContainer: {
         flexDirection: 'row',
-        padding: 10,
-        backgroundColor: '#FFFFFF',
+        padding: 20,
+        paddingBottom: 40,
+        backgroundColor: '#fff8f0',
+        marginLeft: -10,  // Compensate for container margin
+        marginRight: -10, // Compensate for container margin
     },
     input: {
         flex: 1,
@@ -335,20 +339,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     sendButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#37bdd5',
         borderRadius: 20,
         paddingHorizontal: 20,
         paddingVertical: 10,
         justifyContent: 'center',
     },
     sendButtonText: {
-        color: 'white',
+        color: '#fff8f0',
         fontWeight: 'bold',
         fontSize: 16,
     },
     sentMessage: {
         alignSelf: 'flex-end',
-        backgroundColor: '#007AFF',
+        backgroundColor: '#fba904',
         borderRadius: 20,
         padding: 10,
         margin: 5,
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
     },
     receivedMessage: {
         alignSelf: 'flex-start',
-        backgroundColor: '#A5E5EA',
+        backgroundColor: '#facb6e',
         borderRadius: 20,
         padding: 10,
         margin: 5,
@@ -364,14 +368,14 @@ const styles = StyleSheet.create({
     },
     messageText: {
         color: '#FFFFFF',
-        fontSize: 16,
+        fontSize: 17,
     },
     navbar: {
         height: 80,
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 15,
-        backgroundColor: 'white',
+        backgroundColor: '#fff8f0',
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
     },
@@ -385,9 +389,9 @@ const styles = StyleSheet.create({
         marginLeft: 15,
     },
     profileImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 55,
+        height: 55,
+        borderRadius: 30,
         marginRight: 15,
     },
     navbarName: {
@@ -420,13 +424,16 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 10,
         padding: 20,
-        alignItems: 'center',
+        alignItems: 'center', // Center items horizontally
         elevation: 5,
+        width: '80%', // Set a specific width
+        maxWidth: 300, // Maximum width
     },
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
+        textAlign: 'center', // Center the title text
     },
     modalText: {
         fontSize: 16,
@@ -435,13 +442,14 @@ const styles = StyleSheet.create({
     },
     modalButtons: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'center', // Center the buttons
         width: '100%',
     },
     modalButton: {
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
+        marginHorizontal: 10, // Add some horizontal margin between buttons
     },
     cancelButton: {
         backgroundColor: '#ccc',
