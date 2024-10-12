@@ -1,7 +1,6 @@
 // directmessage.tsx
 // Jesus Donate
 
-// START of Jesus Donate Contribution
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
@@ -33,9 +32,12 @@ const DirectMessageScreen = () => {
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
+    // START of Jesus Donate Contribution
+    // Fetches the messages from the database
     useEffect(() => {
         if (!auth.currentUser) return;
 
+        // Loading screen is on
         setIsLoading(true);
 
         const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
@@ -44,25 +46,31 @@ const DirectMessageScreen = () => {
         const unsubscribe = onSnapshot(conversationRef, async (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const conversationData = docSnapshot.data();
+                // Sort the messages by timestamp
                 setMessages(conversationData.messages?.sort((a: Message, b: Message) => a.timestamp - b.timestamp) || []);
 
+                // Fetch the profile image url of the recipient
                 if (!profileImageUrl) {
                     const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', recipientId)));
                     if (!userDoc.empty) {
                         setProfileImageUrl(userDoc.docs[0].data().profileImageUrl || '');
                     }
                 }
-            } else {
+            } else { // If the conversation does not exist, create it
                 await setDoc(conversationRef, {
                     messages: []
                 });
             }
+            // Loading screen is off
             setIsLoading(false);
         });
 
         return () => unsubscribe();
     }, [recipientId]);
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
+    // Sends a message to the recipient
     const sendMessage = async () => {
         const message = newMessage
         setNewMessage('');
@@ -72,6 +80,7 @@ const DirectMessageScreen = () => {
         const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
         const conversationRef = doc(db, 'conversations', conversationId);
 
+        // Create the new message object
         const newMessageObj = {
             message: message,
             senderId: auth.currentUser.uid,
@@ -100,42 +109,53 @@ const DirectMessageScreen = () => {
         }
 
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
+    // Updates the conversationIds of the users in the database
     const updateUsersConversationIds = async (userId1: string, userId2: string, conversationId: string) => {
         const updateUser = async (userId: string, otherUserId: string) => {
             const userRef = doc(db, 'users', userId);
             const userDoc = await getDoc(userRef);
             
+            // If the user exists, update the conversationIds
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const conversationIds = userData.conversationIds || {};
                 
+                // If the other user is not in the conversationIds, add them
                 if (!conversationIds[otherUserId]) {
                     await updateDoc(userRef, {
                         [`conversationIds.${otherUserId}`]: conversationId
                     });
                 }
-                console.log(`Conversation ID for ${otherUserId}:`, conversationIds[otherUserId]);
             }
         };
 
+        // Update the conversationIds for both users
         await Promise.all([
             updateUser(userId1, userId2),
             updateUser(userId2, userId1)
         ]);
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
+    // When the user long presses on a message, the delete modal is shown
     const handleLongPress = (message: Message) => {
         if (message.senderId === auth.currentUser?.uid) {
             setSelectedMessage(message);
             setIsDeleteModalVisible(true);
         }
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
     // Deletes a message from the conversation sent by the current user
     const handleDeleteMessage = async () => {
         if (!selectedMessage || !auth.currentUser) return;
 
+        // Get the conversation id
         const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
         const conversationRef = doc(db, 'conversations', conversationId);
 
@@ -174,7 +194,10 @@ const DirectMessageScreen = () => {
             Alert.alert("Error", "Failed to delete message. Please try again.");
         }
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
+    // Scrolls to the bottom of the flatlist
     const scrollToBottom = () => {
         if (flatListRef.current && messages.length > 0) {
             flatListRef.current.scrollToEnd({ animated: true });
@@ -184,7 +207,10 @@ const DirectMessageScreen = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
+    // Loading screen rendered while the conversation is loading
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
@@ -196,6 +222,7 @@ const DirectMessageScreen = () => {
             </SafeAreaView>
         );
     }
+    // END of Jesus Donate Contribution
 
     return (
         <SafeAreaView style={styles.container}>
@@ -232,6 +259,7 @@ const DirectMessageScreen = () => {
                 )}
                 contentContainerStyle={styles.messageList}
             />
+            {/* This is the input container for the message input and send button */}
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
@@ -243,6 +271,7 @@ const DirectMessageScreen = () => {
                     <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
+            {/* This is the delete modal that is shown when the user long presses on a message */}
             <Modal
                 transparent={true}
                 visible={isDeleteModalVisible}

@@ -907,6 +907,7 @@ export default function SignUp() {
             )}
             {step === 11 && (
               <>
+                {/* Location Input */}
                 <Text style={styles.subtitle}>Where are you located?</Text>
                 <View style={styles.mapContainer}>
                   <MapView
@@ -916,11 +917,13 @@ export default function SignUp() {
                   >
                     <Marker coordinate={region} />
                   </MapView>
+                  {/* Displays the current location name */}
                   {currentLocationName && (
                     <View style={styles.locationNameContainer}>
                       <Text style={styles.locationNameText}>{currentLocationName}</Text>
                     </View>
                   )}
+                  {/* Confirm Location Button */}
                   <TouchableOpacity style={styles.confirmLocationButton} onPress={handleConfirmLocation}>
                     <Text style={styles.confirmLocationButtonText}>Confirm Location</Text>
                   </TouchableOpacity>

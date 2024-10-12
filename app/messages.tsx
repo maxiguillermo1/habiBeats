@@ -35,10 +35,12 @@ const Messages = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
+  // START of Jesus Donate Contributation
   // Fetch existing conversations from Firestore
   const fetchConversations = useCallback(async () => {
     if (!auth.currentUser) return;
 
+    // loading state for conversations
     setIsLoadingConversations(true);
 
     const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -67,6 +69,7 @@ const Messages = () => {
         const otherUserRef = doc(db, 'users', recipientId);
         const otherUserDoc = await getDoc(otherUserRef);
 
+        // If the other user exists, add the conversation to the data array
         if (otherUserDoc.exists()) {
           const otherUserData = otherUserDoc.data();
           conversationsData.push({
@@ -83,14 +86,18 @@ const Messages = () => {
     // Sort conversations by timestamp in descending order (most recent is on top)
     conversationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
+    // Set the conversations data to the state and end loading state
     setConversations(conversationsData);
     setIsLoadingConversations(false);
   }, []);
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   // Fetch new matches from Firestore
   const fetchNewMatches = useCallback(async () => {
     if (!auth.currentUser) return;
 
+    // loading state for new matches
     setIsLoadingMatches(true);
 
     const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -115,6 +122,7 @@ const Messages = () => {
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
 
+        // If the user exists, add them to the new matches data
         if (userDoc.exists()) {
           const userData = userDoc.data();
           newMatchesData.push({
@@ -126,10 +134,13 @@ const Messages = () => {
       }
     }
 
+    // Set the new matches data to the state and end loading state
     setNewMatches(newMatchesData);
     setIsLoadingMatches(false);
   }, []);
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   // Fetch conversations and new matches when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -137,7 +148,9 @@ const Messages = () => {
       fetchNewMatches();
     }, [fetchConversations, fetchNewMatches])
   );
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   // Navigate to the direct message screen
   const navigateToDirectMessage = (recipientId: string, recipientName: string) => {
     router.push({
@@ -145,7 +158,9 @@ const Messages = () => {
       params: { recipientId, recipientName },
     });
   };
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   // Calculate and return a human-readable time difference
   const getTimeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -161,12 +176,16 @@ const Messages = () => {
     if (interval > 1) return Math.floor(interval) + " minutes ago";
     return Math.floor(seconds) + " seconds ago";
   };
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   const handleLongPress = (conversation: Conversation) => {
     setSelectedConversation(conversation);
     setIsDeleteModalVisible(true);
   };
+  // END of Jesus Donate Contributation
 
+  // START of Jesus Donate Contributation
   const handleDeleteConversation = async () => {
     if (!selectedConversation || !auth.currentUser) return;
 
@@ -200,15 +219,19 @@ const Messages = () => {
       Alert.alert("Error", "Failed to delete conversation. Please try again.");
     }
   };
+  // END of Jesus Donate Contributation
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+      {/* This is the scrollview that displays the conversations and new matches */}
       <ScrollView style={styles.scrollView}>
         <Text style={styles.title}>Recent Messages</Text>
+        {/* Displays the conversations */}
         {isLoadingConversations ? (
           <ActivityIndicator size="large" color="#fba904" />
         ) : conversations.length > 0 ? (
+          // Maps the conversations to the messageItem style
           conversations.map((conversation) => (
             <TouchableOpacity 
               key={conversation.recipientId} 
@@ -216,10 +239,12 @@ const Messages = () => {
               onPress={() => navigateToDirectMessage(conversation.recipientId, conversation.friendName)}
               onLongPress={() => handleLongPress(conversation)}
             >
+              {/* Displays the profile image of the conversation partner */}
               <Image 
                 source={{ uri: conversation.profileImageUrl }} 
                 style={styles.avatar} 
               />
+              {/* Displays the name and last message of the conversation partner */}
               <View style={styles.messageContent}>
                 <Text style={styles.name}>{conversation.friendName}</Text>
                 <Text style={styles.messageText} numberOfLines={1}>{conversation.lastMessage}</Text>
@@ -230,7 +255,8 @@ const Messages = () => {
         ) : (
           <Text style={styles.noMessagesText}>No recent messages</Text>
         )}
-        
+
+        {/* Displays the new matches */}
         <Text style={styles.title}>Send your first message!</Text>
         {isLoadingMatches ? (
           <ActivityIndicator size="large" color="#fba904" />
@@ -255,6 +281,7 @@ const Messages = () => {
         visible={isDeleteModalVisible}
         onRequestClose={() => setIsDeleteModalVisible(false)}
       >
+        {/* Modal for deleting a conversation */}
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Delete Conversation</Text>

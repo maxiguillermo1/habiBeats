@@ -121,8 +121,8 @@ const Settings = () => {
   };
   // END of Reyna Aguirre Contribution
   
+  // START of Jesus Donate Contribution
   // New functions from profilesettings.tsx
-
   const uploadImageToFirebase = async (uri: string) => {
     try {
       console.log("Starting image upload to Firebase");
@@ -144,6 +144,7 @@ const Settings = () => {
       throw error;
     }
   };
+  // END of Jesus Donate Contribution
 
   const handleImagePicker = async () => {
     try {
@@ -183,6 +184,8 @@ const Settings = () => {
     }
   };
 
+  // START of Jesus Donate Contribution
+  // Generate a 6-digit OTP
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
@@ -211,12 +214,15 @@ const Settings = () => {
       Alert.alert("Error", "Failed to send OTP. Please try again.");
     }
   };
+  // END of Jesus Donate Contribution
+
 
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
+  // START of Jesus Donate Contribution
   const handleChangeEmail = async () => {
     setEmailChangeError('');
     if (!auth.currentUser) return;
@@ -241,6 +247,7 @@ const Settings = () => {
       return;
     }
     
+    // Check if the new email is already in use
     if (!otpSent) {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', newEmail));
@@ -260,6 +267,7 @@ const Settings = () => {
       return;
     }
 
+    // Query to check if the OTP is valid
     const q = query(collection(db, 'email_change_requests'),
       where('email', '==', auth.currentUser.email),
       where('otp', '==', otp),
@@ -276,6 +284,7 @@ const Settings = () => {
     const otpDoc = snapshot.docs[0];
     const otpData = otpDoc.data();
 
+    // Check if the OTP has expired
     const now = Timestamp.now();
     const expirationTime = 15 * 60 * 1000; // 15 minutes
     if (now.toMillis() - otpData.timestamp.toMillis() > expirationTime) {
@@ -284,6 +293,7 @@ const Settings = () => {
     }
     
     try {
+      // Verify the new email address
       await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
 
       await updateDoc(otpDoc.ref, { used: true });
@@ -318,6 +328,7 @@ const Settings = () => {
       setEmailChangeError('Failed to send verification email. Please try again.');
     }
   };
+  // END of Jesus Donate Contribution
 
   const handleChangePassword = () => {
     Alert.alert(
