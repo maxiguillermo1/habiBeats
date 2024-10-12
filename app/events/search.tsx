@@ -6,10 +6,10 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, TextInput, Text } from 'react-native';
-import TopNavBar from '../components/TopNavBar';
-import BottomNavBar from '../components/BottomNavBar';
+import TopNavBar from '../../components/TopNavBar';
+import BottomNavBar from '../../components/BottomNavBar';
 import { Stack } from 'expo-router';
-import { EventData } from '../components/EventCards';
+import { EventData } from '../../components/EventCards';
 import { Ionicons } from '@expo/vector-icons';
 
 const Search = () => {

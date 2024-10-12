@@ -22,13 +22,13 @@ const TopNavBar = () => {
 
   return (
     <View style={styles.topNav}>
-      <TouchableOpacity onPress={() => navigateTo('/search')}>
+      <TouchableOpacity onPress={() => navigateTo('/events/search')}>
         <Text style={[getNavItemStyle('/search'), styles.boldText]}>Search</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/trending')}>
+      <TouchableOpacity onPress={() => navigateTo('/events/trending')}>
         <Text style={[getNavItemStyle('/trending'), styles.boldText]}>Trending</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/myevents')}>
+      <TouchableOpacity onPress={() => navigateTo('/events/myevents')}>
         <Text style={[getNavItemStyle('/myevents'), styles.boldText]}>My Events</Text>
       </TouchableOpacity>
     </View>

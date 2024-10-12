@@ -1,25 +1,22 @@
-// trending.tsx
+// events.tsx
 // Maxwell Guillermo 
 
-// START of trending page UI/UX
+// START of Events Page UI/IX
 // START of Maxwell Guillermo Contribution
 
 import React from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
-import TopNavBar from '../components/TopNavBar';
-import BottomNavBar from '../components/BottomNavBar';
+import TopNavBar from '../../components/TopNavBar';
+import BottomNavBar from '../../components/BottomNavBar';
 import { Stack } from 'expo-router';
-import TrendingEventCard  from '../components/TrendingEventCard';
 
-const Trending = () => {
+const Events = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
       <View style={styles.content}>
-        {/* Content for trending page will go here */}
-
-        <TrendingEventCard/>
+        {/* Content for events would go here */}
       </View>
       <BottomNavBar />
     </SafeAreaView>
@@ -29,14 +26,14 @@ const Trending = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff8f0', // Updated background color
+    backgroundColor: '#fff8f0',
   },
   content: {
     flex: 1,
   },
 });
 
-export default Trending;
+export default Events;
 
-// END of trending page UI/UX
+// END of Events Page UI/IX
 // END of Maxwell Guillermo Contribution

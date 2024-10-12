@@ -6,11 +6,11 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import TopNavBar from '../components/TopNavBar';
-import BottomNavBar from '../components/BottomNavBar';
+import TopNavBar from '../../components/TopNavBar';
+import BottomNavBar from '../../components/BottomNavBar';
 import { Stack } from 'expo-router';
-import AttendingEvents from '../components/AttendingEvents';
-import FavoriteEvents from '../components/FavoriteEvents';
+import AttendingEvents from '../../components/AttendingEvents';
+import FavoriteEvents from '../../components/FavoriteEvents';
 
 const MyEvents = () => {
   return (
