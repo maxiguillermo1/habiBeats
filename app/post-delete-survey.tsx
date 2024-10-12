@@ -1,40 +1,50 @@
+// post-delete-survey.tsx
+// Reyna Aguirre
+
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Button, StyleSheet, Alert, Image } from 'react-native';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, Timestamp, doc, deleteDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
-
+// DeleteSurvey component for handling account deletion process
 const DeleteSurvey = () => {
+  // State to store the selected survey option
   const [selectedOption, setSelectedOption] = useState('');
   const auth = getAuth();
   const navigation = useNavigation();
 
+  // Survey options for user to choose from
   const surveyOptions = [
     "the app is not functional",
     "i don't use it anymore",
     "i didn't have a good experience",
   ];
 
+  // Function to handle option selection
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option);
   };
 
+  // Function to handle survey submission and account deletion
   const handleSubmit = async () => {
+    // Check if an option is selected
     if (!selectedOption) {
       Alert.alert('please select a reason before submitting.');
       return;
     }
 
     try {
+      // Prepare survey response data
       const response = {
         uid: auth.currentUser?.uid || 'anonymous',
         reason: selectedOption,
         timestamp: Timestamp.now(),
       };
+      // Save survey response to Firestore
       await addDoc(collection(db, 'delete-survey-responses'), response);
 
-      // Proceed to delete user account after saving survey response
+      // Proceed with account deletion if user is authenticated
       if (auth.currentUser) {
         const userId = auth.currentUser.uid;
 
@@ -65,6 +75,7 @@ const DeleteSurvey = () => {
       <Text style={styles.heading}>we are sad to see you go !</Text>
       <Text style={styles.subheading}>please let us know why you’re leaving :</Text>
 
+      {/* Render survey options */}
       {surveyOptions.map((option) => (
         <TouchableOpacity
           key={option}
@@ -78,13 +89,15 @@ const DeleteSurvey = () => {
         </TouchableOpacity>
       ))}
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>SUBMIT</Text>
-        </TouchableOpacity>
+      {/* Submit button */}
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.submitButtonText}>SUBMIT</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
+// Styles for the DeleteSurvey component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -94,9 +107,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
   },
   image: {
-    width: 200, // Adjust width
-    height: 200, // Adjust height
-    marginBottom: 20, // Space between image and heading
+    width: 200,
+    height: 200, 
+    marginBottom: 20, 
   },
   heading: {
     fontSize: 35,
@@ -147,10 +160,9 @@ const styles = StyleSheet.create({
     borderRadius: 10, 
     alignItems: 'center', 
     marginTop: 30, 
-
   },
   submitButtonText: {
-    color: '#fff8f0', // Text color
+    color: '#fff8f0',
     fontWeight: 'bold',
     fontSize: 16,
   },
