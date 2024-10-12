@@ -1,3 +1,9 @@
+// hidden-words.tsx
+// Maxwell Guillermo
+
+// START of Hidden Words UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -127,3 +133,6 @@ const styles = StyleSheet.create({
 });
 
 export default HiddenWords;
+
+// END of Hidden Words UI/UX
+// END of Maxwell Guillermo Contribution

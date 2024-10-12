@@ -1,3 +1,6 @@
+// email-notifications.tsx
+// Maxwell Guillermo
+
 import React from 'react';
 import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -150,3 +153,6 @@ const styles = StyleSheet.create({
 });
 
 export default EmailNotification;
+
+// END of Email Notifications UI/UX
+// END of Maxwell Guillermo Contribution

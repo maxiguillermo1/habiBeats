@@ -26,7 +26,7 @@ const BottomNavBar = () => {
 
   return (
     <View style={styles.bottomNav}>
-      <TouchableOpacity onPress={() => navigateTo('/search')}>
+      <TouchableOpacity onPress={() => navigateTo('/events/search')}>
         <Text style={[
           isEventActive() ? styles.activeNavItem : styles.navItem,
           styles.boldText

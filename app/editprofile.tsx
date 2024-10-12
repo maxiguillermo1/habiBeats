@@ -1,5 +1,6 @@
 // editprofile.tsx
-// Mariann Grace Dizon
+// Mariann Grace Dizon & Max
+
 
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, Image, FlatList } from 'react-native';
@@ -71,12 +72,12 @@ export default function EditProfile() {
     "If you could only listen to one album for the rest of your life, what would it be?",
     "What do you look for in a perfect event experience?",
     "What's one event or concert you're still hoping to attend one day?",
-    "What’s one piece of advice you would give to someone attending their first concert or event?",
+    "What's one piece of advice you would give to someone attending their first concert or event?",
     "What's one thing you always bring to an event that others might overlook?",
     "What's the best concert or event you've attended alone, and why was it worth it?",
     "What's the longest distance you've traveled to attend an event?",
     "What's the most memorable concert you've ever attended?",
-    "What’s the most memorable merch or souvenir you’ve collected from an event?",
+    "What's the most memorable merch or souvenir you've collected from an event?",
     "What's the most surprising thing you've seen happen at a live event?",
     "What's the most underrated album you've ever listened to?",
     "What's the next concert or event you're excited about?",
@@ -219,10 +220,12 @@ export default function EditProfile() {
     setHasChanges(true);
   };
 
+  // START of Maxwell Guillermo Contribution
   const handleSelectSong = (song: Song) => {
     setTuneOfMonth(song);
     setHasChanges(true);
   };
+  // END of Maxwell Guillermo Contribution
 
   const handleSelectArtist = (artist: Artist) => {
     setFavoriteArtists((prevArtists) => [...prevArtists, artist]);
@@ -353,7 +356,9 @@ export default function EditProfile() {
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Tune of the Month</Text>
+              // START of Maxwell Guillermo Contribution
               <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
+              // END of Maxwell Guillermo Contribution
             </View>
 
             <View style={styles.inputContainer}>

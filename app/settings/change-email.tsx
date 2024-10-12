@@ -1,3 +1,9 @@
+// change-email.tsx
+// Maxwell Guillermo
+
+// START of Change Email UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, Image } from 'react-native';
 import { getAuth, updateEmail, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -268,3 +274,6 @@ const styles = StyleSheet.create({
 });
 
 export default ChangeEmail;
+
+// END of Change Email UI/UX
+// END of Maxwell Guillermo Contribution

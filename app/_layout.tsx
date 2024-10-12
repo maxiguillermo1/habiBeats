@@ -40,6 +40,12 @@ export default function RootLayout() {
       <Stack.Screen name="settings/hidden-words" options={{ headerShown: false }} />
       {/* Define the delete survey screen with no header */}
       <Stack.Screen name="post-delete-survey" options={{ headerShown: false }} />
+      {/* Define the events search screen with no header */}
+      <Stack.Screen name="events/search" options={{ headerShown: false }} />
+      {/* Define the events event-details screen with no header */}
+      <Stack.Screen name="events/event-details" options={{ headerShown: false }} />
+      {/* Define the events myevents screen with no header */}
+      <Stack.Screen name="events/myevents" options={{ headerShown: false }} />
     </Stack>
   );
 }

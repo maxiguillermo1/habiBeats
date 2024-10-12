@@ -37,14 +37,14 @@ export default function Index() {
       category: "Core Features",
       color: "#fc6c85",
       items: [
-        { name: "Search", route: "/search" },
+        { name: "Search", route: "/events/search" },
         { name: "Match", route: "/match" },
         { name: "Messages", route: "/messages" },
         { name: "Direct Message", route: "/direct-message" },
         { name: "Events", route: "/events" },
         { name: "My Events", route: "/my-events" },
-        { name: "Trending", route: "/trending" }
-      ]
+        { name: "Trending", route: "/events/trending" }
+      ] 
     },
     {
       category: "Settings",

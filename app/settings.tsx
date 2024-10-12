@@ -1,3 +1,6 @@
+// settings.tsx
+// Reyna Aguirre, Jesus Donate, Mariann Grace Dizon, and Maxwell Guillermo
+
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +17,8 @@ import PushNotificationsSettings from './settings/push-notifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
 
+// START of Settings Component
+// START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
 const Settings = () => {
   const navigation = useNavigation();
   const auth = getAuth();
@@ -50,6 +55,8 @@ const Settings = () => {
   const googlePlacesRef = useRef(null);
   const router = useRouter();
 
+  // START of Maxwell Guillermo Contribution
+  // [User Gender State section]
   const [userGender, setUserGender] = useState('');
 
   useEffect(() => {
@@ -61,7 +68,10 @@ const Settings = () => {
   useEffect(() => {
     console.log('userGender state changed:', userGender);
   }, [userGender]);
+  // END of Maxwell Guillermo Contribution
 
+  // START of Fetch User Data
+  // START of Jesus Donate Contribution
   const fetchUserData = async () => {
     if (auth.currentUser) {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -79,7 +89,9 @@ const Settings = () => {
       }
     }
   };
+  // END of Jesus Donate Contribution
 
+  // START of Logout Functionality
   // START of Reyna Aguirre Contribution
   const handleLogout = () => {
     Alert.alert(
@@ -121,6 +133,7 @@ const Settings = () => {
   };
   // END of Reyna Aguirre Contribution
   
+  // START of Upload Image to Firebase
   // START of Jesus Donate Contribution
   // New functions from profilesettings.tsx
   const uploadImageToFirebase = async (uri: string) => {
@@ -146,6 +159,8 @@ const Settings = () => {
   };
   // END of Jesus Donate Contribution
 
+  // START of Image Picker Functionality
+  // START of Mariann Grace Dizon Contribution
   const handleImagePicker = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -183,7 +198,9 @@ const Settings = () => {
       Alert.alert("Error", "Failed to update profile picture. Please try again.");
     }
   };
+  // END of Mariann Grace Dizon Contribution
 
+  // START of Email Change OTP Generation and Sending
   // START of Jesus Donate Contribution
   // Generate a 6-digit OTP
   const generateOTP = () => {
@@ -216,13 +233,16 @@ const Settings = () => {
   };
   // END of Jesus Donate Contribution
 
-
+  // START of Maxwell Guillermo Contribution
+  // [Email validation function]
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+  // END of Maxwell Guillermo Contribution
 
   // START of Jesus Donate Contribution
+  // [handleChangeEmail function]
   const handleChangeEmail = async () => {
     setEmailChangeError('');
     if (!auth.currentUser) return;
@@ -330,6 +350,9 @@ const Settings = () => {
   };
   // END of Jesus Donate Contribution
 
+
+  // START of Maxwell Guillermo Contribution
+  // [handleChangePassword function]
   const handleChangePassword = () => {
     Alert.alert(
       "Change Password",
@@ -348,6 +371,7 @@ const Settings = () => {
     );
   };
 
+  // [handleEditEmail function]
   const handleEditEmail = () => {
     Alert.alert(
       "Change Email",
@@ -366,13 +390,14 @@ const Settings = () => {
     );
   };
 
+  // [handleEditDisplayName function]
   // Add these functions to your component
   const handleEditDisplayName = () => {
     // Implement logic to edit display name
   };
 
+  // [handlelastNameToggle function]
   // Toggle last name visibility
-  // Jesus Donate
   const handlelastNameToggle = async (value: boolean) => {
     console.log('Show last name toggle value:', value);
     setLastNameVisible(value);
@@ -405,16 +430,18 @@ const Settings = () => {
     }
   };
 
+  // [handleEditProfilePicture function]
   const handleEditProfilePicture = () => {
     // Implement logic to edit profile picture
   };
 
+  // [handleEditLocation function]
   const handleEditLocation = () => {
     // Implement logic to edit location
   };
 
+  // [handleShowLocationToggle function]
   // Toggle location visibility
-  // Jesus Donate
   const handleShowLocationToggle = async (value: boolean) => {
     setLocationVisible(value);
 
@@ -444,8 +471,8 @@ const Settings = () => {
     }
   };
 
+  // [handleMyEventsToggle function]
   // Toggle my events visibility
-  // Jesus Donate
   const handleMyEventsToggle = async (value: boolean) => {
     setMyEventsVisible(value);
   
@@ -462,12 +489,14 @@ const Settings = () => {
     }
   };
 
+  // [handleBackPress function]
   // Update this function
   const handleBackPress = () => {
     navigation.goBack();
   };
 
-  // Jesus Donate - Display Name is used for the user's display name
+  // [handleSaveNameChange function]
+  // Display Name is used for the user's display name
   const handleSaveNameChange = async () => {
     // Changes name, even if is authenticated or not
     
@@ -493,6 +522,7 @@ const Settings = () => {
     console.log('Inside handleSaveNameChange:', lastName, lastName ? tempName : firstName);
   };
 
+  // [handleSaveLocationChange function]
   const handleSaveLocationChange = async () => {
     if (tempLocation) {
       setLocation(locationVisible ? tempLocation : 'N/A');
@@ -514,6 +544,7 @@ const Settings = () => {
     }
   };
 
+  // [getBorderColor function]
   const getBorderColor = (gender: string) => {
     console.log('Getting border color for gender:', gender);
     switch (gender.toLowerCase()) {
@@ -952,6 +983,11 @@ const Settings = () => {
   );
 };
 
+// END of Maxwell Guillermo Contribution
+
+// START of StyleSheet
+// START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1206,5 +1242,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
+// END of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
+// END of StyleSheet
 
 export default Settings;

@@ -1,3 +1,9 @@
+// search-song.tsx
+// Maxwell Guillermo
+
+// START of Search Song Component
+// START of Maxwell Guillermo Contribution  
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -262,3 +268,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+// END of Search Song Component
+// END of Maxwell Guillermo Contribution    

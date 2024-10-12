@@ -1,3 +1,9 @@
+// change-password.tsx
+// Maxwell Guillermo
+
+// START of Change Password UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, ScrollView, Keyboard } from 'react-native';
 import { getAuth, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
@@ -251,3 +257,6 @@ const styles = StyleSheet.create({
 });
 
 export default ChangePassword;
+
+// END of Change Password UI/UX
+// END of Maxwell Guillermo Contribution

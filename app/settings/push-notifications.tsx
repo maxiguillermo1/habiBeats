@@ -1,3 +1,9 @@
+// push-notifications.tsx
+// Maxwell Guillermo
+
+// START of Push Notifications UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React from 'react';
 import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -141,3 +147,6 @@ const styles = StyleSheet.create({
 });
 
 export default PushNotificationsSettings;
+
+// END of Push Notifications UI/UX
+// END of Maxwell Guillermo Contribution    

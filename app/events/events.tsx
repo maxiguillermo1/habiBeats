@@ -1,7 +1,7 @@
 // events.tsx
 // Maxwell Guillermo 
 
-// START of Events Page UI/IX
+// START of Events Page 
 // START of Maxwell Guillermo Contribution
 
 import React from 'react';

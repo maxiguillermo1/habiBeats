@@ -1,3 +1,9 @@
+// block-list.tsx
+// Maxwell Guillermo
+
+// START of Block List UI/UX
+// START of Maxwell Guillermo Contribution
+
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -186,3 +192,6 @@ const styles = StyleSheet.create({
 });
 
 export default BlockList;
+
+// END of Block List UI/UX
+// END of Maxwell Guillermo Contribution
