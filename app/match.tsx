@@ -1,5 +1,5 @@
 // match.tsx
-// Mariann Grace Dizon and Reyna Aguirre
+// Mariann Grace Dizon Reyna Aguirre and Maxwell Guillermo
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert } from 'react-native';
@@ -37,6 +37,7 @@ const Match = () => {
   const [showMatchModal, setShowMatchModal] = useState(false);   // State to control the visibility of the match modal
   const [likeButtonColor, setLikeButtonColor] = useState('#fff8f0');   // State to manage the color of the like button
   const [dislikeButtonColor, setDislikeButtonColor] = useState('#fff8f0'); // State to manage the color of the dislike button
+  const [likedContent, setLikedContent] = useState<Set<string>>(new Set());
 
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
@@ -348,6 +349,22 @@ const Match = () => {
   // END of modal close handler
   // END of Mariann Grace Dizon Contribution
 
+  // START of content like handler
+  // START of Maxwell Guillermo  Contribution  
+  const handleContentLike = (contentType: string) => {
+    setLikedContent(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(contentType)) {
+        newSet.delete(contentType);
+      } else {
+        newSet.add(contentType);
+      }
+      return newSet;
+    });
+  };
+  // END of content like handler
+  // END of Maxwell Guillermo Contribution  
+
   // UI rendering
   // Mariann Grace Dizon
   return (
@@ -409,8 +426,18 @@ const Match = () => {
                     : user2.musicPreference || 'No preferences set'}
                 </Text>
               </View>
+              
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('musicPreference')}
+              >
+                <Ionicons 
+                  name={likedContent.has('musicPreference') ? "heart" : "heart-outline"} 
+                  size={18} // Reduced size from 24 to 18
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
             </View>
-
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
                 <Text style={styles.inputLabel}>Favorite Performance</Text>
@@ -420,6 +447,16 @@ const Match = () => {
                   <Text style={styles.inputText}>No favorite performance set</Text>
                 )}
               </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('favoritePerformance')}
+              >
+                <Ionicons 
+                  name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
             </View>
 
             {/* Add more sections here similar to profile.tsx if needed */}
@@ -569,13 +606,13 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 20,
-  },
-  inputContent: {
-    borderWidth: 15,
-    borderColor: '#FFFFFF',
+    position: 'relative',
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 15,
+  },
+  inputContent: {
+    marginBottom: 20, // Reduced from 30 to 20 due to smaller icon
   },
   inputLabel: {
     fontSize: 14,
@@ -702,6 +739,13 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+  },
+  contentLikeButton: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    padding: 8, // Reduced padding for smaller touch target
+    zIndex: 1,
   },
 });
 

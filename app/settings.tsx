@@ -365,7 +365,7 @@ const Settings = () => {
           style: "destructive",
           onPress: () => {
             // Navigate to a separate screen for changing password
-            navigation.navigate('settings/changepassword' as never);
+            navigation.navigate('settings/change-password' as never);
           }
         }
       ]
