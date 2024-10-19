@@ -25,12 +25,7 @@ export interface User {
     matches?: {
       [uid: string]: "liked" | "disliked";
     };
-    favoriteAlbum?: {
-      id: string;
-      name: string;
-      artist: string;
-      albumArt: string;
-    };
+    favoriteAlbum?: string; // JSON string containing album details
     favoriteArtists?: Array<{
       id: string;
       name: string;

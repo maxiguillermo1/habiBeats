@@ -500,13 +500,25 @@ const Match = () => {
               <View style={styles.inputContent}>
                 <Text style={styles.inputLabel}>Favorite Album</Text>
                 {user2?.favoriteAlbum ? (
-                  <View style={styles.albumContainer}>
-                    <Image source={{ uri: user2.favoriteAlbum.albumArt }} style={styles.albumArt} />
-                    <View style={styles.albumInfo}>
-                      <Text style={styles.albumName}>{user2.favoriteAlbum.name}</Text>
-                      <Text style={styles.albumArtist}>{user2.favoriteAlbum.artist}</Text>
-                    </View>
-                  </View>
+                  (() => {
+                    try {
+                      const albumData = JSON.parse(user2.favoriteAlbum);
+                      return (
+                        <View style={styles.albumContainer}>
+                          {albumData.albumArt && (
+                            <Image source={{ uri: albumData.albumArt }} style={styles.albumArt} />
+                          )}
+                          <View style={styles.albumInfo}>
+                            <Text style={styles.albumName}>{albumData.name || 'Unknown Album'}</Text>
+                            <Text style={styles.albumArtist}>{albumData.artist || 'Unknown Artist'}</Text>
+                          </View>
+                        </View>
+                      );
+                    } catch (error) {
+                      console.error('Error parsing favoriteAlbum:', error);
+                      return <Text style={styles.inputText}>{user2.favoriteAlbum}</Text>;
+                    }
+                  })()
                 ) : (
                   <Text style={styles.inputText}>No favorite album set</Text>
                 )}
