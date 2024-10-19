@@ -26,11 +26,7 @@ export interface User {
       [uid: string]: "liked" | "disliked";
     };
     favoriteAlbum?: string; // JSON string containing album details
-    favoriteArtists?: Array<{
-      id: string;
-      name: string;
-      picture: string;
-    }> | string;
+    favoriteArtists?: string; // JSON string containing an array of artist objects
     prompts?: string[]; // Add this line to include the prompts property
   }
   // function structure for compatibility

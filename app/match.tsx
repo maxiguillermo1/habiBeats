@@ -437,26 +437,7 @@ const Match = () => {
                 />
               </TouchableOpacity>
             </View>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Performance</Text>
-                {user2.favoritePerformance ? (
-                  <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
-                ) : (
-                  <Text style={styles.inputText}>No favorite performance set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('favoritePerformance')}
-              >
-                <Ionicons 
-                  name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
+
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
                 <Text style={styles.inputLabel}>Tune of the Month</Text>
@@ -498,6 +479,47 @@ const Match = () => {
 
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Artists</Text>
+                {user2?.favoriteArtists ? (
+                  (() => {
+                    try {
+                      const artistsData = JSON.parse(user2.favoriteArtists);
+                      return Array.isArray(artistsData) && artistsData.length > 0 ? (
+                        artistsData.map((artist) => (
+                          <View key={artist.id} style={styles.artistContainer}>
+                            {artist.picture && (
+                              <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                            )}
+                            <Text style={styles.artistName}>{artist.name || 'Unknown Artist'}</Text>
+                          </View>
+                        ))
+                      ) : (
+                        <Text style={styles.inputText}>No favorite artists set</Text>
+                      );
+                    } catch (error) {
+                      console.error('Error parsing favoriteArtists:', error);
+                      return <Text style={styles.inputText}>{user2.favoriteArtists}</Text>;
+                    }
+                  })()
+                ) : (
+                  <Text style={styles.inputText}>No favorite artists set</Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('favoriteArtists')}
+              >
+                <Ionicons 
+                  name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
+            </View>
+
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
                 <Text style={styles.inputLabel}>Favorite Album</Text>
                 {user2?.favoriteAlbum ? (
                   (() => {
@@ -535,32 +557,27 @@ const Match = () => {
               </TouchableOpacity>
             </View>
 
+
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Artists</Text>
-                {user2?.favoriteArtists && Array.isArray(user2.favoriteArtists) && user2.favoriteArtists.length > 0 ? (
-                  user2.favoriteArtists.map((artist) => (
-                    <View key={artist.id} style={styles.artistContainer}>
-                      <Image source={{ uri: artist.picture }} style={styles.artistImage} />
-                      <Text style={styles.artistName}>{artist.name}</Text>
-                    </View>
-                  ))
+                <Text style={styles.inputLabel}>Favorite Performance</Text>
+                {user2.favoritePerformance ? (
+                  <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
                 ) : (
-                  <Text style={styles.inputText}>No favorite artists set</Text>
+                  <Text style={styles.inputText}>No favorite performance set</Text>
                 )}
               </View>
               <TouchableOpacity 
                 style={styles.contentLikeButton}
-                onPress={() => handleContentLike('favoriteArtists')}
+                onPress={() => handleContentLike('favoritePerformance')}
               >
                 <Ionicons 
-                  name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
+                  name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
                   size={18} 
                   color="#fc6c85" 
                 />
               </TouchableOpacity>
             </View>
-
 
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
@@ -603,14 +620,14 @@ const Match = () => {
           style={[styles.actionButton, styles.dislikeButton]}
           onPress={handleClosePress}
         >
-          <Ionicons name="close" size={40} color={dislikeButtonColor} />
+          <Ionicons name="close" size={30} color={dislikeButtonColor} />
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={[styles.actionButton, styles.likeButton]}
           onPress={handleHeartPress}
         >
-          <Ionicons name="heart" size={40} color={likeButtonColor} />
+          <Ionicons name="heart" size={26} color={likeButtonColor} />
         </TouchableOpacity>
       </View>
       {/* END of Action buttons (like and dislike) */}
@@ -681,7 +698,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    paddingLeft: 40,
+    paddingLeft: 50,
     paddingRight: 30,
     paddingTop: 20,
     paddingBottom: 15,
@@ -721,7 +738,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    zIndex: 10, // Ensure it's above other elements
+    zIndex: 10, 
     paddingTop: 30,
   },
   scrollContent: {
@@ -756,8 +773,7 @@ const styles = StyleSheet.create({
   },
   imageInput: {
     width: '100%',
-    height: 250,
-    borderRadius: 10,
+    height: 270,
   },
   messageContainer: {
     flex: 1,
@@ -774,17 +790,16 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 20,
+    padding: 32,
     position: 'absolute',
-    bottom: 90,
+    bottom: 80,
     left: 0,
     right: 0,
   },
   actionButton: {
-    padding: 15,
-    borderRadius: 35,
-    width: 70,
-    height: 70,
+    borderRadius: 30,
+    width: 55,
+    height: 55,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -817,7 +832,7 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     alignItems: 'center',
-    justifyContent: 'center', // Changed from 'space-between' to 'center'
+    justifyContent: 'center',
     flex: 1,
   },
   modalTitle: {
@@ -825,7 +840,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1E1E1E',
     textAlign: 'center',
-    marginVertical: 30, // Added margin to create some space around the text
+    marginVertical: 30,
   },
   modalProfilePic: {
     width: 190,
@@ -906,8 +921,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   albumArt: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     borderRadius: 5,
     marginRight: 15,
     marginLeft: 15,
@@ -947,8 +962,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   artistImage: {
-    width: 65,
-    height: 65,
+    width: 60,
+    height: 60,
     borderRadius: 50,
     marginRight: 15,
     marginLeft: 15,
