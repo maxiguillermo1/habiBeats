@@ -581,7 +581,7 @@ const Match = () => {
 
             <View style={styles.inputContainer}>
               <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Prompts</Text>
+                <Text style={styles.inputLabel}>Written Prompts</Text>
                 {user2.prompts && typeof user2.prompts === 'object' ? (
                   Object.entries(user2.prompts).map(([promptTitle, response], index) => (
                     <View key={index} style={styles.promptContainer}>
@@ -698,19 +698,18 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    paddingLeft: 50,
-    paddingRight: 30,
-    paddingTop: 20,
-    paddingBottom: 15,
+    paddingLeft: 70,
+    paddingRight: 70,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    paddingVertical: 10,
   },
   profileImageContainer: {
     borderWidth: 3,
     borderRadius: 50,
     overflow: 'hidden',
-    width: 85,
-    height: 85,
+    width: 80,
+    height: 80,
   },
   profilePicture: {
     width: '100%',
@@ -718,10 +717,10 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: 15,
   },
   name: {
-    fontSize: 25,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
@@ -731,7 +730,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   location: {
-    fontSize: 13,
+    fontSize: 12,
     marginLeft: 4,
   },
   resetButton: {
@@ -746,9 +745,10 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   content: {
-    paddingTop: 20,
-    paddingLeft: 40,
-    paddingRight: 30,
+    paddingTop: 14,
+    paddingLeft: 55,
+    paddingRight: 55,
+    paddingBottom: 23,
   },
   inputContainer: {
     marginBottom: 20,
@@ -772,8 +772,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   imageInput: {
-    width: '100%',
-    height: 270,
+    width: 240,
+    height: 240,
+    alignSelf: 'center',
   },
   messageContainer: {
     flex: 1,
@@ -888,23 +889,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 5,
-    padding: 8, // Reduced padding for smaller touch target
+    padding: 6,
     zIndex: 1,
   },
   promptContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
+    marginTop: 5,
+    marginBottom: 6,
+    marginLeft: 10,
+    marginRight: 10,
   },
   promptQuestion: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
   promptAnswer: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
