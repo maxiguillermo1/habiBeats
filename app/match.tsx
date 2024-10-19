@@ -38,6 +38,8 @@ const Match = () => {
   const [likeButtonColor, setLikeButtonColor] = useState('#fff8f0');   // State to manage the color of the like button
   const [dislikeButtonColor, setDislikeButtonColor] = useState('#fff8f0'); // State to manage the color of the dislike button
   const [likedContent, setLikedContent] = useState<Set<string>>(new Set());
+  const [showWaitingModal, setShowWaitingModal] = useState(false); // New state for waiting modal
+  const [showDislikeModal, setShowDislikeModal] = useState(false); // New state for dislike modal
 
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
@@ -45,6 +47,9 @@ const Match = () => {
   // Animation values for scale and opacity
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
+  // Animation values for modals
+  const waitingModalScale = useRef(new Animated.Value(0)).current;
+  const dislikeModalScale = useRef(new Animated.Value(0)).current;
 // END of Match component definition and state initialization
 // END of Mariann Grace Dizon Contribution
 
@@ -153,18 +158,12 @@ const Match = () => {
   // START of modal animation functions
   // START of Mariann Grace Dizon Contribution
   // Function to animate the modal
-  const animateModal = (visible: boolean) => {
-    Animated.parallel([
-      Animated.spring(scaleValue, {
-        toValue: visible ? 1 : 0,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityValue, {
-        toValue: visible ? 1 : 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  const animateModal = (visible: boolean, scaleValue: Animated.Value) => {
+    Animated.timing(scaleValue, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
   // END of modal animation functions
   // END of Mariann Grace Dizon Contribution
@@ -174,13 +173,9 @@ const Match = () => {
   // Handler for when the heart button is pressed
   const handleHeartPress = async () => {
     if (user2) {
-      setLikeButtonColor('#fc6c85'); // Change to pink when liked
-      // setShowMatchModal(true);
-      // animateModal(true);
-
+      setLikeButtonColor('#fc6c85');
       console.log("heart pressed");
-  
-      // Call updateUserMatch to mark user2 as "liked" by user1
+
       const auth = getAuth(app);
       const currentUser = auth.currentUser;
 
@@ -188,7 +183,6 @@ const Match = () => {
         await updateUserMatch(currentUser.uid, user2.uid, "liked");
       }
 
-      // check if user2 has liked user1
       const db = getFirestore(app);
       const user2DocRef = doc(db, "users", user2.uid);
       const user2DocSnap = await getDoc(user2DocRef);
@@ -197,15 +191,20 @@ const Match = () => {
         const user2Data = user2DocSnap.data() as User;
         const user2MatchStatus = currentUser ? user2Data.matches?.[currentUser.uid] : undefined;
 
-        // If both users liked each other, show the match modal
         if (user2MatchStatus === "liked" && currentUser) {
           console.log(`It's a match! ${currentUser.displayName} and ${user2.displayName} liked each other.`);
           setShowMatchModal(true);
-          animateModal(true);
+          animateModal(true, scaleValue);
         } else {
           console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
-          fetchNextUser();
-          setLikeButtonColor('#fff8f0');
+          setShowWaitingModal(true);
+          animateModal(true, waitingModalScale);
+          setTimeout(() => {
+            setShowWaitingModal(false);
+            animateModal(false, waitingModalScale);
+            fetchNextUser();
+            setLikeButtonColor('#fff8f0');
+          }, 3000);
         }
       } else {
         console.error("User2 document not found in Firestore.");
@@ -219,19 +218,23 @@ const Match = () => {
   // START of Mariann Grace Dizon Contribution
   const handleClosePress = async () => {
     if (user2) {
-      setDislikeButtonColor('#0e1514'); // Change to red when disliked
+      setDislikeButtonColor('#0e1514');
       console.log("close pressed");
-      // Call updateUserMatch to mark user2 as "disliked" by user1
+
       const auth = getAuth(app);
       const currentUser = auth.currentUser;
       if (currentUser) {
         await updateUserMatch(currentUser.uid, user2.uid, "disliked");
       }
-  
-      fetchNextUser(); // Load the next user profile
+
+      setShowDislikeModal(true);
+      animateModal(true, dislikeModalScale);
       setTimeout(() => {
-        setDislikeButtonColor('#fff8f0'); // Change back to original color
-      }, 1000);
+        setShowDislikeModal(false);
+        animateModal(false, dislikeModalScale);
+        fetchNextUser();
+        setDislikeButtonColor('#fff8f0');
+      }, 3000);
     }
   };
   // END of close button press handler
@@ -341,7 +344,7 @@ const Match = () => {
   // START of Mariann Grace Dizon Contribution
   // Function to handle modal close
   const handleModalClose = () => {
-    animateModal(false);
+    animateModal(false, scaleValue);
     setShowMatchModal(false);
     fetchNextUser(); // Load the next user profile
   };
@@ -642,18 +645,12 @@ const Match = () => {
           style={[
             styles.modalContainer,
             {
-              opacity: opacityValue,
+              transform: [{ scale: scaleValue }],
+              backgroundColor: '#fff8f0',
             }
           ]}
         >
-          <Animated.View 
-            style={[
-              styles.modalContent,
-              {
-                transform: [{ scale: scaleValue }],
-              }
-            ]}
-          >
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
                 <Ionicons name="close" size={50} color="#1E1E1E" />
@@ -679,10 +676,52 @@ const Match = () => {
                 style={styles.modalProfilePic}
               />
             </View>
-          </Animated.View>
+          </View>
         </Animated.View>
       </Modal>
       {/* END of Match modal */}
+
+      {/* START of Waiting modal */}
+      <Modal
+        transparent={true}
+        visible={showWaitingModal}
+        onRequestClose={() => setShowWaitingModal(false)}
+      >
+        <Animated.View 
+          style={[
+            styles.waitingModalContainer,
+            {
+              transform: [{ scale: waitingModalScale }],
+              backgroundColor: '#fff8f0',
+            }
+          ]}
+        >
+          <Ionicons name="heart" size={100} color="#fc6c85" />
+          <Text style={styles.waitingText}>Waiting for a mutual like...</Text>
+        </Animated.View>
+      </Modal>
+      {/* END of Waiting modal */}
+
+      {/* START of Dislike modal */}
+      <Modal
+        transparent={true}
+        visible={showDislikeModal}
+        onRequestClose={() => setShowDislikeModal(false)}
+      >
+        <Animated.View 
+          style={[
+            styles.dislikeModalContainer,
+            {
+              transform: [{ scale: dislikeModalScale }],
+              backgroundColor: '#fff8f0',
+            }
+          ]}
+        >
+          <Ionicons name="close" size={100} color="#de3c3c" />
+          <Text style={styles.dislikeText}>Moving to the next user...</Text>
+        </Animated.View>
+      </Modal>
+      {/* END of Dislike modal */}
 
       <BottomNavBar />
     </SafeAreaView>
@@ -977,6 +1016,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  waitingModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  waitingText: {
+    fontSize: 20,
+    color: '#fba904',
+    marginTop: 20,
+  },
+  dislikeModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  dislikeText: {
+    fontSize: 20,
+    color: '#fba904',
+    marginTop: 20,
   },
 });
 
