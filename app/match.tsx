@@ -48,7 +48,6 @@ const Match = () => {
 // END of Match component definition and state initialization
 // END of Mariann Grace Dizon Contribution
 
-
   //  START of fetch two users from Firestore
   //  START of Reyna Aguirre Contribution
   const [user1, setUser1] = useState<User | null>(null); // current user
@@ -458,8 +457,126 @@ const Match = () => {
                 />
               </TouchableOpacity>
             </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Tune of the Month</Text>
+                {user2?.tuneOfMonth ? (
+                  (() => {
+                    try {
+                      const tuneData = JSON.parse(user2.tuneOfMonth);
+                      return (
+                        <View style={styles.songContainer}>
+                          {tuneData.albumArt && (
+                            <Image source={{ uri: tuneData.albumArt }} style={styles.albumArt} />
+                          )}
+                          <View style={styles.songInfo}>
+                            <Text style={styles.songTitle}>{tuneData.name || 'Unknown Title'}</Text>
+                            <Text style={styles.songArtist}>{tuneData.artist || 'Unknown Artist'}</Text>
+                          </View>
+                        </View>
+                      );
+                    } catch (error) {
+                      console.error('Error parsing tuneOfMonth:', error);
+                      return <Text style={styles.inputText}>{user2.tuneOfMonth}</Text>;
+                    }
+                  })()
+                ) : (
+                  <Text style={styles.inputText}>No tune of the month set</Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('tuneOfMonth')}
+              >
+                <Ionicons 
+                  name={likedContent.has('tuneOfMonth') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
+            </View>
 
-            {/* Add more sections here similar to profile.tsx if needed */}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Album</Text>
+                {user2?.favoriteAlbum ? (
+                  <View style={styles.albumContainer}>
+                    <Image source={{ uri: user2.favoriteAlbum.albumArt }} style={styles.albumArt} />
+                    <View style={styles.albumInfo}>
+                      <Text style={styles.albumName}>{user2.favoriteAlbum.name}</Text>
+                      <Text style={styles.albumArtist}>{user2.favoriteAlbum.artist}</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.inputText}>No favorite album set</Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('favoriteAlbum')}
+              >
+                <Ionicons 
+                  name={likedContent.has('favoriteAlbum') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Artists</Text>
+                {user2?.favoriteArtists && Array.isArray(user2.favoriteArtists) && user2.favoriteArtists.length > 0 ? (
+                  user2.favoriteArtists.map((artist) => (
+                    <View key={artist.id} style={styles.artistContainer}>
+                      <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                      <Text style={styles.artistName}>{artist.name}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.inputText}>No favorite artists set</Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('favoriteArtists')}
+              >
+                <Ionicons 
+                  name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
+            </View>
+
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Prompts</Text>
+                {user2.prompts && typeof user2.prompts === 'object' ? (
+                  Object.entries(user2.prompts).map(([promptTitle, response], index) => (
+                    <View key={index} style={styles.promptContainer}>
+                      <Text style={styles.promptQuestion}>{promptTitle}</Text>
+                      <Text style={styles.promptAnswer}>{response || 'No response provided'}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.inputText}>No prompts set</Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.contentLikeButton}
+                onPress={() => handleContentLike('prompts')}
+              >
+                <Ionicons 
+                  name={likedContent.has('prompts') ? "heart" : "heart-outline"} 
+                  size={18} 
+                  color="#fc6c85" 
+                />
+              </TouchableOpacity>
+            </View>
+
+            
           </View>
         ) : noMoreUsers ? (
           <View style={styles.messageContainer}>
@@ -612,7 +729,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   inputContent: {
-    marginBottom: 20, // Reduced from 30 to 20 due to smaller icon
+    marginBottom: 20, // Adjusted for smaller icon
   },
   inputLabel: {
     fontSize: 14,
@@ -746,6 +863,90 @@ const styles = StyleSheet.create({
     right: 5,
     padding: 8, // Reduced padding for smaller touch target
     zIndex: 1,
+  },
+  promptContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  },
+  promptQuestion: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  promptAnswer: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  promptTitleContainer: {
+    // Add your desired styles here
+    marginBottom: 5,
+  },
+  promptResponseContainer: {
+    // Add your desired styles here
+    marginBottom: 5,
+  },
+  songContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  albumArt: {
+    width: 80,
+    height: 80,
+    borderRadius: 5,
+    marginRight: 15,
+    marginLeft: 15,
+  },
+  songInfo: {
+    flex: 1,
+  },
+  songTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  songArtist: {
+    marginTop: 1,
+    fontSize: 11,
+    color: '#333',
+  },
+  albumContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  albumInfo: {
+    flex: 1,
+  },
+  albumName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  albumArtist: {
+    marginTop: 1,
+    fontSize: 11,
+    color: '#666',
+  },
+  artistContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  artistImage: {
+    width: 65,
+    height: 65,
+    borderRadius: 50,
+    marginRight: 15,
+    marginLeft: 15,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  artistName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 

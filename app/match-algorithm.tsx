@@ -1,6 +1,6 @@
 // match-algorithm.tsx
 // Reyna Aguirre
-import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import * as Location from 'expo-location';
 
@@ -17,7 +17,7 @@ export interface User {
     matchIntention: string;
     agePreference: { min: number, max: number } | undefined; // Make agePreference optional
     musicPreference: string[];
-    tuneOfMonth: string;
+    tuneOfMonth?: string; // JSON string containing song details
     location: string; //example: "West Donald, RI 33335, USA"
     latitude?: number;  // optional if already geocoded
     longitude?: number; // optional if already geocoded
@@ -25,6 +25,18 @@ export interface User {
     matches?: {
       [uid: string]: "liked" | "disliked";
     };
+    favoriteAlbum?: {
+      id: string;
+      name: string;
+      artist: string;
+      albumArt: string;
+    };
+    favoriteArtists?: Array<{
+      id: string;
+      name: string;
+      picture: string;
+    }> | string;
+    prompts?: string[]; // Add this line to include the prompts property
   }
   // function structure for compatibility
   // 1. gender compatibility
@@ -233,13 +245,16 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
 // Implement getCurrentUserData function
 const getCurrentUserData = async (uid: string): Promise<User | null> => {
   const db = getFirestore();
-  const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", uid)));
-  
-  if (userDoc.empty) {
+  const userDocRef = doc(db, "users", uid);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (!userDocSnap.exists()) {
     console.error("Current user not found in Firestore");
     return null;
   }
-  
+
   console.log("Current user data retrieved successfully");
-  return userDoc.docs[0].data() as User;
+  return userDocSnap.data() as User;
 };
+
+
