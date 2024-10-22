@@ -2,14 +2,14 @@
 // Mariann Grace Dizon
 
 // START of Profile component imports and type definitions
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
-import { registerForPushNotificationsAsync } from '../scripts/notificationHandler';
+import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
 
 interface Song {
   id: string;
@@ -54,6 +54,7 @@ export default function Profile() {
   const [tuneOfMonthLoaded, setTuneOfMonthLoaded] = useState(false);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [hasUnread, setHasUnread] = useState(false);
 // END of Profile component definition and state initialization
 
 // START of useEffect hooks for fetching user data and registering push notifications
@@ -148,6 +149,37 @@ export default function Profile() {
   }, []);
 // END of useEffect hooks for fetching user data and registering push notifications
 
+  // Checks if there are any unread notifications
+  const checkUnreadNotifications = useCallback(async () => {
+    if (auth.currentUser) {
+      const unread = await hasUnreadNotifications(auth.currentUser.uid);
+      setHasUnread(unread);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add sample notifications
+    if (auth.currentUser) {
+      // addNotification(auth.currentUser.uid, 'You have a new match!')
+      // addNotification(auth.currentUser.uid, 'Someone liked your profile!')
+      // addNotification(auth.currentUser.uid, 'New message from John!')
+    }
+
+    // Initial check
+    checkUnreadNotifications();
+
+    // Checks for unread notifications every 3 seconds
+    const intervalId = setInterval(() => {
+      checkUnreadNotifications();
+    }, 3000);
+
+    // Clean up function
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [checkUnreadNotifications]);
+
+
 // START of helper functions for navigation and styling
   const handleSettingsPress = () => {
     router.push('/settings');
@@ -184,6 +216,20 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
+            <Ionicons name="create-outline" size={25} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
+            <Ionicons name="settings-outline" size={25} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.notificationButton} onPress={() => router.push('/notification-page')}>
+            <Ionicons name="notifications-outline" size={25} color="#333" />
+            {hasUnread && <View style={styles.notificationDot} />}
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.profileContent}>
         {user.profileImageUrl ? (
           <View style={[
             styles.profileImageContainer,
@@ -207,14 +253,6 @@ export default function Profile() {
             <Ionicons name="location-outline" size={12} color={getTextColor(user.gender)} />
             <Text style={[styles.location, { color: getTextColor(user.gender) }]}>{user.location}</Text>
           </View>
-        </View>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
-            <Ionicons name="create-outline" size={25} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
-            <Ionicons name="settings-outline" size={25} color="#333" />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -323,12 +361,32 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingRight: 20,
+    paddingTop: 10,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 120,
+  },
+  editButton: {
+    padding: 5,
+  },
+  settingsButton: {
+    padding: 5,
+  },
+  notificationButton: {
+    padding: 5,
+    position: 'relative',
+  },
+  profileContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingLeft: 40,
     paddingRight: 30,
     paddingTop: 20,
     paddingBottom: 15,
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   profileImageContainer: {
     borderWidth: 3,
@@ -351,14 +409,16 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   location: {
     fontSize: 13,
     marginLeft: 4,
   },
-  settingsButton: {
-    paddingTop: 15,
-    paddingBottom: 25,
-    paddingRight: 7,
+  placeholderImage: {
+    backgroundColor: '#f7e9da',
   },
   content: {
     paddingTop: 20,
@@ -397,16 +457,6 @@ const styles = StyleSheet.create({
     right: 0,
     paddingBottom: 80,
   },
-  headerButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  editButton: {
-    paddingTop: 15,
-    paddingBottom: 25,
-    paddingRight: 10,
-  },
   songContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -420,13 +470,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontSize: 11,
     color: '#333',
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  placeholderImage: {
-    backgroundColor: '#f7e9da',
   },
   songInfo: {
     flex: 1,
@@ -484,5 +527,14 @@ const styles = StyleSheet.create({
   promptAnswer: {
     fontSize: 20,
     color: '#666',
+  },
+  notificationDot: {
+    position: 'absolute',
+    right: 3,
+    top: 3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
   },
 });
