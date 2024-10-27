@@ -1,7 +1,5 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
+//useThemeColor.ts
+// Mariann Grace Dizon
 
 import { useColorScheme } from 'react-native';
 
@@ -20,3 +18,4 @@ export function useThemeColor(
     return Colors[theme][colorName];
   }
 }
+

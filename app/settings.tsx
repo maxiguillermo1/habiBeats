@@ -1,7 +1,7 @@
 // settings.tsx
 // Reyna Aguirre, Jesus Donate, Mariann Grace Dizon, and Maxwell Guillermo
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut, verifyBeforeUpdateEmail, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
@@ -16,12 +16,14 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import PushNotificationsSettings from './settings/push-notifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
+import { ThemeContext } from '@/context/ThemeContext';
 
 // START of Settings Component
 // START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
 const Settings = () => {
   const navigation = useNavigation();
   const auth = getAuth();
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
   // Existing state variables
   const [lastNameVisible, setLastNameVisible] = useState(true);
@@ -58,6 +60,10 @@ const Settings = () => {
   // START of Maxwell Guillermo Contribution
   // [User Gender State section]
   const [userGender, setUserGender] = useState('');
+
+  const handleThemeToggle = () => {
+    toggleTheme();
+  };
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -613,6 +619,21 @@ const Settings = () => {
         {/* Rest of the settings sections */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={styles.sectionTitle}>Profile</Text>
+        </View>
+        <View style={styles.divider} />
+
+                {/* Theme Toggle Section */}
+                <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.settingItem}>
+          <Text style={styles.settingTitle}>Theme Mode</Text>
+          <Text style={styles.settingDescription}>
+            Light or Dark Mode.
+          </Text>
+          <Switch value={theme === 'dark'} onValueChange={handleThemeToggle} />
         </View>
         <View style={styles.divider} />
 
