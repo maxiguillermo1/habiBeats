@@ -1,12 +1,9 @@
-// settings.tsx
-// Reyna Aguirre, Jesus Donate, Mariann Grace Dizon, and Maxwell Guillermo
-
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut, verifyBeforeUpdateEmail, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, deleteDoc, updateDoc, getDoc, addDoc, collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Ensure this path is correct
+import { doc, deleteDoc, updateDoc, getDoc, addDoc, collection, Timestamp, query, where, getDocs, getFirestore } from 'firebase/firestore';
+import { db, app } from '../firebaseConfig'; // Ensure this path is correct
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -16,14 +13,19 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import PushNotificationsSettings from './settings/push-notifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
-import { ThemeContext } from '@/context/ThemeContext';
 
-// START of Settings Component
-// START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
+interface UserMatch {
+  uid: string;
+  displayName: string;
+  profileImageUrl: string;
+  matches?: {
+    [uid: string]: "liked" | "disliked";
+  };
+}
+
 const Settings = () => {
   const navigation = useNavigation();
   const auth = getAuth();
-  const { theme, toggleTheme } = useContext(ThemeContext);
 
   // Existing state variables
   const [lastNameVisible, setLastNameVisible] = useState(true);
@@ -57,17 +59,7 @@ const Settings = () => {
   const googlePlacesRef = useRef(null);
   const router = useRouter();
 
-  // START of Maxwell Guillermo Contribution
-  // [User Gender State section]
   const [userGender, setUserGender] = useState('');
-
-  const [isEditingBorder, setIsEditingBorder] = useState(false);
-
-  const [selectedGif, setSelectedGif] = useState<string | null>(null);
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-  };
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -78,10 +70,7 @@ const Settings = () => {
   useEffect(() => {
     console.log('userGender state changed:', userGender);
   }, [userGender]);
-  // END of Maxwell Guillermo Contribution
 
-  // START of Fetch User Data
-  // START of Jesus Donate Contribution
   const fetchUserData = async () => {
     if (auth.currentUser) {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -94,14 +83,11 @@ const Settings = () => {
         setUserGender(userData.gender || 'other');
         setLastNameVisible(userData.lastNameVisible !== false); // Default to true if not set
         setLocationVisible(userData.locationVisible !== false); // Default to true if not set
-        setMyEventsVisible(userData.myEventsVisible !== false); // Default to true if not set
         console.log('Fetched user gender:', userData.gender);
       }
     }
   };
-  // END of Jesus Donate Contribution
 
-  // START of Logout Functionality
   // START of Reyna Aguirre Contribution
   const handleLogout = () => {
     Alert.alert(
@@ -143,9 +129,8 @@ const Settings = () => {
   };
   // END of Reyna Aguirre Contribution
   
-  // START of Upload Image to Firebase
-  // START of Jesus Donate Contribution
   // New functions from profilesettings.tsx
+
   const uploadImageToFirebase = async (uri: string) => {
     try {
       console.log("Starting image upload to Firebase");
@@ -167,10 +152,7 @@ const Settings = () => {
       throw error;
     }
   };
-  // END of Jesus Donate Contribution
 
-  // START of Image Picker Functionality
-  // START of Mariann Grace Dizon Contribution
   const handleImagePicker = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -208,12 +190,7 @@ const Settings = () => {
       Alert.alert("Error", "Failed to update profile picture. Please try again.");
     }
   };
-  // END of Image Picker Functionality
-  // END of Mariann Grace Dizon Contribution
 
-  // START of Email Change OTP Generation and Sending
-  // START of Jesus Donate Contribution
-  // Generate a 6-digit OTP
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
@@ -242,18 +219,12 @@ const Settings = () => {
       Alert.alert("Error", "Failed to send OTP. Please try again.");
     }
   };
-  // END of Jesus Donate Contribution
 
-  // START of Maxwell Guillermo Contribution
-  // [Email validation function]
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
-  // END of Maxwell Guillermo Contribution
 
-  // START of Jesus Donate Contribution
-  // [handleChangeEmail function]
   const handleChangeEmail = async () => {
     setEmailChangeError('');
     if (!auth.currentUser) return;
@@ -278,7 +249,6 @@ const Settings = () => {
       return;
     }
     
-    // Check if the new email is already in use
     if (!otpSent) {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', newEmail));
@@ -298,7 +268,6 @@ const Settings = () => {
       return;
     }
 
-    // Query to check if the OTP is valid
     const q = query(collection(db, 'email_change_requests'),
       where('email', '==', auth.currentUser.email),
       where('otp', '==', otp),
@@ -315,7 +284,6 @@ const Settings = () => {
     const otpDoc = snapshot.docs[0];
     const otpData = otpDoc.data();
 
-    // Check if the OTP has expired
     const now = Timestamp.now();
     const expirationTime = 15 * 60 * 1000; // 15 minutes
     if (now.toMillis() - otpData.timestamp.toMillis() > expirationTime) {
@@ -324,7 +292,6 @@ const Settings = () => {
     }
     
     try {
-      // Verify the new email address
       await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
 
       await updateDoc(otpDoc.ref, { used: true });
@@ -359,11 +326,7 @@ const Settings = () => {
       setEmailChangeError('Failed to send verification email. Please try again.');
     }
   };
-  // END of Jesus Donate Contribution
 
-
-  // START of Maxwell Guillermo Contribution
-  // [handleChangePassword function]
   const handleChangePassword = () => {
     Alert.alert(
       "Change Password",
@@ -375,14 +338,13 @@ const Settings = () => {
           style: "destructive",
           onPress: () => {
             // Navigate to a separate screen for changing password
-            navigation.navigate('settings/change-password' as never);
+            navigation.navigate('settings/changepassword' as never);
           }
         }
       ]
     );
   };
 
-  // [handleEditEmail function]
   const handleEditEmail = () => {
     Alert.alert(
       "Change Email",
@@ -401,14 +363,13 @@ const Settings = () => {
     );
   };
 
-  // [handleEditDisplayName function]
   // Add these functions to your component
   const handleEditDisplayName = () => {
     // Implement logic to edit display name
   };
 
-  // [handlelastNameToggle function]
   // Toggle last name visibility
+  // Jesus Donate
   const handlelastNameToggle = async (value: boolean) => {
     console.log('Show last name toggle value:', value);
     setLastNameVisible(value);
@@ -441,18 +402,16 @@ const Settings = () => {
     }
   };
 
-  // [handleEditProfilePicture function]
   const handleEditProfilePicture = () => {
     // Implement logic to edit profile picture
   };
 
-  // [handleEditLocation function]
   const handleEditLocation = () => {
     // Implement logic to edit location
   };
 
-  // [handleShowLocationToggle function]
   // Toggle location visibility
+  // Jesus Donate
   const handleShowLocationToggle = async (value: boolean) => {
     setLocationVisible(value);
 
@@ -482,32 +441,12 @@ const Settings = () => {
     }
   };
 
-  // [handleMyEventsToggle function]
-  // Toggle my events visibility
-  const handleMyEventsToggle = async (value: boolean) => {
-    setMyEventsVisible(value);
-  
-    if (auth.currentUser) {
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
-      try {
-        await updateDoc(userDocRef, {
-          myEventsVisible: value
-        });
-        console.log('Show my events preference updated successfully');
-      } catch (error) {
-        console.error('Error updating show my events preference:', error);
-      }
-    }
-  };
-
-  // [handleBackPress function]
   // Update this function
   const handleBackPress = () => {
     navigation.goBack();
   };
 
-  // [handleSaveNameChange function]
-  // Display Name is used for the user's display name
+  // Jesus Donate - Display Name is used for the user's display name
   const handleSaveNameChange = async () => {
     // Changes name, even if is authenticated or not
     
@@ -533,7 +472,6 @@ const Settings = () => {
     console.log('Inside handleSaveNameChange:', lastName, lastName ? tempName : firstName);
   };
 
-  // [handleSaveLocationChange function]
   const handleSaveLocationChange = async () => {
     if (tempLocation) {
       setLocation(locationVisible ? tempLocation : 'N/A');
@@ -555,7 +493,6 @@ const Settings = () => {
     }
   };
 
-  // [getBorderColor function]
   const getBorderColor = (gender: string) => {
     console.log('Getting border color for gender:', gender);
     switch (gender.toLowerCase()) {
@@ -568,20 +505,7 @@ const Settings = () => {
     }
   };
 
-  // START of Mariann Grace Dizon Contribution
-  // Import GIFs at the top of your file
-  const gifImages: Record<string, any> = {
-    'pfpoverlay1.gif': require('../assets/animated-avatar/pfpoverlay1.gif'),
-    'pfpoverlay2.gif': require('../assets/animated-avatar/pfpoverlay2.gif'),
-    'pfpoverlay3.gif': require('../assets/animated-avatar/pfpoverlay3.gif'),
-    'pfpoverlay4.gif': require('../assets/animated-avatar/pfpoverlay4.gif'),
-    'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
-    'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
-  };
-  // END of Mariann Grace Dizon Contribution
 
-
-  // START of Maxwell Guillermo and Mariann Grace Dizon
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -634,27 +558,6 @@ const Settings = () => {
         </TouchableOpacity>
         <View style={styles.divider} />
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingBorder(true)}>
-          <Text style={styles.settingTitle}>Change Border Animation</Text>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-        <View style={styles.divider} />
-
-                {/* Theme Toggle Section */}
-                <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-        </View>
-        <View style={styles.divider} />
-
-        <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>Theme Mode</Text>
-          <Text style={styles.settingDescription}>
-            Light or Dark Mode.
-          </Text>
-          <Switch value={theme === 'dark'} onValueChange={handleThemeToggle} />
-        </View>
-        <View style={styles.divider} />
-
         {/* Rest of the settings sections */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={styles.sectionTitle}>Profile</Text>
@@ -683,6 +586,20 @@ const Settings = () => {
         </View>
         <View style={styles.divider} />
 
+        {/* Matches Section */}
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Matches</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('settings/current-liked-list' as never)}>
+          <Text style={styles.settingTitle}>Current Liked Profiles List</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
+
+        {/* Visibility Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={styles.sectionTitle}>Visibility</Text>
         </View>
@@ -702,7 +619,7 @@ const Settings = () => {
 
         <View style={styles.settingItem}>
           <Text style={styles.settingTitle}>Show My Events</Text>
-          <Switch value={myEventsVisible} onValueChange={handleMyEventsToggle} />
+          <Switch value={myEventsVisible} onValueChange={setMyEventsVisible} />
         </View>
         <View style={styles.divider} />
 
@@ -1025,48 +942,9 @@ const Settings = () => {
           </View>
         </View>
       </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isEditingBorder}
-        onRequestClose={() => setIsEditingBorder(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select an Animated Border</Text>
-            <ScrollView horizontal>
-              {Object.keys(gifImages).map((gifFileName) => (
-                <TouchableOpacity key={gifFileName} onPress={() => setSelectedGif(gifFileName)}>
-                  <Image source={gifImages[gifFileName]} style={styles.gifThumbnail} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                if (selectedGif) {
-                  console.log('Selected GIF:', selectedGif);
-                  setIsEditingBorder(false);
-                }
-              }}
-            >
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setIsEditingBorder(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };
-
-// END of Maxwell Guillermo and Mariann Grace Dizon Contribution
-
-// START of StyleSheet
-// START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution 
 
 const styles = StyleSheet.create({
   container: {
@@ -1321,14 +1199,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
     marginTop: 10,
   },
-  gifThumbnail: {
-    width: 100,
-    height: 100,
-    margin: 5,
-  },
 });
-
-// END of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution
-// END of StyleSheet
 
 export default Settings;
