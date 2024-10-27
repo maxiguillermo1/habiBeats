@@ -61,6 +61,10 @@ const Settings = () => {
   // [User Gender State section]
   const [userGender, setUserGender] = useState('');
 
+  const [isEditingBorder, setIsEditingBorder] = useState(false);
+
+  const [selectedGif, setSelectedGif] = useState<string | null>(null);
+
   const handleThemeToggle = () => {
     toggleTheme();
   };
@@ -564,6 +568,20 @@ const Settings = () => {
     }
   };
 
+  // START of Mariann Grace Dizon Contribution
+  // Import GIFs at the top of your file
+  const gifImages: Record<string, any> = {
+    'pfpoverlay1.gif': require('../assets/animated-avatar/pfpoverlay1.gif'),
+    'pfpoverlay2.gif': require('../assets/animated-avatar/pfpoverlay2.gif'),
+    'pfpoverlay3.gif': require('../assets/animated-avatar/pfpoverlay3.gif'),
+    'pfpoverlay4.gif': require('../assets/animated-avatar/pfpoverlay4.gif'),
+    'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
+    'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
+  };
+  // END of Mariann Grace Dizon Contribution
+
+
+  // START of Maxwell Guillermo and Mariann Grace Dizon
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -616,10 +634,10 @@ const Settings = () => {
         </TouchableOpacity>
         <View style={styles.divider} />
 
-        {/* Rest of the settings sections */}
-        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Profile</Text>
-        </View>
+        <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingBorder(true)}>
+          <Text style={styles.settingTitle}>Change Border Animation</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
         <View style={styles.divider} />
 
                 {/* Theme Toggle Section */}
@@ -634,6 +652,12 @@ const Settings = () => {
             Light or Dark Mode.
           </Text>
           <Switch value={theme === 'dark'} onValueChange={handleThemeToggle} />
+        </View>
+        <View style={styles.divider} />
+
+        {/* Rest of the settings sections */}
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Profile</Text>
         </View>
         <View style={styles.divider} />
 
@@ -1001,11 +1025,45 @@ const Settings = () => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isEditingBorder}
+        onRequestClose={() => setIsEditingBorder(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select an Animated Border</Text>
+            <ScrollView horizontal>
+              {Object.keys(gifImages).map((gifFileName) => (
+                <TouchableOpacity key={gifFileName} onPress={() => setSelectedGif(gifFileName)}>
+                  <Image source={gifImages[gifFileName]} style={styles.gifThumbnail} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                if (selectedGif) {
+                  console.log('Selected GIF:', selectedGif);
+                  setIsEditingBorder(false);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => setIsEditingBorder(false)}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
-// END of Maxwell Guillermo Contribution
+// END of Maxwell Guillermo and Mariann Grace Dizon Contribution
 
 // START of StyleSheet
 // START of Reyna Aguirre and Maxwell Guillermo and Grace Mariann Dizon and Jesus Donate Contribution 
@@ -1262,6 +1320,11 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#ccc',
     marginTop: 10,
+  },
+  gifThumbnail: {
+    width: 100,
+    height: 100,
+    margin: 5,
   },
 });
 
