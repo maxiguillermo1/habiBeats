@@ -19,7 +19,7 @@ import { debounce } from 'lodash';
 import { getDistance } from 'geolib';
 import axios from 'axios';
 
-const TICKETMASTER_API_KEY = 'NmyRpAYBV0T5oqLqGf4kghGLiFLB2NB0';
+const TICKETMASTER_API_KEY = 'dUU6uAGlJCm1uSxAJJFjS8oeh1gPkaSe';
 const GOOGLE_PLACES_API_KEY = 'AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc'; // Replace with your actual API key
 const { width } = Dimensions.get('window');
 const cardWidth = width * 0.38; // Reduced from 42% to 38% of screen width
@@ -52,6 +52,7 @@ const genreMapping: { [key: string]: string } = {
   'Undefined': 'KnvZfZ7v7le'
 };
 
+// Types
 interface Event {
   id: string;
   name: string;
@@ -67,6 +68,9 @@ interface Event {
       location?: {
         latitude: string;
         longitude: string;
+      };
+      city?: {
+        name: string;
       };
     }>;
     attractions?: Array<{
@@ -91,8 +95,8 @@ interface CachedEvents {
 
 const CACHE_EXPIRATION = 1000 * 60 * 60; // 1 hour
 
-const searchEvents = async (query: string, genres: Set<string>, location: string, artists: string[], similarArtists: string[], pageNumber: number = 0) => {
-  const cacheKey = `events_${query}_${Array.from(genres).join(',')}_${location}_${artists.join(',')}_${similarArtists.join(',')}_${pageNumber}`;
+const searchEvents = async (query: string, genres: Set<string>, location: string, artists: string[], pageNumber: number = 0) => {
+  const cacheKey = `events_${query}_${Array.from(genres).join(',')}_${location}_${artists.join(',')}_${pageNumber}`;
   const cachedData = await AsyncStorage.getItem(cacheKey);
 
   if (cachedData) {
@@ -118,20 +122,6 @@ const searchEvents = async (query: string, genres: Set<string>, location: string
       console.error(`Error fetching events for artist ${artist}:`, error);
     }
   }
-  // Search for similar artists
-  for (const artist of similarArtists) {
-    if (allEvents.length >= 50) break;
-    const artistUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&keyword=${encodeURIComponent(artist)}&size=10&page=${pageNumber}&classificationName=music`;
-    try {
-      const response = await fetch(artistUrl);
-      const data = await response.json();
-      if (data._embedded?.events) {
-        allEvents = [...allEvents, ...data._embedded.events.map((event: Event) => ({ ...event, relevanceScore: 1 }))];
-      }
-    } catch (error) {
-      console.error(`Error fetching events for similar artist ${artist}:`, error);
-    }
-  }
 
   // General search if needed
   if (allEvents.length < 50) {
@@ -152,6 +142,7 @@ const searchEvents = async (query: string, genres: Set<string>, location: string
       console.error('Error fetching additional events:', error);
     }
   }
+
   // Cache the results
   await AsyncStorage.setItem(cacheKey, JSON.stringify({
     timestamp: Date.now(),
@@ -198,27 +189,33 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
 
   const handleSave = () => {
     onSave(tempPreferences, tempLocation);
-    onClose();
+    // Remove the onClose() call from here as it's now handled in handleSavePreferences
   };
 
   const isApplyEnabled = tempLocation.trim() !== '' || tempPreferences.size > 0;
 
+  // Render the modal component for editing search preferences
   return (
     <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
+      animationType="slide" // Slide animation when opening/closing modal
+      transparent={true} // Modal background is transparent
+      visible={visible} // Controls modal visibility
+      onRequestClose={onClose} // Handle back button/gesture on Android
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Search Preferences</Text>
+
+          {/* Location selection section */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Location</Text>
+            
+            {/* "Search Everywhere" quick select button */}
             <TouchableOpacity
               style={styles.everywhereButton}
               onPress={() => {
                 setTempLocation('Everywhere');
+                // Reset the Google Places input text if ref exists
                 if (googlePlacesRef.current) {
                   googlePlacesRef.current.setAddressText('Everywhere');
                 }
@@ -226,6 +223,8 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
             >
               <Text style={styles.everywhereButtonText}>Search Everywhere</Text>
             </TouchableOpacity>
+
+            {/* Google Places Autocomplete for location search */}
             <GooglePlacesAutocomplete
               ref={googlePlacesRef}
               placeholder="Search for a location"
@@ -234,7 +233,7 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
               }}
               query={{
                 key: GOOGLE_PLACES_API_KEY,
-                types: '(cities)',
+                types: '(cities)', // Restrict to city-level results
               }}
               styles={{
                 container: styles.autocompleteContainer,
@@ -249,6 +248,8 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
               }}
             />
           </View>
+
+          {/* Genre selection section */}
           <Text style={styles.inputLabel}>Music Genres</Text>
           <FlatList
             data={genreList}
@@ -258,6 +259,7 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
                 onPress={() => toggleGenre(item)}
               >
                 <Text style={styles.genreText}>{item}</Text>
+                {/* Show checkmark icon for selected genres */}
                 {tempPreferences.has(item) && (
                   <Ionicons name="checkmark-circle" size={20} color="green" />
                 )}
@@ -266,10 +268,15 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
             keyExtractor={(item) => item}
             style={styles.genreList}
           />
+
+          {/* Action buttons container */}
           <View style={styles.buttonContainer}>
+            {/* Cancel button */}
             <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
+
+            {/* Apply button - disabled if no location or genres selected */}
             <TouchableOpacity 
               style={[styles.button, !isApplyEnabled && styles.disabledButton]}
               onPress={handleSave}
@@ -284,30 +291,80 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
   );
 };
 
+// Helper function to get the best quality image from an array of images
 const getBestImage = (images: Array<{ url: string; width?: number; height?: number }>) => {
   // Sort images by resolution (width * height) in descending order, if available
   const sortedImages = images.sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
   return sortedImages[0]?.url || '';
 };
 
+// Utility Functions
+/**
+ * Converts full city names to their common abbreviations
+ * Example: "New York" -> "NYC"
+ */
+const getCityAbbreviation = (cityName: string): string => {
+  const cityAbbreviations: { [key: string]: string } = {
+    'New York': 'NYC',
+    'Los Angeles': 'LA',
+    'San Francisco': 'SF',
+    'Las Vegas': 'LV',
+    'Chicago': 'CHI',
+    'Miami': 'MIA',
+    'Dallas': 'DAL',
+    'Houston': 'HOU',
+    'Washington': 'DC',
+    'Boston': 'BOS',
+    // Add more cities and their abbreviations as needed
+  };
+
+  return cityAbbreviations[cityName] || cityName.substring(0, 2).toUpperCase();
+};
+
+/**
+ * Type guard to check if a preferences object contains extended preferences
+ * Used to safely access similarGenres and similarArtists properties
+ */
+function hasExtendedPreferences(prefs: any): prefs is { similarGenres: string[], similarArtists: string[] } {
+  return 'similarGenres' in prefs && 'similarArtists' in prefs;
+}
+
+// Main SearchEvents component
 const SearchEvents = () => {
+  // State management for search functionality
   const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  
+  // User preferences state
   const [userGenres, setUserGenres] = useState<Set<string>>(new Set());
   const [tempGenres, setTempGenres] = useState<Set<string>>(new Set());
   const [location, setLocation] = useState<string>('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchQuery);
   const [userPreferences, setUserPreferences] = useState<any>({});
+  
+  // Pagination and loading state
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  // Location and search state
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [searchInputValue, setSearchInputValue] = useState('');
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Track current active search criteria
+  const [activeSearchCriteria, setActiveSearchCriteria] = useState({
+    query: '',
+    genres: new Set<string>(),
+    location: '',
+    artists: [] as string[]
+  });
+
+  // Fetch user's genre preferences from Firestore
   const fetchUserGenres = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
@@ -328,37 +385,76 @@ const SearchEvents = () => {
     return { genres: new Set(), location: '' };
   }, []);
 
+  // Effect to fetch user preferences and initial events
   useEffect(() => {
     const fetchUserPreferencesAndEvents = async () => {
       try {
         const preferences = await getUserPreferences();
         console.log('User preferences:', JSON.stringify(preferences, null, 2));
-        setUserPreferences(preferences || {});  // Ensure it's always an object
+        setUserPreferences(preferences || {});
+        
         if (preferences) {
-          const allGenres = [...new Set([
-            ...preferences.musicPreference,
-            ...('similarGenres' in preferences ? preferences.similarGenres : [])
-          ])];
-          const allArtists = [
-            ...(preferences.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? []),
-            ...('similarArtists' in preferences ? preferences.similarArtists : [])
-          ];
-          console.log('Searching with genres:', allGenres);
-          console.log('Searching with artists:', allArtists);
-          handleSearch('', new Set(allGenres), preferences.location, allArtists); 
+          // Combine user's direct preferences with similar/recommended items
+          const allGenres = new Set([
+            ...(preferences.musicPreference || []),
+            ...(hasExtendedPreferences(preferences) ? preferences.similarGenres : [])
+          ]);
+          const favoriteArtists = preferences.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? [];
+          const similarArtists = hasExtendedPreferences(preferences) ? preferences.similarArtists : [];
+          const allArtists = [...favoriteArtists, ...similarArtists];
+          
+          // Log fetched preferences for debugging
+          console.log('Genres:', Array.from(allGenres));
+          console.log('Favorite artists:', favoriteArtists);
+          console.log('Similar artists:', similarArtists);
+          console.log('Location:', preferences.location);
+          
+          // Update active search criteria with fetched preferences
+          setActiveSearchCriteria({
+            query: '',
+            genres: allGenres,
+            location: preferences.location || '',
+            artists: allArtists
+          });
+          
+          // Fetch initial events based on preferences
+          const initialEvents = await searchEvents(
+            '',
+            allGenres,
+            preferences.location || '',
+            favoriteArtists,
+            0
+          );
+          
+          // Filter and sort the fetched events
+          const filteredAndSortedResults = filterAndSortEvents(initialEvents, preferences, userLocation);
+          setEvents(filteredAndSortedResults);
         }
       } catch (error) {
         console.error('Error fetching user preferences:', error);
-        setUserPreferences({});  // Set to empty object on error
+        setUserPreferences({});
+        setEvents([]);
+      } finally {
+        setIsInitialLoad(false);
+        setLoading(false);
       }
     };
     fetchUserPreferencesAndEvents();
-  }, []);
+  }, [userLocation]);
 
+  /**
+   * Filters and sorts events based on user preferences and location
+   * @param events - Array of events to filter and sort
+   * @param userPreferences - User's preferences including favorite artists and genres
+   * @param userLocation - User's current location coordinates
+   * @returns Filtered and sorted array of events
+   */
   const filterAndSortEvents = (events: Event[], userPreferences: any, userLocation: { latitude: number; longitude: number } | null): Event[] => {
+    // Track artists we've already shown to avoid duplicates
     const seenArtists = new Set<string>();
 
     return events
+      // Calculate distance from user for each event if location data available
       .map(event => {
         if (userLocation && event._embedded?.venues?.[0]?.location) {
           event.distance = getDistance(
@@ -371,47 +467,48 @@ const SearchEvents = () => {
         }
         return event;
       })
+      // Sort events by relevance score, distance, and date
       .sort((a, b) => {
-        // Sort by relevance score first
+        // Primary sort by relevance score (higher scores first)
         if (b.relevanceScore !== a.relevanceScore) {
           return b.relevanceScore! - a.relevanceScore!;
         }
 
-        // Then by distance if available
+        // Secondary sort by distance if available
         if (a.distance && b.distance && a.distance !== b.distance) {
           return a.distance - b.distance;
         }
 
-        // Finally by date
+        // Tertiary sort by date
         const dateA = new Date(a.dates?.start?.localDate || '');
         const dateB = new Date(b.dates?.start?.localDate || '');
         return dateA.getTime() - dateB.getTime();
       })
+      // Filter out duplicate artists while keeping non-favorite artist events
       .filter(event => {
         const artistName = event._embedded?.attractions?.[0]?.name;
         if (artistName && !seenArtists.has(artistName)) {
           seenArtists.add(artistName);
           return true;
         }
-        return event.relevanceScore !== 2; // Keep non-favorite artist events
+        return event.relevanceScore !== 2; // Keep events that aren't from favorite artists
       })
-      .slice(0, 35);
+      .slice(0, 35); // Limit results to 35 events
   };
 
-  const handleSearch = useCallback(async (text: string, genres: Set<string>, location: string, artists: string[]) => {
+  /**
+   * Handles the search operation when search criteria changes
+   * Fetches new events and updates the UI accordingly
+   */
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
     setPage(0);
     setHasMore(true);
     try {
-      const preferences = await getUserPreferences();
-      setUserPreferences(preferences);
-
-      const similarArtists = preferences && typeof preferences === 'object' && 'similarArtists' in preferences ? preferences.similarArtists : [];
-      const searchResults = await searchEvents(text, genres, location, artists, similarArtists, 0);
-      console.log('Before filtering:', searchResults.length);
-      const filteredAndSortedResults = filterAndSortEvents(searchResults, preferences, userLocation); 
-      console.log('After filtering and sorting:', filteredAndSortedResults.length);
+      const { query, genres, location, artists } = activeSearchCriteria;
+      const searchResults = await searchEvents(query, genres, location, artists, 0);
+      const filteredAndSortedResults = filterAndSortEvents(searchResults, { ...userPreferences, location }, userLocation);
       setEvents(filteredAndSortedResults);
     } catch (error) {
       console.error('Error searching events:', error);
@@ -420,26 +517,34 @@ const SearchEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, [userLocation]);
+  }, [activeSearchCriteria, userPreferences, userLocation]);
 
+  /**
+   * Triggers a new search when the search input changes
+   * Updates search criteria and initiates search
+   */
   const triggerSearch = useCallback(() => {
-    handleSearch(searchInputValue, tempGenres, location, userPreferences?.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? []);
-  }, [handleSearch, searchInputValue, tempGenres, location, userPreferences]);
+    setActiveSearchCriteria(prev => ({
+      ...prev,
+      query: searchInputValue
+    }));
+    handleSearch();
+  }, [searchInputValue, handleSearch]);
 
+  /**
+   * Loads more events when user scrolls to bottom
+   * Fetches next page of results and appends them to existing events
+   */
   const loadMoreEvents = useCallback(async () => {
     if (!hasMore || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
       const nextPage = page + 1;
-      const similarArtists = userPreferences && typeof userPreferences === 'object' && 'similarArtists' in userPreferences 
-        ? userPreferences.similarArtists 
-        : [];
       const moreEvents = await searchEvents(
         searchInputValue, 
         tempGenres, 
         location, 
         userPreferences?.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? [], 
-        similarArtists, 
         nextPage
       );
       if (moreEvents.length > 0) {
@@ -455,6 +560,10 @@ const SearchEvents = () => {
     }
   }, [hasMore, isLoadingMore, page, searchInputValue, tempGenres, location, userPreferences]);
 
+  /**
+   * Handles the edit preferences button press
+   * Fetches current user genres and location and opens the edit modal
+   */
   const handleEditPress = async () => {
     const { genres, location } = await fetchUserGenres();
     setTempGenres(genres as Set<string>);
@@ -463,16 +572,37 @@ const SearchEvents = () => {
   };
 
   const handleSavePreferences = async (newPreferences: Set<string>, newLocation: string) => {
-    setTempGenres(new Set(newPreferences));
-    setLocation(newLocation);
-    
+    // Update state using callbacks to ensure we're working with the latest state
+    setTempGenres(prev => new Set(newPreferences));
+    setLocation(prev => newLocation);
     setSearchInputValue('');
     
-    if (newPreferences.size === 0) {
-      setEvents([]);
-    } else {
-      triggerSearch();
-    }
+    const updatedCriteria = {
+      query: '',
+      genres: newPreferences,
+      location: newLocation,
+      artists: [] // Reset artists to empty array
+    };
+
+    // Use a callback to ensure we're working with the latest state
+    setActiveSearchCriteria(prev => ({
+      ...prev,
+      ...updatedCriteria
+    }));
+
+    setUserPreferences((prev: any) => ({
+      ...prev,
+      musicPreference: Array.from(newPreferences),
+      location: newLocation
+    }));
+
+    // Clear all cached event data
+    const keys = await AsyncStorage.getAllKeys();
+    const eventCacheKeys = keys.filter(key => key.startsWith('events_'));
+    await AsyncStorage.multiRemove(eventCacheKeys);
+
+    // Use the updated criteria directly in the search
+    await searchEventsWithCriteria(updatedCriteria);
 
     const user = auth.currentUser;
     if (user) {
@@ -481,6 +611,34 @@ const SearchEvents = () => {
         location: newLocation,
         musicPreference: Array.from(newPreferences)
       });
+    }
+
+    // Close the modal
+    setIsModalVisible(false);
+  };
+
+  // New function to search events with given criteria
+  const searchEventsWithCriteria = async (criteria: {
+    query: string,
+    genres: Set<string>,
+    location: string,
+    artists: string[]
+  }) => {
+    setLoading(true);
+    setError(null);
+    setPage(0);
+    setHasMore(true);
+    try {
+      const { query, genres, location, artists } = criteria;
+      const searchResults = await searchEvents(query, genres, location, artists, 0);
+      const filteredAndSortedResults = filterAndSortEvents(searchResults, { location }, userLocation);
+      setEvents(filteredAndSortedResults);
+    } catch (error) {
+      console.error('Error searching events:', error);
+      setError('Error searching events. Please try again.');
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -511,46 +669,58 @@ const SearchEvents = () => {
     });
   };
 
-  // This component renders individual event cards in a grid layout
-  // Each card displays an event image, date, and venue
-  // The layout is designed to show two cards per row
+  // Main component for rendering individual event cards in a grid layout
+  // Takes an Event object as input and returns a TouchableOpacity card component
   const renderEvent = ({ item }: { item: Event }) => {
+    // Validate that required event data exists before rendering
+    // Returns null if any essential data is missing to prevent errors
     if (!item || !item.name || !item.dates || !item.dates.start || !item._embedded || !item._embedded.venues) {
       console.log('Skipping event due to missing data:', item);
       return null;
     }
 
+    // Extract venue and city information from the event data
+    // Format the location string with city abbreviation if available
     const venueName = item._embedded.venues[0]?.name;
+    const cityName = item._embedded.venues[0]?.city?.name;
+    const cityAbbr = cityName ? getCityAbbreviation(cityName) : '';
+    const venueAndCity = venueName && cityAbbr ? `${venueName}, ${cityAbbr}` : venueName || 'Venue not specified';
 
+    // Return the event card component wrapped in a TouchableOpacity for tap handling
     return (
       <TouchableOpacity 
         style={styles.container}
-        onPress={() => handleEventPress(item)}
+        onPress={() => handleEventPress(item)} // Navigate to event details on tap
       >
         <View style={styles.card}>
+          {/* Container for the event image */}
           <View style={styles.imageContainer}>
+            {/* Render event image if available */}
             {item.images && item.images.length > 0 && (
               <Image 
-                source={{ uri: getBestImage(item.images) }} 
+                source={{ uri: getBestImage(item.images) }} // Get optimal image from available options
                 style={styles.image}
                 resizeMode="cover"
               />
             )}
           </View>
         </View>
+        {/* Display formatted event date */}
         <Text style={styles.date}>{formatDate(item.dates.start.localDate)}</Text>
-        {venueName && (
-          <View style={styles.venueContainer}>
-            <Ionicons name="location-outline" size={10} color="#000000" />
-            <Text style={styles.venue}>{venueName}</Text>
-          </View>
-        )}
+        {/* Display venue location with icon */}
+        <View style={styles.venueContainer}>
+          <Ionicons name="location-outline" size={10} color="#000000" />
+          <Text style={styles.venue}>{venueAndCity}</Text>
+        </View>
+        {/* Show distance from user if available */}
         {item.distance && (
           <Text style={styles.distance}>{(item.distance / 1000).toFixed(1)} km away</Text>
         )}
+        {/* Show artist name for favorite artist events */}
         {item.relevanceScore === 2 && item._embedded?.attractions?.[0]?.name && (
           <Text style={styles.relevance}>{item._embedded.attractions[0].name}</Text>
         )}
+        {/* Show "Similar Artist" label for recommended events */}
         {item.relevanceScore === 1 && (
           <Text style={styles.relevance}>Similar Artist</Text>
         )}
@@ -558,20 +728,30 @@ const SearchEvents = () => {
     );
   };
 
+  // Effect to handle search input changes
+  // Triggers search when debounced search term updates
   useEffect(() => {
     if (debouncedSearchTerm !== searchInputValue) {
       setDebouncedSearchTerm(searchInputValue);
+      setActiveSearchCriteria(prev => ({
+        ...prev,
+        query: searchInputValue
+      }));
+      handleSearch();
     }
-  }, [searchInputValue]);
+  }, [searchInputValue, handleSearch]);
 
+  // Effect to log number of events when events state changes
   useEffect(() => {
     console.log('Events in state:', events.length);
   }, [events]);
 
+  // Memoized events array to prevent unnecessary re-renders
   const sortedAndFilteredEvents = useMemo(() => {
     return events;
   }, [events]);
 
+  // Function to get user's current location using browser geolocation
   const getUserLocation = useCallback(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -583,20 +763,22 @@ const SearchEvents = () => {
         },
         (error) => {
           console.log('Error getting location:', error);
-          setUserLocation(null); // or set a default location
+          setUserLocation(null);
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
       );
     } else {
       console.log('Geolocation is not supported by this browser.');
-      setUserLocation(null); // or set a default location
+      setUserLocation(null);
     }
   }, []);
 
+  // Effect to get user location when component mounts
   useEffect(() => {
     getUserLocation();
   }, [getUserLocation]);
 
+  // Helper function to compare distances between two events and user location
   const isEventCloser = (event1: Event, event2: Event): boolean => {
     if (!userLocation || !event1._embedded?.venues?.[0] || !event2._embedded?.venues?.[0]) return false;
 
@@ -619,12 +801,15 @@ const SearchEvents = () => {
     return distance1 < distance2;
   };
 
+  // Log event IDs for debugging
   console.log('Event IDs:', sortedAndFilteredEvents.map(event => event.id));
 
+  // Render main component UI
   return (
     <SafeAreaView style={styles.pageContainer}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
+      {/* Search bar section */}
       <View style={styles.searchWrapper}>
         <View style={styles.searchContainer}>
           <TextInput
@@ -643,7 +828,8 @@ const SearchEvents = () => {
         </View>
       </View>
       <Text style={styles.sectionTitle}>Suggestions</Text>
-      {loading ? (
+      {/* Show loading indicator or event list */}
+      {isInitialLoad || loading ? (
         <ActivityIndicator size="large" color="#79ce54" style={styles.loader} />
       ) : (
         <FlatList
@@ -660,6 +846,7 @@ const SearchEvents = () => {
         />
       )}
       <BottomNavBar />
+      {/* Modal for editing search preferences */}
       <EditPreferencesModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
@@ -678,7 +865,7 @@ const styles = StyleSheet.create({
   },
   searchWrapper: {
     alignItems: 'center',
-    marginTop: 20, // Increased top margin
+    marginTop: 13, // Increased top margin
     marginBottom: 10,
   },
   searchContainer: {
@@ -689,7 +876,7 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     borderRadius: 20,
     width: '40%',
-    height: 23,
+    height: 20,
     paddingHorizontal: 10,
   },
   searchInput: {
@@ -714,8 +901,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#79ce54',
-    marginBottom: 27.5,
-    marginTop: 15.5,
+    marginBottom: 0,
+    marginTop: 0,
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -956,3 +1143,4 @@ export default SearchEvents;
 
 // END of search events page frontend & backend
 // END of Maxwell Guillermo
+
