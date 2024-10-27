@@ -15,7 +15,7 @@ import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore"; // to
 
 // START of to updating matches hashmap for current user
 // Reyna Aguirre Contribution
-const updateUserMatch = async (currentUserId: string, matchedUserId: string, status: "liked" | "disliked") => {
+const updateUserMatch = async (currentUserId: string, matchedUserId: string, status: "liked" | "disliked" | "blocked") => {
   const db = getFirestore(app);
   const userDocRef = doc(db, "users", currentUserId); 
 
@@ -245,7 +245,7 @@ const Match = () => {
   const confirmResetMatches = () => {
     Alert.alert(
       "Confirm Reset Matches",
-      "are you sure you want to reset current match statuses?",
+      "are you sure you want to reset current match statuses (including blocked users)? this action cannot be undone.",
       [
         {
           text: "cancel",
@@ -253,6 +253,7 @@ const Match = () => {
         },
         {
           text: "yes",
+          style: "destructive",
           onPress: () => resetMatches()
         }
       ]

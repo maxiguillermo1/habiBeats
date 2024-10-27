@@ -1,9 +1,10 @@
-// current-matches-list.tsx
+// current-interaction-list.tsx  // change filename later
+// shows current matches while allowing users to block and report the users on this page
 // Reyna Aguirre
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
 
 interface UserMatch {
@@ -14,26 +15,27 @@ interface UserMatch {
 
 const MatchesList: React.FC = () => {
   const [likedMatches, setLikedMatches] = useState<UserMatch[]>([]);
-
+  const [dislikedMatches, setDislikedMatches] = useState<UserMatch[]>([]);
   useEffect(() => {
-    const fetchLikedMatches = async () => {
+    const fetchMatches = async () => {
       const db = getFirestore(app);
       const currentUserId = auth.currentUser?.uid;
-
+  
       if (!currentUserId) return;
-
+  
       const userDocRef = doc(db, 'users', currentUserId);
-
+  
       try {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const matches = userData.matches || {};
-
-          // Get all liked user IDs
+  
+          // Get liked and disliked user IDs
           const likedUserIds = Object.keys(matches).filter((uid) => matches[uid] === 'liked');
-
-          // Fetch user details for each liked match
+          const dislikedUserIds = Object.keys(matches).filter((uid) => matches[uid] === 'disliked');
+  
+          // Fetch user details for both liked and disliked matches
           const likedMatchesData: UserMatch[] = await Promise.all(
             likedUserIds.map(async (uid) => {
               const matchDoc = await getDoc(doc(db, 'users', uid));
@@ -45,20 +47,74 @@ const MatchesList: React.FC = () => {
               };
             })
           );
-
+  
+          const dislikedMatchesData: UserMatch[] = await Promise.all(
+            dislikedUserIds.map(async (uid) => {
+              const matchDoc = await getDoc(doc(db, 'users', uid));
+              const matchData = matchDoc.data();
+              return {
+                uid,
+                displayName: matchData?.displayName || '',
+                profileImageUrl: matchData?.profileImageUrl || '',
+              };
+            })
+          );
+  
           setLikedMatches(likedMatchesData);
+          setDislikedMatches(dislikedMatchesData);
         }
       } catch (error) {
         console.error('Error fetching matches list: ', error);
       }
     };
 
-    fetchLikedMatches();
+    fetchMatches();
   }, []);
 
   const handleBlockUser = (uid: string) => {
-    console.log(`Block user with UID: ${uid}`);
-    // Add functionality to block the user as needed
+    Alert.alert(
+      'Block User',
+      'Are you sure you want to block this user?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              const db = getFirestore(app);
+              const currentUserId = auth.currentUser?.uid;
+              if (!currentUserId) return;
+  
+              const userDocRef = doc(db, 'users', currentUserId);
+              const userDoc = await getDoc(userDocRef);
+              
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const matches = { ...userData.matches };
+                
+                // Update the status to 'blocked'
+                matches[uid] = 'blocked';
+                
+                // Update the document
+                await updateDoc(userDocRef, { matches });
+                
+                // Remove the blocked user from the UI
+                setLikedMatches(prev => prev.filter(match => match.uid !== uid));
+                setDislikedMatches(prev => prev.filter(match => match.uid !== uid));
+              }
+            } catch (error) {
+              console.error('Error blocking user:', error);
+              Alert.alert('Error', 'Failed to block user. Please try again.');
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -69,10 +125,25 @@ const MatchesList: React.FC = () => {
         keyExtractor={(item) => item.uid}
         renderItem={({ item }) => (
           <View style={styles.matchItem}>
-            <Image source={{ uri: item.profileImageUrl }} style={styles.profileImage} />
+            <Image source={{ uri: item.profileImageUrl }} style={styles.profileLikedImage} />
             <Text style={styles.displayName}>{item.displayName}</Text>
             <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
-              <Ionicons name="close-circle" size={30} color="#d9534f" />
+              <Ionicons name="warning" size={27} color="rgba(222, 60, 60, 0.8)" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+
+      <Text style={styles.title}>Current Disliked Profiles</Text>
+      <FlatList
+        data={dislikedMatches}
+        keyExtractor={(item) => item.uid}
+        renderItem={({ item }) => (
+          <View style={styles.matchItem}>
+            <Image source={{ uri: item.profileImageUrl }} style={styles.profileDislikedImage} />
+            <Text style={styles.displayName}>{item.displayName}</Text>
+            <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
+              <Ionicons name="warning" size={27} color="rgba(222, 60, 60, 0.8)" />
             </TouchableOpacity>
           </View>
         )}
@@ -90,7 +161,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontWeight: 'bold',
-    color: '#37bdd5',
+    color: '#7d7d7d',
     marginBottom: 30,
     alignSelf: 'center',
   },
@@ -99,14 +170,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  profileImage: {
+  profileLikedImage: {
     width: 75,
     height: 75,
     borderRadius: 100,
     marginLeft: 20,
     marginRight: 20,
-    borderWidth: 3,
-    borderColor: '#37bdd5',
+    borderWidth: 5,
+    borderColor: '#79ce54',
+  },
+  profileDislikedImage: {
+    width: 75,
+    height: 75,
+    borderRadius: 100,
+    marginLeft: 20,
+    marginRight: 20,
+    borderWidth: 5,
+    borderColor: '#de3c3c',
   },
   displayName: {
     fontSize: 20,

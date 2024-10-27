@@ -23,7 +23,7 @@ export interface User {
     longitude?: number; // optional if already geocoded
     favoritePerformance: string;
     matches?: {
-      [uid: string]: "liked" | "disliked";
+      [uid: string]: "liked" | "disliked" | "blocked";
     };
     favoriteAlbum?: string; // JSON string containing album details
     favoriteArtists?: string; // JSON string containing an array of artist objects
@@ -194,9 +194,9 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
 
     // get list of already interacted UIDs 
     const interactedUIDs = new Set(
-      Object.keys(user1.matches ?? {}).filter((uid) =>
-        user1.matches?.[uid] && ["liked", "disliked"].includes(user1.matches[uid]!)
-      )
+      Object.entries(user1.matches ?? {})
+        .filter(([_, status]) => status === "blocked" || status === "disliked" || status === "liked")
+        .map(([uid]) => uid)
     );
 
     // query users that are not in the interactedUIDs set
@@ -217,7 +217,14 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
           console.log(`User ${user2.displayName} skipped (already interacted)`);
           return null; 
         }
-        
+
+        // Also check if user2 has blocked user1
+        const user2Matches = user2.matches ?? {};
+        if (user2Matches[currentUser.uid] === "blocked") {
+          console.log(`User ${user2.displayName} has blocked current user`);
+          return null;
+        }
+
         const isCompatible = await isMatch(user1, user2);
         console.log(`Compatibility result for ${user1.displayName} and ${user2.displayName}: ${isCompatible}`);
         return isCompatible ? user2 : null;
