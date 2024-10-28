@@ -1,16 +1,21 @@
 // login-signup.tsx
-// Reyna Aguirre, Jesus Donate, and Maxwell Guillermo
+// Author: Reyna Aguirre
+// This file handles the login functionality for the HabiBeats app, including form validation,
+// Firebase authentication, and animated UI elements.
 
+// Import necessary React and React Native components
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, ActivityIndicator, Keyboard } from "react-native";
+// Import Firebase authentication functions
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "../firebaseConfig.js";
+// Import routing components
 import { useRouter } from "expo-router";
 import { Stack } from 'expo-router';
+// Import animation utilities from Reanimated
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 
-// START of Custom TextInput Component
-// START of Maxwell Guillermo Contribution
+// Custom TextInput component that wraps React Native's TextInput with consistent styling
 const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -30,24 +35,17 @@ const CustomTextInput = ({ value, onChangeText, secureTextEntry = false, placeho
     />
   );
 };
-// END of Custom TextInput Component
-// END of Maxwell Guillermo Contribution
 
-// START State Management
-// START of Jesus Donate Contribution
 export default function LoginSignup() {
+  // State management for form inputs and UI states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [emptyFieldsError, setEmptyFieldsError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-// END of State Mangement
-// END of Jesus Donate Contribution
 
-
-  // START of Animated Flow
-  // START of Reyna Aguirre Contribution 
+  // Animation values for various UI elements using Reanimated
   const titleOpacity = useSharedValue(0);
   const titleTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
@@ -61,7 +59,9 @@ export default function LoginSignup() {
   const miniLogoOpacity = useSharedValue(0);
   const miniLogoScale = useSharedValue(0.5);
 
+  // Initialize animations on component mount
   useEffect(() => {
+    // Sequence of animations with delays for a staggered effect
     titleOpacity.value = withSpring(1);
     titleTranslateY.value = withSpring(0);
     subtitleOpacity.value = withDelay(100, withSpring(1));
@@ -76,6 +76,7 @@ export default function LoginSignup() {
     miniLogoScale.value = withDelay(750, withSpring(1));
   }, []);
 
+  // Define animated styles for UI elements
   const animatedTitleStyle = useAnimatedStyle(() => {
     return {
       opacity: titleOpacity.value,
@@ -116,16 +117,13 @@ export default function LoginSignup() {
     transform: [{ scale: miniLogoScale.value }],
   }));
 
-  // END of Reyna Aguirre Contribution 
-  // END of Animated Flow
-
-  // START of Authentication Functions
-  // START of of Maxwell Guillermo Contribution
+  // Handle user sign in with Firebase authentication
   async function signIn() {
-    Keyboard.dismiss();  // Dismiss the keyboard when sign in is pressed
+    Keyboard.dismiss();  // Dismiss keyboard when sign in is attempted
     const auth = getAuth(app);
     console.log("Attempting to sign in with email:", email);
 
+    // Validate form inputs
     if (!email || !password) {
       setEmptyFieldsError("Please enter both email and password.");
       return;
@@ -134,24 +132,21 @@ export default function LoginSignup() {
     setIsLoading(true);
 
     try {
+      // Attempt Firebase authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Sign in successful:", user);
 
-      setErrorMessage(""); // Clear any existing error message
-      setEmptyFieldsError(""); // Clear empty fields error
+      // Clear any existing error messages
+      setErrorMessage(""); 
+      setEmptyFieldsError(""); 
 
-      // END of Authentication Functions
-      // END of of Maxwell Guillermo Contribution
-
-      // Delay the navigation to show the loading indicator
+      // Add delay before navigation for loading indicator
       setTimeout(() => {
         setIsLoading(false);
         router.push("/profile");
-      }, 2000); // 2 seconds delay\
+      }, 2000);
 
-      // START of Log In Error Handling
-      // START of Jesus Donate Contribution
     } catch (error: unknown) {
       setIsLoading(false);
       if (error instanceof Error) {
@@ -162,13 +157,9 @@ export default function LoginSignup() {
         Alert.alert("Error", "An unknown error occurred");
       }
     }
-    // END of Log In Error Handling
-    // ENDof Jesus Donate Contribution
   }
 
-
-  // START Firebase Log Error Handlings
-  // START of Reyna Aguirre Contribution
+  // Handle different Firebase authentication errors
   const handleFirebaseErrors = (error: Error) => {
     switch (error.message) {
       case "Firebase: Error (auth/user-not-found).":
@@ -185,11 +176,8 @@ export default function LoginSignup() {
         break;
     }
   };
-  // END Firebase Log Error Handlings
-  // END of Reyna Aguirre Contribution
 
-  // START of Navigation Functions
-  // START of Maxwell Guillermo Contribution
+  // Navigation handlers
   const handleSignUp = () => {
     router.push("/signup");
   };
@@ -201,11 +189,8 @@ export default function LoginSignup() {
   const handleBackPress = () => {
     router.push("/landing");
   };
-  // END of Navigation Functions
-  // END of Maxwell Guillermo Contribution
 
-  // START of UI Render
-  // Reyna Aguirre, Jesus Donate, andMaxwell Guillermo
+  // Render the UI
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -297,10 +282,8 @@ export default function LoginSignup() {
     </>
   );
 }
-// END of UI Render
 
-// START of Style Codes
-// Reyna Aguirre and Maxwell Guillermo
+// Styles for the UI components
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -444,4 +427,3 @@ const styles = StyleSheet.create({
     height: 80,
   },
 });
-// END of Style Codes

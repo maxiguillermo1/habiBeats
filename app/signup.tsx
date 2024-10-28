@@ -1,6 +1,8 @@
 // signup.tsx
-// Reyna Aguirre, Jesus Donate, Maxwell Guillermo, and Mariann Grace Dizon
+// Main signup flow component for user registration
+// Authors: Reyna Aguirre
 
+// Import required dependencies
 import React, { useState, useEffect, useCallback } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
@@ -17,15 +19,14 @@ import Constants from 'expo-constants';
 import MapView, { Marker, Region } from 'react-native-maps';
 import 'react-native-get-random-values';
 
-// Loading Sora SemiBold Font
+// Load custom fonts
 async function loadFonts() {
   await Font.loadAsync({
     'Sora-SemiBold': require('../assets/fonts/Sora-SemiBold.ttf'),
   });
 }
 
-// START Custom TextInput component
-// START of Maxwell Guillermo Contribution
+// Custom TextInput component with consistent styling
 const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -43,16 +44,14 @@ const CustomTextInput = ({ value, onChangeText, placeholder, ...props }: {
     />
   );
 };
-// END Custom TextInput component
-// END of Maxwell Guillermo Contribution
 
-// START of Sign Up Process
-// START of Reyna Aguirre Contribution 
+// Main SignUp component
 export default function SignUp() {
   
-  // START of Sora SemiBold Font Loading
+  // State for font loading
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
+  // Load fonts on component mount
   useEffect(() => {
     let isMounted = true;
     loadFonts().then(() => {
@@ -64,9 +63,8 @@ export default function SignUp() {
       isMounted = false;
     };
   }, []);
-  // END of Sora SemiBold Font Loading
 
-  // State variables to Store User Input
+  // User information states
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -77,19 +75,21 @@ export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [step, setStep] = useState<number>(0);
-  const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); // Last Name Visibility Variable
+  const [lastNameVisible, setLastNameVisible] = useState<boolean>(true); 
   const [gender, setGender] = useState<string>(""); 
-  const [genderPreference, setGenderPreference] = useState<string>(""); // Gender Preference Variable
+  const [genderPreference, setGenderPreference] = useState<string>("");
   const [pronouns, setPronouns] = useState<string[]>([]);
-  const [pronounVisible, setPronounVisible] = useState<boolean>(true); // Pronoun Visibility Variable
-  const [matchIntention, setMatchIntention] = useState<string>(""); // Match Intention Variable [Friends, Dating, Both]
-  const [musicPreference, setMusicPreference] = useState<string[]>([]); // Music Preference Variable [Pop, Rock, Hip-Hop, R&B, Country, Electronic, Jazz, Classical, Latin, Other]
-  const [agePreference, setAgePreference] = useState<number>(0); // Age Preference Variable
+  const [pronounVisible, setPronounVisible] = useState<boolean>(true);
+  const [matchIntention, setMatchIntention] = useState<string>("");
+  const [musicPreference, setMusicPreference] = useState<string[]>([]);
+  const [agePreference, setAgePreference] = useState<number>(0);
   const router = useRouter();
+
+  // Location related states
   const [currentLocationName, setCurrentLocationName] = useState('');
   const [locationSelected, setLocationSelected] = useState(false);
-  const [displayLocation, setDisplayLocation] = useState<string>(''); // Display Location Variable
-  const [locationVisible, setLocationVisible] = useState<boolean>(true); // Location Visibility Variable
+  const [displayLocation, setDisplayLocation] = useState<string>('');
+  const [locationVisible, setLocationVisible] = useState<boolean>(true);
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -102,12 +102,13 @@ export default function SignUp() {
     longitudeDelta: 0.0421,
   });
 
-  // State variables to Store User Input for Animation 
+  // Animation values for transitions
   const landingSubtitleOpacity = useSharedValue(0);
   const landingSubtitleTranslateY = useSharedValue(50);
   const subtitleOpacity = useSharedValue(0);
   const subtitleTranslateY = useSharedValue(50);
 
+  // Request location permissions and set initial region
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -125,6 +126,7 @@ export default function SignUp() {
     })();
   }, []);
 
+  // Initialize animations on step change
   useEffect(() => {
     landingSubtitleOpacity.value = withDelay(150, withSpring(1));
     landingSubtitleTranslateY.value = withDelay(150, withSpring(0));
@@ -132,8 +134,7 @@ export default function SignUp() {
     subtitleTranslateY.value = withDelay(150, withSpring(0));
   }, [step, router]);
 
-  // START of Animated Styles
-  // START of Reyna Aguirre Contribution
+  // Animation styles
   const animatedLandingSubtitleStyle = useAnimatedStyle(() => {
     return {
       opacity: landingSubtitleOpacity.value,
@@ -148,14 +149,7 @@ export default function SignUp() {
     };
   });
 
-
-
-  // END of Sign Up Process
-
-  // END of Reyna Aguirre Contribution 
-
-  // START of Firebase Storing of User Data
-  // START of Jesus Donate Contribution 
+  // Handle user signup process
   const handleSignUp = async () => {
     try {
       console.log("Starting sign up process...");
@@ -164,8 +158,8 @@ export default function SignUp() {
       const user = userCredential.user;
       console.log("User created:", user);
 
-      const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName; // Checks for Last Name Visibility Boolean
-      setDisplayLocation(`${locationVisible ? selectedLocation?.name : 'N/A'}`); // Checks for Location Visibility Boolean
+      const displayName = lastNameVisible ? `${firstName} ${lastName}` : firstName;
+      setDisplayLocation(`${locationVisible ? selectedLocation?.name : 'N/A'}`);
       console.log("Display name:", displayName);
       await updateProfile(user, {
         displayName: displayName
@@ -173,18 +167,19 @@ export default function SignUp() {
 
       const db = getFirestore(app);
       
+      // Create user document in Firestore
       await setDoc(doc(db, "users", user.uid), {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        dateOfBirth: dateOfBirth.toISOString().split('T')[0], // Store as YYYY-MM-DD
+        dateOfBirth: dateOfBirth.toISOString().split('T')[0],
         age: age,
         displayName: displayName,
         lastNameVisible: lastNameVisible,
         pronounsVisible: pronounVisible,
         gender: gender, 
         genderPreference: genderPreference,
-        agePreference: { min: 21, max: 80 }, // automatically set age preference
+        agePreference: { min: 21, max: 80 },
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention,
@@ -195,10 +190,8 @@ export default function SignUp() {
       });
       console.log("User document created successfully");
 
-      // Firebase Error Handling
       setSuccessMessage("Sign up successful!");
       
-      // Update the database
       await updateUserProfile(user.uid);
       
       router.push("/login-signup"); 
@@ -213,7 +206,7 @@ export default function SignUp() {
     }
   };
 
-  // Function to update user profile in the database
+  // Update user profile in Firestore
   const updateUserProfile = async (userId: string) => {
     const db = getFirestore(app);
     const userRef = doc(db, "users", userId);
@@ -231,7 +224,7 @@ export default function SignUp() {
         locationVisible: locationVisible,
         gender: gender,
         genderPreference: genderPreference,
-        agePreference: { min: 21, max: 80 }, // automatically set age preference
+        agePreference: { min: 21, max: 80 },
         pronouns: pronouns,
         musicPreference: musicPreference,
         matchIntention: matchIntention, 
@@ -246,10 +239,8 @@ export default function SignUp() {
       setErrorMessage("Failed to update user profile. Please try again.");
     }
   };
-  // END of Firebase Storing of User Data
-  // END of Jesus Donate Contribution 
 
-
+  // Reverse geocode coordinates to get location name
   const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
     try {
       const response = await fetch(
@@ -275,6 +266,7 @@ export default function SignUp() {
     }
   }, []);
   
+  // Handle location confirmation
   const handleConfirmLocation = () => {
     if (currentLocationName) {
       setSelectedLocation({
@@ -286,27 +278,26 @@ export default function SignUp() {
     }
   };
 
+  // Handle map region changes
   const handleRegionChange = (newRegion: Region) => {
-    // Region is the current location of the map.
     setRegion(newRegion);
-    // Is called when the region changes. Region is the current location of the map.
     if (newRegion.latitude !== region.latitude && newRegion.longitude !== region.longitude) {
       reverseGeocode(newRegion.latitude, newRegion.longitude);
     }
   };
 
+  // Handle final signup step
   const handleFinishSignUp = () => {
     console.log("Finishing sign up...");
     handleSignUp();
   };
 
-  // START Function to clear error message when user re-enters form
-  // START of Mariann Grace Dizon Contribution
+  // Clear error message
   const clearErrorMessage = () => {
     setErrorMessage("");
   };
 
-  // Function to handle next step
+  // Handle progression through signup steps
   const handleNextStep = async () => {
     if (step === 0) {
       setStep(1);
@@ -322,13 +313,10 @@ export default function SignUp() {
       if (email) {
         try {
           const auth = getAuth(app);
-          // Attempt to create a user with the given email
           await createUserWithEmailAndPassword(auth, email, 'temporaryPassword');
-          // If successful, delete the temporary user
           if (auth.currentUser) {
             await auth.currentUser.delete();
           }
-          // Email is not in use, proceed to next step
           console.log("email:", email);
           setStep(3);
         } catch (error: any) {
@@ -417,13 +405,9 @@ export default function SignUp() {
     }
   };
 
-
-  // END of Mariann Grace Dizon Contribution
-
-  // START of UI Render
-  // Reyna Aguirre and Maxwell Guillermo
+  // Wait for fonts to load before rendering
   if (!fontsLoaded) {
-    return null; // or a loading indicator
+    return null;
   }
 
   return (
@@ -434,7 +418,6 @@ export default function SignUp() {
         style={styles.container}
       >
         <SafeAreaView style={styles.container}>
-          {/* START Back Button: Reyna Aguirre 09/18/2024 */}
           <TouchableOpacity style={styles.backButton} onPress={() => {
             Alert.alert(
               "Exit Profile Setup",
@@ -453,10 +436,8 @@ export default function SignUp() {
           }}>
             <Text style={styles.backButtonText}>back</Text>
           </TouchableOpacity>
-          {/* END Back Button: Reyna Aguirre 09/18/2024 */}
 
           <View style={styles.content}>
-            {/* START of Profile Landing Page */}
             {step === 0 && (
               <>
                 <Animated.Text style={[styles.landingsubtitle, animatedLandingSubtitleStyle]}>Let's get started with creating your unique music profile.</Animated.Text>
@@ -477,12 +458,10 @@ export default function SignUp() {
                 </View>
               </>
             )}
-            {/* END of Profile Landing Page */}
             {step === 1 && (
               <>
                 <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>What's your name?</Animated.Text>
                 <View style={styles.formContainer}>
-                  {/* First Name input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={firstName} 
@@ -490,7 +469,6 @@ export default function SignUp() {
                       placeholder="first name"
                     />
                   </View>
-                  {/* Last Name input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={lastName} 
@@ -498,9 +476,7 @@ export default function SignUp() {
                       placeholder="last name"
                     />
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                  {/* Next button */}
                   <TouchableOpacity 
                     style={styles.button}
                     onPress={handleNextStep}
@@ -510,7 +486,6 @@ export default function SignUp() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {/* Checkbox for last name visibility */}
                 <View style={styles.checkboxContainer}>
                   <TouchableOpacity 
                     style={styles.checkbox}
@@ -534,7 +509,6 @@ export default function SignUp() {
                 <Text style={styles.subtitle}>What's your email?</Text>
                 <Text style={styles.subtitleDescription}>your email is required for account recovery and security purposes.</Text>
                 <View style={styles.formContainer}>
-                  {/* Email input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={email} 
@@ -544,7 +518,6 @@ export default function SignUp() {
                       autoCapitalize="none"
                     />
                   </View>
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.button}
@@ -562,7 +535,6 @@ export default function SignUp() {
               <>
                 <Text style={styles.subtitle}>What's your birthday?</Text>
                 <View style={styles.formContainer}>
-                  {/* Date of Birth input */}
                   <View style={styles.inputContainer}>
                     <DateTimePicker
                       value={dateOfBirth}
@@ -575,23 +547,19 @@ export default function SignUp() {
                       }}
                     />
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.button}
                       onPress={() => {
-                        // Calculate Age
                         const today = new Date();
                         let calculatedAge = today.getFullYear() - dateOfBirth.getFullYear();
                         const m = today.getMonth() - dateOfBirth.getMonth();
                         if (m < 0 || (m === 0 && today.getDate() < dateOfBirth.getDate())) {
                           calculatedAge--;
                         }
-                        setAge(calculatedAge); // save age to firestor
+                        setAge(calculatedAge);
                         
-                        // Show Pop-Up to Confirm Age
                         Alert.alert(
                           `Confirm you're ${calculatedAge}.`,
                           `\nIs this correct?`,
@@ -624,7 +592,6 @@ export default function SignUp() {
               <>
                 <Text style={styles.subtitle}>Password Setup</Text>
                 <View style={styles.formContainer}>
-                  {/* Password input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={password} 
@@ -633,7 +600,6 @@ export default function SignUp() {
                       secureTextEntry={true}
                     />
                   </View>
-                  {/* Confirm Password input */}
                   <View style={styles.inputContainer}>
                     <CustomTextInput 
                       value={confirmPassword} 
@@ -642,9 +608,7 @@ export default function SignUp() {
                       secureTextEntry={true}
                     />
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.button}
@@ -682,7 +646,6 @@ export default function SignUp() {
               <>
                 <Text style={styles.subtitle}>What gender best describes you?</Text>
                 <View style={styles.formContainer}>
-                  {/* Gender selection buttons */}
                   <View style={styles.genderButtonsContainer}>
                     <TouchableOpacity 
                       style={[styles.genderButton, gender === 'Male' && styles.selectedGenderButton]}
@@ -703,9 +666,7 @@ export default function SignUp() {
                       <Text style={[styles.genderButtonText, gender === 'Other' && styles.selectedGenderButtonText]}>other</Text>
                     </TouchableOpacity>
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.profileButton}
@@ -724,7 +685,6 @@ export default function SignUp() {
                 <Text style={styles.subtitle}>What are your pronouns?</Text>
                 <Text style={styles.subtitleDescription}>select up to (2) pronouns that apply.</Text>
                 <View style={styles.formContainer}>
-                  {/* Pronoun selection checkboxes */}
                   <View style={styles.pronounCheckboxContainer}>
                     {['she', 'her', 'he', 'him', 'they', 'them'].map((pronoun) => (
                       <TouchableOpacity 
@@ -747,9 +707,7 @@ export default function SignUp() {
                       </TouchableOpacity>
                     ))}
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.profileButton}
@@ -761,7 +719,6 @@ export default function SignUp() {
                     </TouchableOpacity>
                   </View>
                 </View>
-                {/* Checkbox for pronoun visibility */}
                 <View style={styles.checkboxContainerP}>
                   <TouchableOpacity 
                     style={styles.checkboxP}
@@ -782,8 +739,6 @@ export default function SignUp() {
               <Text style={styles.subtitle}>What are your intentions for connecting?</Text>
               <Text style={styles.subtitleDescription}>select (1) that applies to you.</Text>
               <View style={styles.formContainer}>
-                  {/* Intention selection buttons */}
-                  {/* Re-used Gender Buttons for Styling of Intention Buttons */}
                   <View style={styles.intentionButtonsContainer}>
                     <TouchableOpacity 
                       style={[styles.genderButton, matchIntention === 'Friends' && styles.selectedGenderButton]}
@@ -804,10 +759,8 @@ export default function SignUp() {
                       <Text style={[styles.genderButtonText, matchIntention === 'Both' && styles.selectedGenderButtonText]}>both</Text>
                     </TouchableOpacity>
                   </View>
-                  {/* Error message */}
                   {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                   
-                  {/* Next button */}
                   <View>
                     <TouchableOpacity 
                       style={styles.profileButton}
@@ -826,7 +779,6 @@ export default function SignUp() {
                 <Text style={styles.subtitle}>What gender are you looking for?</Text>
                 <Text style={styles.subtitleDescription}>select (1) that applies to you.</Text>
                 <View style={styles.formContainer}>
-                  {/* Gender selection buttons */}
                   <View style={styles.genderButtonsContainer}>
                     <TouchableOpacity 
                       style={[styles.genderButton, genderPreference === 'Male' && styles.selectedGenderButton]}
@@ -977,7 +929,7 @@ export default function SignUp() {
 
 
 // START of Style Code
-// Reyna Aguirre and Maxwell Guillermo
+// Reyna Aguirre
 const styles = StyleSheet.create({
   container: {
     flex: 1,

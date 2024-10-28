@@ -1,12 +1,15 @@
 // ai-chatbot.tsx
 // Reyna Aguirre
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios'; 
+
+const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
 
 
 const Chatbot = () => {
@@ -81,6 +84,69 @@ const Chatbot = () => {
                 return "how can i help you today?";
         }
     };
+
+    // ai response code
+    const [isLoading, setIsLoading] = useState(false);
+    const [userInput, setUserInput] = useState('');
+    const [response, setResponse] = useState('');
+
+    const generateAIResponse = async (userInput: string) => {
+        setIsLoading(true);
+        let prompt = '';
+
+        // different prompts based on active button
+        switch (activeButton) {
+            case 'weather':
+                prompt = `As a weather expert for concert events, please provide a brief and friendly response about what the weather will be like for this event: ${userInput}. Include temperature expectations and any weather-related tips for concert-goers.`;
+                break;
+                
+            case 'planShirt':
+                prompt = `As a fashion expert for concert events, please suggest outfit ideas for this event: ${userInput}. Consider the artist's genre, typical fan fashion at their concerts, and provide 2-3 specific outfit suggestions. Keep the response concise and stylish.`;
+                break;
+                
+            case 'planDay':
+                prompt = `As a concert planning expert, please provide a brief timeline and tips for this event: ${userInput}. Include when to arrive, what to do before the show, and any venue-specific advice. Keep the response focused on timing and practical tips.`;
+                break;
+                
+            default:
+                prompt = userInput;
+        }
+
+        try {
+            const response = await axios.post(
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+                {
+                    contents: [
+                        {
+                            parts: [{ text: prompt }]
+                        }
+                    ]
+                },
+                {
+                    params: { key: GEMINI_API_KEY },
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+            
+            const generatedResponse = response.data.candidates[0].content.parts[0].text;
+            setResponse(generatedResponse);
+        } catch (error) {
+            console.error('Error generating AI response:', error);
+            setResponse('Sorry, I encountered an error. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSend = () => {
+        if (!userInput.trim()) {
+            return; // Don't send empty messages
+        }
+
+        generateAIResponse(userInput);
+        setUserInput(''); // Clear input after sending
+    };
+
     
   return (
     <SafeAreaView style={styles.container}>
@@ -128,16 +194,37 @@ const Chatbot = () => {
         </TouchableOpacity>
     </Animated.View>
 
+    {/* response container */}
+    <ScrollView style={styles.responseContainer}>
+                {response && (
+                    <View style={styles.responseBox}>
+                        <Text style={styles.responseText}>{response}</Text>
+                    </View>
+                )}
+    </ScrollView>
+
+    {/* user input container */}
     <View style={styles.inputContainer}>
-        <TextInput
-            style={styles.input}
-            placeholder={getPlaceholderText()}
-            placeholderTextColor="#999"
-        />
-        <TouchableOpacity style={styles.sendButton}>
-            <Ionicons name="arrow-up" size={24} color="#0e1514" />
-        </TouchableOpacity>
-    </View>
+                <TextInput
+                    style={styles.input}
+                    placeholder={getPlaceholderText()}
+                    placeholderTextColor="#999"
+                    value={userInput}
+                    onChangeText={setUserInput}
+                    onSubmitEditing={() => handleSend()}
+                />
+                <TouchableOpacity 
+                    style={styles.sendButton}
+                    onPress={() => handleSend()}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#0e1514" />
+                    ) : (
+                        <Ionicons name="arrow-up" size={24} color="#0e1514" />
+                    )}
+                </TouchableOpacity>
+            </View>
     
     <BottomNavBar />
     </SafeAreaView>
@@ -164,6 +251,30 @@ const styles = StyleSheet.create({
   iconButton: {
     marginHorizontal: 30,
   },
+  responseContainer: {
+    flex: 1,
+    paddingHorizontal: 15,
+    marginBottom: 10,
+},
+responseBox: {
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 15,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+        width: 0,
+        height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+},
+responseText: {
+    fontSize: 14,
+    color: '#0e1514',
+    lineHeight: 20,
+},
   inputContainer: {
     position: 'absolute',
     bottom: 110, 
