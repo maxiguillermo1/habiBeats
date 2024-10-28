@@ -13,6 +13,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import PushNotificationsSettings from './settings/push-notifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
+import { getGooglePlacesQueryConfig } from '../api/google-places-api';
 
 interface UserMatch {
   uid: string;
@@ -1049,7 +1050,7 @@ const Settings = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Change Location</Text>
             <View style={styles.googleAutocompleteContainer}>
-              <GooglePlacesAutocomplete
+            <GooglePlacesAutocomplete
                 ref={googlePlacesRef}
                 placeholder='Search for a city or town'
                 onPress={(data, details) => {
@@ -1057,11 +1058,7 @@ const Settings = () => {
                     setTempLocation(details.formatted_address);
                   }
                 }}
-                query={{
-                  key: 'AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc',
-                  language: 'en',
-                  types: '(cities)',
-                }}
+                query={getGooglePlacesQueryConfig()}
                 styles={{
                   container: styles.googleAutocompleteContainer,
                   textInputContainer: styles.googleAutocompleteInputContainer,

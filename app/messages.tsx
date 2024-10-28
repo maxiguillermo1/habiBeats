@@ -8,6 +8,7 @@ import { Stack, useRouter } from 'expo-router';
 import { doc, getDoc, Timestamp, deleteDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 // Define structure for conversation data
 interface Conversation {
@@ -228,6 +229,15 @@ const Messages = () => {
       <Stack.Screen options={{ headerShown: false }} />
       {/* This is the scrollview that displays the conversations and new matches */}
       <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Messages</Text>
+          <TouchableOpacity 
+            style={styles.groupMessageButton}
+            onPress={() => router.push('/create-group')}
+          >
+            <Ionicons name="people" size={24} color="#fba904" />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.title}>Recent Messages</Text>
         {/* Displays the conversations */}
         {isLoadingConversations ? (
@@ -413,6 +423,18 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  groupMessageButton: {
+    position: 'absolute',
+    right: 20,
+    top: 20,
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
 });
 
