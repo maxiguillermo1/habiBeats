@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
   },
   navItem: {
-    fontSize: 13,
+    fontSize: 11,
     color: 'black',
     marginHorizontal: 10,
   },
   activeNavItem: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#37bdd5',
     marginHorizontal: 10,
   },
