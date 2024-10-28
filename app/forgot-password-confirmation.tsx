@@ -1,10 +1,10 @@
 // forgotpassword-confirmation.tsx
-// Reyna Aguirre and Maxwell Guillermo
+// Maxwell Guillermo
 
 // Forgot Password Confirmation
 
-  // START of Forgot Password Confirmation Code
-  // START of Maxwell Guillermo
+// START of Forgot Password Confirmation Code
+// START of Maxwell Guillermo
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
@@ -13,41 +13,49 @@ import { getFirestore, collection, query, where, getDocs, updateDoc, Timestamp }
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from "../firebaseConfig.js";
 
+// Main function that handles the password reset confirmation screen
 export default function ForgotPasswordConfirm() {
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [otpVerified, setOtpVerified] = useState(false);
-  const { email } = useLocalSearchParams();
-  const router = useRouter();
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const functions = getFunctions(app);
+  // Create variables to store user input and screen state
+  const [otp, setOtp] = useState('');              // Stores the one-time password code
+  const [newPassword, setNewPassword] = useState(''); // Stores the new password
+  const [confirmPassword, setConfirmPassword] = useState(''); // Stores the password confirmation
+  const [otpVerified, setOtpVerified] = useState(false); // Tracks if OTP is verified
+  const { email } = useLocalSearchParams();  // Gets the email from the URL parameters
+  const router = useRouter();  // Tool to navigate between screens
+  const auth = getAuth(app);   // Sets up authentication
+  const db = getFirestore(app); // Sets up database connection
+  const functions = getFunctions(app); // Sets up cloud functions
 
+  // Function that checks if the OTP code is valid
   const verifyOTP = async () => {
+    // Check if user actually entered an OTP
     if (!otp) {
       Alert.alert("Error", "Please enter the OTP from your email.");
       return;
     }
 
+    // Look in the database for a matching OTP code
     const q = query(
       collection(db, "password_resets"),
-      where("email", "==", email),
-      where("otp", "==", otp),
-      where("used", "==", false)
+      where("email", "==", email),    // Must match the email
+      where("otp", "==", otp),        // Must match the OTP code
+      where("used", "==", false)      // Must not be already used
     );
 
     const querySnapshot = await getDocs(q);
 
+    // If we found a matching OTP
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
       const data = doc.data();
 
+      // Check if the OTP has expired (15 minutes limit)
       const now = Timestamp.now();
-      const expirationTime = 15 * 60 * 1000; // 15 minutes
+      const expirationTime = 15 * 60 * 1000; // 15 minutes in milliseconds
       const isExpired = now.toMillis() - data.timestamp.toMillis() > expirationTime;
 
       if (!isExpired) {
+        // OTP is valid and not expired
         setOtpVerified(true);
         Alert.alert("Success", "OTP verified. Please enter your new password.");
       } else {
@@ -58,27 +66,33 @@ export default function ForgotPasswordConfirm() {
     }
   };
 
+  // Function that actually changes the password
   const resetPassword = async () => {
+    // Make sure the passwords match
     if (newPassword !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
 
+    // Make sure password is long enough
     if (newPassword.length < 6) {
       Alert.alert("Error", "Password should be at least 6 characters long.");
       return;
     }
 
     try {
+      // Call Firebase function to reset the password
       const resetPasswordFunc = httpsCallable(functions, 'resetPassword');
       const result = await resetPasswordFunc({ email, otp, newPassword });
       
+      // Show success message and go back to login screen
       Alert.alert(
         "Success", 
         "Your password has been reset successfully.",
         [{ text: "OK", onPress: () => router.replace("/login-signup") }]
       );
     } catch (error: any) {
+      // Handle any errors that occur during password reset
       console.error("Error resetting password:", error);
       if (error.code === 'not-found') {
         Alert.alert("Error", "No user found with this email address. Please check your email and try again.");
@@ -88,6 +102,7 @@ export default function ForgotPasswordConfirm() {
     }
   };
 
+  // The visual layout of the screen
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -255,5 +270,5 @@ const styles = StyleSheet.create({
   
 });
 
-  // END of Forgot Password Confirmation Code
-  // END of Maxwell Guillermo
+// END of Forgot Password Confirmation Code
+// END of Maxwell Guillermo

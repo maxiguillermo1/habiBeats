@@ -1,6 +1,8 @@
 // forgotpassword.tsx
-// Reyna Aguirre and Maxwell Guillermo
+// Maxwell Guillermo
 
+  // START of Forgot Password Code
+  // START of Maxwell Guillermo
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Keyboard, Image } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
@@ -11,54 +13,61 @@ import { getFirestore, collection, addDoc, Timestamp, query, where, getDocs, upd
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 
+// This is the main component for handling password reset functionality
 export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [step, setStep] = useState("email"); // "email" or "otp"
-  const [message, setMessage] = useState(""); // New state for the message
-  const [showMessage, setShowMessage] = useState(true); // New state to control message visibility
+  // These are like memory boxes that store different pieces of information we need
+  const [email, setEmail] = useState("");        // Stores the user's email address
+  const [otp, setOtp] = useState("");           // Stores the one-time password code user enters
+  const [newPassword, setNewPassword] = useState(""); // Stores the new password user wants to set
+  const [step, setStep] = useState("email");    // Keeps track of which screen we're on ("email" or "otp")
+  const [message, setMessage] = useState("");    // Stores messages we want to show to the user
+  const [showMessage, setShowMessage] = useState(true); // Controls whether to show or hide messages
+  
+  // This helps us navigate between different screens
   const router = useRouter();
+  // This is our connection to the database
   const db = getFirestore(app);
 
-  // START of Animation Code
-  // START of Reyna Aguirre Contribution
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(50);
-  const subtitleOpacity = useSharedValue(0);
-  const subtitleTranslateY = useSharedValue(50);
-  const backButtonOpacity = useSharedValue(0);
-  const backButtonTranslateY = useSharedValue(50);
-  const emailInputOpacity = useSharedValue(0);
-  const emailInputTranslateY = useSharedValue(50);
-  const resetButtonOpacity = useSharedValue(0);
-  const resetButtonTranslateY = useSharedValue(50);
-  const otpInputOpacity = useSharedValue(0);
-  const otpInputTranslateY = useSharedValue(50);
-  const newPasswordInputOpacity = useSharedValue(0);
-  const newPasswordInputTranslateY = useSharedValue(50);
-  const miniLogoOpacity = useSharedValue(0);
-  const miniLogoScale = useSharedValue(0.5);
+  // These special values control animations for different elements on screen
+  const titleOpacity = useSharedValue(0);       // Controls how visible the title is
+  const titleTranslateY = useSharedValue(50);   // Controls how far down the title starts
+  const subtitleOpacity = useSharedValue(0);    // Controls how visible the subtitle is
+  const subtitleTranslateY = useSharedValue(50);// Controls how far down the subtitle starts
+  const backButtonOpacity = useSharedValue(0);  // Controls how visible the back button is
+  const backButtonTranslateY = useSharedValue(50); // Controls how far down the back button starts
+  const emailInputOpacity = useSharedValue(0);  // Controls how visible the email input is
+  const emailInputTranslateY = useSharedValue(50); // Controls how far down the email input starts
+  const resetButtonOpacity = useSharedValue(0); // Controls how visible the reset button is
+  const resetButtonTranslateY = useSharedValue(50); // Controls how far down the reset button starts
+  const otpInputOpacity = useSharedValue(0);    // Controls how visible the OTP input is
+  const otpInputTranslateY = useSharedValue(50);// Controls how far down the OTP input starts
+  const newPasswordInputOpacity = useSharedValue(0); // Controls how visible the new password input is
+  const newPasswordInputTranslateY = useSharedValue(50); // Controls how far down the new password input starts
+  const miniLogoOpacity = useSharedValue(0);    // Controls how visible the mini logo is
+  const miniLogoScale = useSharedValue(0.5);    // Controls how big the mini logo starts
 
+  // This runs when the screen first loads to start all our animations
   useEffect(() => {
-    titleOpacity.value = withSpring(1);
-    titleTranslateY.value = withSpring(0);
-    subtitleOpacity.value = withDelay(150, withSpring(1));
-    subtitleTranslateY.value = withDelay(150, withSpring(0));
-    backButtonOpacity.value = withDelay(300, withSpring(1));
-    backButtonTranslateY.value = withDelay(300, withSpring(0));
-    emailInputOpacity.value = withDelay(450, withSpring(1));
-    emailInputTranslateY.value = withDelay(450, withSpring(0));
-    resetButtonOpacity.value = withDelay(600, withSpring(1));
-    resetButtonTranslateY.value = withDelay(600, withSpring(0));
-    otpInputOpacity.value = withDelay(450, withSpring(1));
-    otpInputTranslateY.value = withDelay(450, withSpring(0));
-    newPasswordInputOpacity.value = withDelay(600, withSpring(1));
-    newPasswordInputTranslateY.value = withDelay(600, withSpring(0));
-    miniLogoOpacity.value = withDelay(750, withSpring(1));
-    miniLogoScale.value = withDelay(750, withSpring(1));
+    // Each animation starts with a slight delay after the previous one
+    titleOpacity.value = withSpring(1);         // Fade in the title
+    titleTranslateY.value = withSpring(0);      // Move the title up
+    subtitleOpacity.value = withDelay(150, withSpring(1));     // Fade in subtitle after delay
+    subtitleTranslateY.value = withDelay(150, withSpring(0));  // Move subtitle up after delay
+    backButtonOpacity.value = withDelay(300, withSpring(1));   // Fade in back button
+    backButtonTranslateY.value = withDelay(300, withSpring(0)); // Move back button up
+    emailInputOpacity.value = withDelay(450, withSpring(1));   // Fade in email input
+    emailInputTranslateY.value = withDelay(450, withSpring(0)); // Move email input up
+    resetButtonOpacity.value = withDelay(600, withSpring(1));  // Fade in reset button
+    resetButtonTranslateY.value = withDelay(600, withSpring(0)); // Move reset button up
+    otpInputOpacity.value = withDelay(450, withSpring(1));     // Fade in OTP input
+    otpInputTranslateY.value = withDelay(450, withSpring(0));  // Move OTP input up
+    newPasswordInputOpacity.value = withDelay(600, withSpring(1)); // Fade in new password input
+    newPasswordInputTranslateY.value = withDelay(600, withSpring(0)); // Move new password input up
+    miniLogoOpacity.value = withDelay(750, withSpring(1));     // Fade in mini logo
+    miniLogoScale.value = withDelay(750, withSpring(1));       // Scale up mini logo
   }, []);
 
+  // These create the animation styles for each element
   const animatedTitleStyle = useAnimatedStyle(() => ({
     opacity: titleOpacity.value,
     transform: [{ translateY: titleTranslateY.value }],
@@ -98,20 +107,19 @@ export default function ForgotPassword() {
     opacity: miniLogoOpacity.value,
     transform: [{ scale: miniLogoScale.value }],
   }));
-  // END of Animation Code
-  // END of Reyna Aguirre Contribution
 
-  // START of Recovery Code Functions
-  // START of Maxwell Guillermo Contribution
+  // Creates a random 6-digit code for password reset
   const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+    return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
+  // This function handles sending the recovery code to the user's email
   const sendPasswordResetOTP = async (email: string) => {
-    const otpCode = generateOTP();
-    const timestamp = Timestamp.now();
+    const otpCode = generateOTP();              // Generate a new code
+    const timestamp = Timestamp.now();          // Record when this happened
 
     try {
+      // Save the recovery code information to our database
       await addDoc(collection(db, "password_resets"), {
         email: email,
         otp: otpCode,
@@ -119,28 +127,33 @@ export default function ForgotPassword() {
         used: false
       });
 
+      // Send the code to the user's email using a special function
       const functions = getFunctions(app);
       const sendOTPFunc = httpsCallable(functions, 'sendOTP');
       await sendOTPFunc({ email, otp: otpCode });
 
+      // Show success message and move to next screen
       setMessage(`Recovery code sent to ${email}.\n\nEnter code to reset password.`);
       setShowMessage(true);
       setStep("otp");
     } catch (error) {
+      // If something goes wrong, show an error message
       console.error("Error sending OTP:", error);
       setMessage("Failed to send OTP. Please try again.");
       setShowMessage(true);
     }
   };
 
+  // This function handles the initial step of sending the OTP
   const handleSendOTP = async () => {
+    // Check if email is provided
     if (!email) {
       setMessage("Please enter your email address.");
       setShowMessage(true);
       return;
     }
 
-    // Check if email is in firestore
+    // Check if the email exists in our database
     const usersCollection = collection(db, 'users');
     const q = query(usersCollection, where('email', '==', email));
     const querySnapshot = await getDocs(q);
@@ -150,9 +163,10 @@ export default function ForgotPassword() {
       return;
     }
 
+    // Hide the keyboard
+    Keyboard.dismiss();
 
-    Keyboard.dismiss();  // Dismiss the keyboard
-
+    // Try to send the OTP
     try {
       await sendPasswordResetOTP(email);
     } catch (error) {
@@ -162,20 +176,25 @@ export default function ForgotPassword() {
     }
   };
 
+  // This function verifies the OTP and sets the new password
   const verifyOTPAndResetPassword = async () => {
+    // Check if all required fields are filled
     if (!email || !otp || !newPassword) {
       setMessage("Please fill in all fields.");
       setShowMessage(true);
       return;
     }
 
-    Keyboard.dismiss();  // Dismiss the keyboard
+    // Hide the keyboard
+    Keyboard.dismiss();
 
     try {
+      // Call the password reset function
       const functions = getFunctions(app);
       const resetPasswordFunc = httpsCallable(functions, 'resetPassword');
       const result = await resetPasswordFunc({ email, otp, newPassword });
       
+      // Show success message and redirect to login
       setMessage("Your password has been reset successfully!");
       setShowMessage(true);
       setTimeout(() => router.replace("/login-signup"), 2000);
@@ -185,11 +204,8 @@ export default function ForgotPassword() {
       setShowMessage(true);
     }
   };
-  // END of Recovery Code Functions
-  // END of Maxwell Guillermo Contribution
 
-  // START of UI Render
-  // Reyna Aguirre and Maxwell Guillermo
+  // This is what shows up on the screen
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -285,7 +301,7 @@ export default function ForgotPassword() {
 // END of UI Render
 
 // START of Style Codes
-// Reyna Aguirre and Maxwell Guillermo
+// Maxwell Guillermo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -387,3 +403,8 @@ const styles = StyleSheet.create({
     height: 80,
   },
 });
+
+  
+
+// END of Forgot Password Code
+// END of Maxwell Guillermo
