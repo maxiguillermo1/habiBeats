@@ -1,13 +1,13 @@
 // profile.tsx
 // Mariann Grace Dizon
 
-// START of Profile component imports and type definitions
+// Import necessary modules and define types
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard, ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
 
@@ -35,10 +35,22 @@ interface Prompt {
   question: string;
   answer: string;
 }
-// END of Profile component imports and type definitions
+// End of imports and type definitions
 
-// START of Profile component definition and state initialization
+// Define Profile component and initialize state
+const gifImages: Record<string, any> = {
+  'pfpoverlay1.gif': require('../assets/animated-avatar/pfpoverlay1.gif'),
+  'pfpoverlay2.gif': require('../assets/animated-avatar/pfpoverlay2.gif'),
+  'pfpoverlay3.gif': require('../assets/animated-avatar/pfpoverlay3.gif'),
+  'pfpoverlay4.gif': require('../assets/animated-avatar/pfpoverlay4.gif'),
+  'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
+  'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
+};
+
 export default function Profile() {
+  // Define animatedBorder here
+  const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null); // Update the type
+
   const router = useRouter();
   const [user, setUser] = useState({
     name: 'Name not set',
@@ -55,9 +67,26 @@ export default function Profile() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
-// END of Profile component definition and state initialization
 
-// START of useEffect hooks for fetching user data and registering push notifications
+  // Define fetchAnimatedBorder function inside the Profile component
+  const fetchAnimatedBorder = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.AnimatedBorder && gifImages[userData.AnimatedBorder]) {
+            setAnimatedBorder(gifImages[userData.AnimatedBorder] as ImageSourcePropType); // Ensure correct type
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching animated border:', error);
+      }
+    }
+  };
+
+// Fetch user data and register push notifications
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -74,6 +103,9 @@ export default function Profile() {
               profileImageUrl: userData.profileImageUrl || '',
               gender: userData.gender || '',
             });
+
+            // Use fetchAnimatedBorder function
+            fetchAnimatedBorder();
 
             if (userData.tuneOfMonth) {
               try {
@@ -147,7 +179,7 @@ export default function Profile() {
       }
     });
   }, []);
-// END of useEffect hooks for fetching user data and registering push notifications
+// End of fetching user data and registering push notifications
 
   // Checks if there are any unread notifications
   const checkUnreadNotifications = useCallback(async () => {
@@ -180,7 +212,7 @@ export default function Profile() {
   }, [checkUnreadNotifications]);
 
 
-// START of helper functions for navigation and styling
+// Define helper functions for navigation and styling
   const handleSettingsPress = () => {
     router.push('/settings');
   };
@@ -210,9 +242,9 @@ export default function Profile() {
         return '#333';
     }
   };
-// END of helper functions for navigation and styling
+// End of helper functions for navigation and styling
 
-// START of Profile component render
+// Render Profile component
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -235,6 +267,12 @@ export default function Profile() {
             styles.profileImageContainer,
             { borderColor: getBorderColor(user.gender) }
           ]}>
+            {animatedBorder && (
+              <Image
+                source={animatedBorder}
+                style={styles.animatedBorder}
+              />
+            )}
             <Image
               source={{ uri: user.profileImageUrl }}
               style={styles.profilePicture}
@@ -347,9 +385,9 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
-// END of Profile component render
+// End of Profile component render
 
-// START of StyleSheet definition
+// Define StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -398,6 +436,8 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: '100%',
     height: '100%',
+    zIndex: 0, // Ensure profile picture is below the animated border
+    position: 'relative',
   },
   userInfo: {
     flex: 1,
@@ -536,5 +576,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: 'red',
+  },
+  animatedBorder: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+    zIndex: 1, // Ensure animated border is on top
   },
 });

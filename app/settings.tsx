@@ -91,6 +91,8 @@ const Settings = () => {
     }
   };
 
+  // START of Fetching Animated Border
+  // START of Mariann Grace Dizon Contribution
   const fetchAnimatedBorder = async () => {
     if (auth.currentUser) {
       try {
@@ -107,6 +109,9 @@ const Settings = () => {
       }
     }
   };
+  // END of Fetching Animated Border
+  // END of Mariann Grace Dizon Contribution
+
 
   useEffect(() => {
     fetchAnimatedBorder();
@@ -539,13 +544,14 @@ const Settings = () => {
     'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
     'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
   };
-  // END of Mariann Grace Dizon Contribution
-  // START of Maxwell Guillermo and Mariann Grace Dizon
-
+  
+  // START of Theme Toggle Function
   const handleThemeToggle = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
+  // END of Theme Toggle Function
 
+  // START of Save Border Change Function
   const handleSaveBorderChange = async () => {
     if (selectedGif && auth.currentUser) {
       try {
@@ -561,12 +567,17 @@ const Settings = () => {
       }
     }
   };
+  // END of Save Border Change Function
 
+  // START of Cancel Border Change Function
   const handleCancelBorderChange = () => {
     fetchAnimatedBorder();
     setIsEditingBorder(false);
   };
+  // END of Cancel Border Change Function
+  // END of Mariann Grace Dizon Contribution
 
+  // START of Maxwell Guillermo and Mariann Grace Dizon Contribution
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -1330,5 +1341,6 @@ const styles = StyleSheet.create({
     left: 0,
   },
 });
+// END of Maxwell Guillermo and Mariann Grace Dizon Contribution
 
 export default Settings;
