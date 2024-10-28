@@ -1,6 +1,5 @@
 // editprofile.tsx
-// Mariann Grace Dizon & Maxwell Guillermo
-
+// Mariann Grace Dizon 
 
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, Image, FlatList } from 'react-native';
@@ -230,14 +229,11 @@ export default function EditProfile() {
   // END of defining the EditProfile component
   // END of Mariann Grace Dizon Contribution 
 
-  // START of function to handle song selection
-  // START of Maxwell Guillermo Contribution
   const handleSelectSong = (song: Song) => {
     setTuneOfMonth(song);
     setHasChanges(true);
   };
-  // END of Maxwell Guillermo Contribution
-  // END of function to handle song selection
+
   // START of function to handle artist selection
   // START of Mariann Grace Dizon Contribution
   const handleSelectArtist = (artist: Artist) => {
