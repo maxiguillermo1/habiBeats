@@ -160,6 +160,8 @@ const Settings = () => {
   
   // New functions from profilesettings.tsx
 
+
+  // START of Jesus Donate Contribution
   const uploadImageToFirebase = async (uri: string) => {
     try {
       console.log("Starting image upload to Firebase");
@@ -181,6 +183,8 @@ const Settings = () => {
       throw error;
     }
   };
+  // END of Jesus Donate Contribution
+
 
   const handleImagePicker = async () => {
     try {
@@ -397,8 +401,21 @@ const Settings = () => {
     // Implement logic to edit display name
   };
 
+  const handleEditProfilePicture = () => {
+    // Implement logic to edit profile picture
+  };
+
+  const handleEditLocation = () => {
+    // Implement logic to edit location
+  };
+  
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
+
+  // START of Jesus Donate Contribution
   // Toggle last name visibility
-  // Jesus Donate
   const handlelastNameToggle = async (value: boolean) => {
     console.log('Show last name toggle value:', value);
     setLastNameVisible(value);
@@ -431,16 +448,8 @@ const Settings = () => {
     }
   };
 
-  const handleEditProfilePicture = () => {
-    // Implement logic to edit profile picture
-  };
-
-  const handleEditLocation = () => {
-    // Implement logic to edit location
-  };
 
   // Toggle location visibility
-  // Jesus Donate
   const handleShowLocationToggle = async (value: boolean) => {
     setLocationVisible(value);
 
@@ -469,11 +478,9 @@ const Settings = () => {
       }
     }
   };
+ 
+  
 
-  // Update this function
-  const handleBackPress = () => {
-    navigation.goBack();
-  };
 
   // Jesus Donate - Display Name is used for the user's display name
   const handleSaveNameChange = async () => {
@@ -501,6 +508,8 @@ const Settings = () => {
     console.log('Inside handleSaveNameChange:', lastName, lastName ? tempName : firstName);
   };
 
+
+
   const handleSaveLocationChange = async () => {
     if (tempLocation) {
       setLocation(locationVisible ? tempLocation : 'N/A');
@@ -521,6 +530,8 @@ const Settings = () => {
       }
     }
   };
+
+  // END of Jesus Donate Contribution
 
   const getBorderColor = (gender: string) => {
     console.log('Getting border color for gender:', gender);

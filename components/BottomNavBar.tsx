@@ -1,10 +1,10 @@
 // BottomNavBar.tsx
-// Maxwell Guillermo 
+// Jesus Donate Contribution
 
 // START of Bottom Navigation Bar UI/UX
-// START of Maxwell Guillermo Contribution
+// START of Jesus Donate Contribution
 
-import React from 'react';
+import React from 'react';  
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, usePathname, Href } from 'expo-router';
 
@@ -78,4 +78,4 @@ const styles = StyleSheet.create({
 export default BottomNavBar;
 
 // END of Bottom Navigation Bar UI/UX
-// END of Maxwell Guillermo Contribution
+// END of Jesus Donate Contribution
