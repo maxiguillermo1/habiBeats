@@ -1,8 +1,8 @@
 // match.tsx
-// Mariann Grace Dizon Reyna Aguirre and Maxwell Guillermo
+// Mariann Grace Dizon, Reyna Aguirre and Maxwell Guillermo
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,17 @@ import { app } from '../firebaseConfig';
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore"; // to store matches 
 
+// END of Mariann Grace Dizon Contribution
+// Define gifImages for animated borders
+const gifImages: Record<string, any> = {
+  'pfpoverlay1.gif': require('../assets/animated-avatar/pfpoverlay1.gif'),
+  'pfpoverlay2.gif': require('../assets/animated-avatar/pfpoverlay2.gif'),
+  'pfpoverlay3.gif': require('../assets/animated-avatar/pfpoverlay3.gif'),
+  'pfpoverlay4.gif': require('../assets/animated-avatar/pfpoverlay4.gif'),
+  'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
+  'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
+};
+// END of Mariann Grace Dizon Contribution
 
 // START of to updating matches hashmap for current user
 // Reyna Aguirre Contribution
@@ -62,7 +73,38 @@ const Match = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentUserImage, setCurrentUserImage] = useState<string | null>(null); // current user image
+  // END of Reyna Aguirre Contribution
 
+  // START of Mariann Grace Dizon Contribution
+  // Add a new state to store the animated border for user2
+  const [user2AnimatedBorder, setUser2AnimatedBorder] = useState<ImageSourcePropType | null>(null);
+
+  // Function to fetch the animated border for user2
+  const fetchUser2AnimatedBorder = async (user2Id: string) => {
+    try {
+      const db = getFirestore(app);
+      const user2DocRef = doc(db, 'users', user2Id);
+      const user2Doc = await getDoc(user2DocRef);
+      if (user2Doc.exists()) {
+        const user2Data = user2Doc.data();
+        if (user2Data.AnimatedBorder && gifImages[user2Data.AnimatedBorder]) {
+          setUser2AnimatedBorder(gifImages[user2Data.AnimatedBorder] as ImageSourcePropType);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user2 animated border:', error);
+    }
+  };
+
+  // Call fetchUser2AnimatedBorder when user2 is set
+  useEffect(() => {
+    if (user2) {
+      fetchUser2AnimatedBorder(user2.uid);
+    }
+  }, [user2]);
+  // END of Mariann Grace Dizon Contribution
+
+  // START of Reyna Aguirre Contribution
   useEffect(() => {
     const fetchUsers = async () => {
     
@@ -400,6 +442,12 @@ const Match = () => {
                 source={{ uri: user2.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
                 style={styles.profilePicture}
               />
+              {user2AnimatedBorder && (
+                <Image
+                  source={user2AnimatedBorder}
+                  style={styles.animatedBorder} // Apply the new animated border style
+                />
+              )}
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.name}>{user2.displayName}</Text>
@@ -750,6 +798,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 80,
     height: 80,
+    position: 'relative',
   },
   profilePicture: {
     width: '100%',
@@ -1039,6 +1088,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#fba904',
     marginTop: 20,
+  },
+  animatedBorder: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+    zIndex: 1, // Ensure it is on top of the profile picture
   },
 });
 

@@ -13,6 +13,7 @@ export interface User {
     profileImageUrl: string;
     age: number;
     gender: string;
+    AnimatedBorder: string;
     genderPreference: string;
     matchIntention: string;
     agePreference: { min: number, max: number } | undefined; // Make agePreference optional
