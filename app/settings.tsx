@@ -224,6 +224,8 @@ const Settings = () => {
     }
   };
 
+
+  // START of Maxwell Guillermo Contribution
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
   };
@@ -395,6 +397,7 @@ const Settings = () => {
       ]
     );
   };
+  // END of Maxwell Guillermo Contribution
 
   // Add these functions to your component
   const handleEditDisplayName = () => {
