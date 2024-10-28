@@ -32,6 +32,9 @@ const BottomNavBar = () => {
           styles.boldText
         ]}>Events</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigateTo('/ai-chatbot')}>
+        <Text style={[getNavItemStyle('/ai-chatbot'), styles.boldText]}>Habibi</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={() => navigateTo('/messages')}>
         <Text style={[getNavItemStyle('/messages'), styles.boldText]}>Messages</Text>
       </TouchableOpacity>
@@ -58,14 +61,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
   },
   navItem: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'black',
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   activeNavItem: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#37bdd5',
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   boldText: {
     fontWeight: 'bold',
