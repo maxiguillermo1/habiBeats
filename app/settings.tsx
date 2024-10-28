@@ -60,6 +60,9 @@ const Settings = () => {
   const router = useRouter();
 
   const [userGender, setUserGender] = useState('');
+  const [isEditingBorder, setIsEditingBorder] = useState(false);
+  const [selectedGif, setSelectedGif] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Add this line
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -505,6 +508,22 @@ const Settings = () => {
     }
   };
 
+  // START of Mariann Grace Dizon Contribution
+  // Import GIFs at the top of your file
+  const gifImages: Record<string, any> = {
+    'pfpoverlay1.gif': require('../assets/animated-avatar/pfpoverlay1.gif'),
+    'pfpoverlay2.gif': require('../assets/animated-avatar/pfpoverlay2.gif'),
+    'pfpoverlay3.gif': require('../assets/animated-avatar/pfpoverlay3.gif'),
+    'pfpoverlay4.gif': require('../assets/animated-avatar/pfpoverlay4.gif'),
+    'pfpoverlay5.gif': require('../assets/animated-avatar/pfpoverlay5.gif'),
+    'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
+  };
+  // END of Mariann Grace Dizon Contribution
+  // START of Maxwell Guillermo and Mariann Grace Dizon
+
+  const handleThemeToggle = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -556,6 +575,27 @@ const Settings = () => {
           <Text style={styles.settingTitle}>Change Location</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
+        <View style={styles.divider} />
+
+        <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingBorder(true)}>
+          <Text style={styles.settingTitle}>Change Border Animation</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
+        {/* Theme Toggle Section */}
+                <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.settingItem}>
+          <Text style={styles.settingTitle}>Theme Mode</Text>
+          <Text style={styles.settingDescription}>
+            Light or Dark Mode.
+          </Text>
+          <Switch value={theme === 'dark'} onValueChange={handleThemeToggle} />
+        </View>
         <View style={styles.divider} />
 
         {/* Rest of the settings sections */}
@@ -896,6 +936,40 @@ const Settings = () => {
         </View>
       </Modal>
 
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isEditingBorder}
+        onRequestClose={() => setIsEditingBorder(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select an Animated Border</Text>
+            <ScrollView horizontal>
+              {Object.keys(gifImages).map((gifFileName) => (
+                <TouchableOpacity key={gifFileName} onPress={() => setSelectedGif(gifFileName)}>
+                  <Image source={gifImages[gifFileName]} style={styles.gifThumbnail} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                if (selectedGif) {
+                  console.log('Selected GIF:', selectedGif);
+                  setIsEditingBorder(false);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => setIsEditingBorder(false)}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Location change modal */}
       <Modal
         animationType="slide"
@@ -1174,7 +1248,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  
+
+  gifThumbnail: {
+    width: 100,
+    height: 100,
+    margin: 5,
+  },
   
   customHeader: {
     flexDirection: 'row',
