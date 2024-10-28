@@ -577,7 +577,7 @@ const Settings = () => {
   // END of Cancel Border Change Function
   // END of Mariann Grace Dizon Contribution
 
-  // START of Maxwell Guillermo and Mariann Grace Dizon Contribution
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -692,7 +692,7 @@ const Settings = () => {
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('settings/current-liked-list' as never)}>
-          <Text style={styles.settingTitle}>Current Liked Profiles List</Text>
+          <Text style={styles.settingTitle}>Current Interactions List</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
@@ -1341,6 +1341,6 @@ const styles = StyleSheet.create({
     left: 0,
   },
 });
-// END of Maxwell Guillermo and Mariann Grace Dizon Contribution
+
 
 export default Settings;

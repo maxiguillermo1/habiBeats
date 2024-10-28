@@ -24,7 +24,7 @@ export interface User {
     longitude?: number; // optional if already geocoded
     favoritePerformance: string;
     matches?: {
-      [uid: string]: "liked" | "disliked" | "blocked";
+      [uid: string]: "liked" | "disliked" | "blocked" | "reported";
     };
     favoriteAlbum?: string; // JSON string containing album details
     favoriteArtists?: string; // JSON string containing an array of artist objects
@@ -196,7 +196,7 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
     // get list of already interacted UIDs 
     const interactedUIDs = new Set(
       Object.entries(user1.matches ?? {})
-        .filter(([_, status]) => status === "blocked" || status === "disliked" || status === "liked")
+        .filter(([_, status]) => status === "blocked" || status === "disliked" || status === "liked" || status === "reported")
         .map(([uid]) => uid)
     );
 
@@ -221,8 +221,8 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
 
         // Also check if user2 has blocked user1
         const user2Matches = user2.matches ?? {};
-        if (user2Matches[currentUser.uid] === "blocked") {
-          console.log(`User ${user2.displayName} has blocked current user`);
+        if (user2Matches[currentUser.uid] === "blocked" || user2Matches[currentUser.uid] === "reported") {
+          console.log(`User ${user2.displayName} has blocked or reported current user`);
           return null;
         }
 

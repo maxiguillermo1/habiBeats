@@ -127,6 +127,77 @@ const MatchesList: React.FC = () => {
     );
   };
 
+  const handleReportUser = (uid: string) => {
+    Alert.alert(
+      'Report User',
+      'select reason:',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Inappropriate Content',
+          onPress: () => submitReport(uid, 'inappropriate_content'),
+        },
+        {
+          text: 'Harassment',
+          onPress: () => submitReport(uid, 'harassment'),
+        },
+        {
+          text: 'Fake Profile',
+          onPress: () => submitReport(uid, 'fake_profile'),
+        },
+        {
+          text: 'Spam',
+          onPress: () => submitReport(uid, 'spam'),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  
+  const submitReport = async (uid: string, reason: string) => {
+    try {
+      const db = getFirestore(app);
+      const currentUserId = auth.currentUser?.uid;
+      if (!currentUserId) return;
+  
+      const userDocRef = doc(db, 'users', currentUserId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const matches = { ...userData.matches };
+        const reports = { ...userData.reports } || {};
+        
+        // Update the matches status to 'reported'
+        matches[uid] = 'reported';
+        
+        // Store the report details
+        reports[uid] = {
+          reason: reason,
+          timestamp: new Date().toISOString(),
+        };
+        
+        // Update the document with both matches and reports
+        await updateDoc(userDocRef, { 
+          matches,
+          reports,
+        });
+        
+        // Remove the reported user from the UI
+        setLikedMatches(prev => prev.filter(match => match.uid !== uid));
+        setDislikedMatches(prev => prev.filter(match => match.uid !== uid));
+        
+        Alert.alert('Success', 'user has been reported successfully');
+      }
+    } catch (error) {
+      console.error('Error reporting user:', error);
+      Alert.alert('Error', 'Failed to report user. Please try again.');
+    }
+  };
+
   const handleBackPress = () => {
     navigation.navigate('settings' as never);
   };
@@ -154,7 +225,10 @@ const MatchesList: React.FC = () => {
               <Image source={{ uri: item.profileImageUrl }} style={imageStyle} />
               <Text style={styles.displayName}>{item.displayName}</Text>
               <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
-                <Ionicons name="warning" size={20} color="rgba(222, 60, 60, 0.8)" />
+                <Ionicons name="remove-circle" size={23} color="rgba(222, 60, 60, 0.8)" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleReportUser(item.uid)} style={styles.blockIcon}>
+                <Ionicons name="warning" size={23} color="rgba(222, 60, 60, 0.8)" />
               </TouchableOpacity>
             </View>
           )}
@@ -262,7 +336,7 @@ const styles = StyleSheet.create({
     borderColor: '#de3c3c',
   },
   displayName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     flex: 1,
   },
