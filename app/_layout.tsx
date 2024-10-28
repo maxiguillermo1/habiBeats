@@ -46,6 +46,8 @@ export default function RootLayout() {
       <Stack.Screen name="events/event-details" options={{ headerShown: false }} />
       {/* Define the events myevents screen with no header */}
       <Stack.Screen name="events/myevents" options={{ headerShown: false }} />
+      {/* Define the current liked list screen with no header */}
+      <Stack.Screen name="settings/current-liked-list" options={{ headerShown: false }} />
     </Stack>
   );
 }

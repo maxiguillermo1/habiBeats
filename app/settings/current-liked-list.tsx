@@ -2,10 +2,18 @@
 // shows current matches while allowing users to block and report the users on this page
 // Reyna Aguirre
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Settings: undefined;
+};
+
+type LikedListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
 
 interface UserMatch {
   uid: string;
@@ -14,8 +22,10 @@ interface UserMatch {
 }
 
 const MatchesList: React.FC = () => {
+  const navigation = useNavigation<LikedListScreenNavigationProp>();
   const [likedMatches, setLikedMatches] = useState<UserMatch[]>([]);
   const [dislikedMatches, setDislikedMatches] = useState<UserMatch[]>([]);
+  const [activeTab, setActiveTab] = useState<'Liked' | 'Disliked'>('Liked');
   useEffect(() => {
     const fetchMatches = async () => {
       const db = getFirestore(app);
@@ -117,38 +127,65 @@ const MatchesList: React.FC = () => {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Current Liked Profiles</Text>
-      <FlatList
-        data={likedMatches}
-        keyExtractor={(item) => item.uid}
-        renderItem={({ item }) => (
-          <View style={styles.matchItem}>
-            <Image source={{ uri: item.profileImageUrl }} style={styles.profileLikedImage} />
-            <Text style={styles.displayName}>{item.displayName}</Text>
-            <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
-              <Ionicons name="warning" size={27} color="rgba(222, 60, 60, 0.8)" />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
+  const handleBackPress = () => {
+    navigation.navigate('settings' as never);
+  };
 
-      <Text style={styles.title}>Current Disliked Profiles</Text>
-      <FlatList
-        data={dislikedMatches}
-        keyExtractor={(item) => item.uid}
-        renderItem={({ item }) => (
-          <View style={styles.matchItem}>
-            <Image source={{ uri: item.profileImageUrl }} style={styles.profileDislikedImage} />
-            <Text style={styles.displayName}>{item.displayName}</Text>
-            <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
-              <Ionicons name="warning" size={27} color="rgba(222, 60, 60, 0.8)" />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-    </View>
+  const renderContent = () => {
+    const data = activeTab === 'Liked' ? likedMatches : dislikedMatches;
+    const imageStyle = activeTab === 'Liked' ? styles.profileLikedImage : styles.profileDislikedImage;
+    const emptyMessage = activeTab === 'Liked' ? 'No liked profiles!' : 'No disliked profiles!';
+
+    if (data.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.listContainer}>
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.uid}
+          renderItem={({ item }) => (
+            <View style={styles.matchItem}>
+              <Image source={{ uri: item.profileImageUrl }} style={imageStyle} />
+              <Text style={styles.displayName}>{item.displayName}</Text>
+              <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
+                <Ionicons name="warning" size={20} color="rgba(222, 60, 60, 0.8)" />
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleBackPress}>
+          <Ionicons name="chevron-back" size={20} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Interaction List</Text>
+        <View style={styles.headerRight} />
+      </View>
+
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity onPress={() => setActiveTab('Liked')}>
+          <Text style={activeTab === 'Liked' ? styles.activeTab : styles.inactiveTab}>Liked Profiles</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActiveTab('Disliked')}>
+          <Text style={activeTab === 'Disliked' ? styles.activeTab : styles.inactiveTab}>Disliked Profiles</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        {renderContent()}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -156,46 +193,97 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
-    padding: 20,
   },
-  title: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    color: '#7d7d7d',
-    marginBottom: 30,
-    alignSelf: 'center',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  headerRight: {
+    width: 20,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingVertical: 10,
+    marginBottom: 20,
+  },
+  activeTab: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#37bdd5',
+    borderBottomWidth: 2,
+    borderBottomColor: '#37bdd5',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 20,
+  },
+  inactiveTab: {
+    fontSize: 13,
+    color: '#888',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 20,
+  },
+  content: {
+    flexGrow: 1,
   },
   matchItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
+    padding: 7.5,
+    borderRadius: 8,
   },
   profileLikedImage: {
-    width: 75,
-    height: 75,
-    borderRadius: 100,
-    marginLeft: 20,
-    marginRight: 20,
-    borderWidth: 5,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    marginLeft: 8,
+    marginRight: 12,
+    borderWidth: 2,
     borderColor: '#79ce54',
   },
   profileDislikedImage: {
-    width: 75,
-    height: 75,
-    borderRadius: 100,
-    marginLeft: 20,
-    marginRight: 20,
-    borderWidth: 5,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    marginLeft: 8,
+    marginRight: 12,
+    borderWidth: 2,
     borderColor: '#de3c3c',
   },
   displayName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    flex: 1, // Takes up remaining space
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
   },
   blockIcon: {
-    marginRight: 15,
+    marginRight: 8,
+  },
+  listContainer: {
+    marginHorizontal: 50,
+    flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#888',
+    fontWeight: '500',
   },
 });
 
 export default MatchesList;
+
