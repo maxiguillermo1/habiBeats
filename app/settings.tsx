@@ -62,7 +62,7 @@ const Settings = () => {
   const [userGender, setUserGender] = useState('');
   const [isEditingBorder, setIsEditingBorder] = useState(false);
   const [selectedGif, setSelectedGif] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Add this line
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -90,6 +90,27 @@ const Settings = () => {
       }
     }
   };
+
+  const fetchAnimatedBorder = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.AnimatedBorder) {
+            setSelectedGif(userData.AnimatedBorder);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching animated border:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchAnimatedBorder();
+  }, []);
 
   // START of Reyna Aguirre Contribution
   const handleLogout = () => {
@@ -525,6 +546,27 @@ const Settings = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
+  const handleSaveBorderChange = async () => {
+    if (selectedGif && auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          AnimatedBorder: selectedGif
+        });
+        console.log('Animated border saved successfully:', selectedGif);
+        setIsEditingBorder(false);
+      } catch (error) {
+        console.error('Error saving animated border:', error);
+        Alert.alert('Error', 'Failed to save animated border. Please try again.');
+      }
+    }
+  };
+
+  const handleCancelBorderChange = () => {
+    fetchAnimatedBorder();
+    setIsEditingBorder(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -548,6 +590,12 @@ const Settings = () => {
               source={{ uri: profileImage || 'https://via.placeholder.com/150' }}
               style={styles.profilePicture}
             />
+            {selectedGif && (
+              <Image
+                source={gifImages[selectedGif]}
+                style={styles.overlayGif}
+              />
+            )}
           </View>
           <Text style={styles.nameInput}>{name}</Text>
           <Text style={styles.locationInput}>{location}</Text>
@@ -797,7 +845,7 @@ const Settings = () => {
               <Text style={styles.modalOptionText}>Change Password</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalOption} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalOptionText}>Cancel</Text>
+              <Text style={styles.modalOptionText}>Cancel</Text> 
             </TouchableOpacity>
           </View>
         </View>
@@ -954,16 +1002,11 @@ const Settings = () => {
             </ScrollView>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => {
-                if (selectedGif) {
-                  console.log('Selected GIF:', selectedGif);
-                  setIsEditingBorder(false);
-                }
-              }}
+              onPress={handleSaveBorderChange}
             >
               <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setIsEditingBorder(false)}>
+            <TouchableOpacity style={styles.button} onPress={handleCancelBorderChange}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -1133,6 +1176,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 125,
     height: 125,
+    position: 'relative', // Ensure the container is positioned relative
   },
   profilePicture: {
     width: '100%',
@@ -1277,6 +1321,13 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#ccc',
     marginTop: 10,
+  },
+  overlayGif: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    top: 0,
+    left: 0,
   },
 });
 
