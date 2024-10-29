@@ -4,47 +4,56 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { searchSpotifyArtists } from '../api/spotify-api'; // Import the centralized function
+import { searchSpotifyArtists } from '../api/spotify-api'; // Import the centralized function for searching artists
 
+// Define the Artist interface to type the artist data
 interface Artist {
   id: string;
   name: string;
   picture: string;
 }
 
+// Define the props for the SearchArtist component
 interface SpotifySearchProps {
-  onSelectArtist: (artist: Artist) => void;
-  onRemoveArtist: (artistId: string) => void;
-  selectedArtists: Artist[];
+  onSelectArtist: (artist: Artist) => void; // Callback function when an artist is selected
+  onRemoveArtist: (artistId: string) => void; // Callback function to remove an artist
+  selectedArtists: Artist[]; // List of currently selected artists
 }
 
 const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveArtist, selectedArtists }) => {
+  // State to manage the search query input by the user
   const [searchQuery, setSearchQuery] = useState('');
+  // State to store the search results from Spotify
   const [searchResults, setSearchResults] = useState<Artist[]>([]);
+  // State to control the visibility of the search modal
   const [modalVisible, setModalVisible] = useState(false);
 
+  // Function to handle the search operation
   const handleSearch = async () => {
-    if (searchQuery.trim() === '') return;
+    if (searchQuery.trim() === '') return; // Do nothing if the search query is empty
     try {
-      const artists = await searchSpotifyArtists(searchQuery);
-      setSearchResults(artists);
+      const artists = await searchSpotifyArtists(searchQuery); // Fetch artists from Spotify API
+      setSearchResults(artists); // Update the search results state
     } catch (error) {
-      console.error('Error searching Spotify artists:', error);
+      console.error('Error searching Spotify artists:', error); // Log any errors
     }
   };
 
+  // Function to handle the selection of an artist
   const handleSelectArtist = (artist: Artist) => {
-    onSelectArtist(artist);
-    setModalVisible(false);
+    onSelectArtist(artist); // Call the parent component's callback with the selected artist
+    setModalVisible(false); // Close the modal
   };
 
   return (
     <View style={styles.container}>
+      {/* Touchable area to open the search modal */}
       <TouchableOpacity style={styles.searchBox} onPress={() => setModalVisible(true)}>
         <Text style={styles.placeholderText}>Search for an artist</Text>
         <Ionicons name="search" size={24} color="#999" />
       </TouchableOpacity>
 
+      {/* List of selected artists */}
       <FlatList
         data={selectedArtists}
         keyExtractor={(item) => item.id}
@@ -59,6 +68,7 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
         )}
       />
 
+      {/* Modal to display the search input and results */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -67,6 +77,7 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            {/* Search input and button */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -78,6 +89,7 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
                 <Ionicons name="search" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
+            {/* List of search results */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
@@ -91,6 +103,7 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
                 </TouchableOpacity>
               )}
             />
+            {/* Button to close the modal */}
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -171,7 +184,7 @@ const styles = StyleSheet.create({
   artistName: {
     fontSize: 15,
     color: '#0e1514',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   closeButton: {
     backgroundColor: '#1DB954',

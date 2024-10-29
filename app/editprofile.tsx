@@ -17,8 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import SearchArtist from '../components/search-artist';
 
-// START of defining interfaces for Prompt, Song, Artist, and Album
-// START of Mariann Grace Dizon Contribution 
+// Define interfaces for data structures used in the component
 interface Prompt {
   question: string;
   answer: string;
@@ -43,14 +42,13 @@ interface Album {
   artist: string;
   albumArt: string;
 }
-// END of defining interfaces for Prompt, Song, Artist, and Album
-// END of Mariann Grace Dizon Contribution 
 
-// START of defining the EditProfile component
-// START of Mariann Grace Dizon Contribution 
+// Main component for editing user profile
 export default function EditProfile() {
   const router = useRouter();
   const navigation = useNavigation();
+
+  // State variables to manage user data and UI state
   const [user, setUser] = useState({
     favoritePerformance: '',
     listenTo: '',
@@ -70,7 +68,7 @@ export default function EditProfile() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
 
-  // Define promptOptions as an array of strings
+  // Predefined prompt options for user to select from
   const promptOptions = [
     "Are you more of a front row or back row person at concerts? Why?",
     "How do you prepare for an event? Any special gear or outfits?",
@@ -91,6 +89,7 @@ export default function EditProfile() {
     "What's your favorite post-event hangout spot or after-party?"
   ];
 
+  // Store initial values to detect changes
   const initialValues = useRef({
     tuneOfMonth: null as Song | null,
     favoritePerformance: '',
@@ -103,6 +102,7 @@ export default function EditProfile() {
     favoriteAfterPartySpot: '',
   });
 
+  // Fetch user data from Firebase on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -123,6 +123,7 @@ export default function EditProfile() {
             favoriteAfterPartySpot: userData.favoriteAfterPartySpot || '',
           });
 
+          // Parse and set tune of the month
           if (userData.tuneOfMonth) {
             try {
               const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
@@ -135,6 +136,7 @@ export default function EditProfile() {
             setTuneOfMonth(null);
           }
 
+          // Parse and set favorite album
           if (userData.favoriteAlbum) {
             try {
               const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
@@ -147,6 +149,7 @@ export default function EditProfile() {
             setFavoriteAlbum(null);
           }
 
+          // Parse and set favorite artists
           if (userData.favoriteArtists) {
             try {
               const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
@@ -159,6 +162,7 @@ export default function EditProfile() {
             setFavoriteArtists([]);
           }
 
+          // Set music preferences
           setMusicPreference(userData.musicPreference || []);
           
           // Fetch prompts from Firebase
@@ -173,12 +177,14 @@ export default function EditProfile() {
     fetchUserData();
   }, []);
 
+  // Handle saving changes to Firebase
   const handleSave = async () => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       const userDocRef = doc(db, 'users', currentUser.uid);
 
+      // Handle image upload if changed
       let imageUrl = user.favoritePerformance;
       if (image && image !== initialValues.current.favoritePerformance) {
         const imageRef = ref(storage, `userImages/${currentUser.uid}/${Date.now()}`);
@@ -196,6 +202,7 @@ export default function EditProfile() {
         return acc;
       }, {});
 
+      // Update user document in Firebase
       await updateDoc(userDocRef, {
         favoritePerformance: imageUrl,
         listenTo: user.listenTo,
@@ -222,47 +229,37 @@ export default function EditProfile() {
     }
   };
 
+  // Handle input changes and mark form as changed
   const handleInputChange = (field: string, value: string) => {
     setUser((prevUser) => ({ ...prevUser, [field]: value }));
     setHasChanges(true);
   };
-  // END of defining the EditProfile component
-  // END of Mariann Grace Dizon Contribution 
 
+  // Handle song selection
   const handleSelectSong = (song: Song) => {
     setTuneOfMonth(song);
     setHasChanges(true);
   };
 
-  // START of function to handle artist selection
-  // START of Mariann Grace Dizon Contribution
+  // Handle artist selection
   const handleSelectArtist = (artist: Artist) => {
     setFavoriteArtists((prevArtists) => [...prevArtists, artist]);
     setHasChanges(true);
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to handle artist selection
 
-  // START of function to handle artist removal
-  // START of Mariann Grace Dizon Contribution
+  // Handle artist removal
   const handleRemoveArtist = (artistId: string) => {
     setFavoriteArtists((prevArtists) => prevArtists.filter(artist => artist.id !== artistId));
     setHasChanges(true);
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to handle artist removal
 
-  // START of function to handle album selection
-  // START of Mariann Grace Dizon Contribution
+  // Handle album selection
   const handleSelectAlbum = (album: Album) => {
     setFavoriteAlbum(album);
     setHasChanges(true);
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to handle album selection
 
-  // START of function to toggle music preference
-  // START of Mariann Grace Dizon Contribution
+  // Toggle music preference selection
   const toggleMusicPreference = (genre: string) => {
     setMusicPreference((prevPreferences) => {
       if (prevPreferences.includes(genre)) {
@@ -273,11 +270,8 @@ export default function EditProfile() {
     });
     setHasChanges(true);
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to toggle music preference
 
-  // START of function to pick an image
-  // START of Mariann Grace Dizon Contribution
+  // Pick an image from the library
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -297,33 +291,24 @@ export default function EditProfile() {
       handleInputChange('favoritePerformance', result.assets[0].uri);
     }
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to pick an image
 
-  // START of function to handle prompt change
-  // START of Mariann Grace Dizon Contribution
+  // Handle prompt change
   const handlePromptChange = (index: number, field: 'question' | 'answer', value: string) => {
     const newPrompts = [...prompts];
     newPrompts[index][field] = value;
     setPrompts(newPrompts);
     setHasChanges(true);
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to handle prompt change
 
-  // START of function to add a prompt
-  // START of Mariann Grace Dizon Contribution
+  // Add a new prompt
   const handleAddPrompt = () => {
     if (prompts.length < 8) {
       setPrompts([...prompts, { question: '', answer: '' }]);
       setHasChanges(true);
     }
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to add a prompt
 
-  // START of function to remove a prompt
-  // START of Mariann Grace Dizon Contribution
+  // Remove a prompt
   const handleRemovePrompt = async (index: number) => {
     try {
       const removedPrompt = prompts[index];
@@ -345,18 +330,13 @@ export default function EditProfile() {
       Alert.alert('Error', 'Failed to remove prompt');
     }
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to remove a prompt
 
-  // START of function to handle back press
-  // START of Mariann Grace Dizon Contribution
+  // Handle back button press
   const handleBackPress = () => {
     router.back();
   };
-  // END of Mariann Grace Dizon Contribution
-  // END of function to handle back press
 
-  // START of Mariann Grace Dizon Contribution
+  // Render the component UI
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
@@ -486,6 +466,7 @@ export default function EditProfile() {
   );
 }
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -699,4 +680,3 @@ const styles = StyleSheet.create({
     color: '#542f11',
   },
 });
-// END of Mariann Grace Contribution

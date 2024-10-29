@@ -11,6 +11,7 @@ import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
 
+// Define interfaces for data structures
 interface Song {
   id: string;
   name: string;
@@ -48,10 +49,11 @@ const gifImages: Record<string, any> = {
 };
 
 export default function Profile() {
-  // Define animatedBorder here
-  const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null); // Update the type
+  // State for animated border image
+  const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null);
 
   const router = useRouter();
+  // State for user profile data
   const [user, setUser] = useState({
     name: 'Name not set',
     location: 'Location not set',
@@ -59,6 +61,7 @@ export default function Profile() {
     gender: '',
   });
 
+  // State for various user preferences and data
   const [tuneOfMonth, setTuneOfMonth] = useState<Song | null>(null);
   const [favoritePerformance, setFavoritePerformance] = useState('');
   const [favoriteAlbumData, setFavoriteAlbumData] = useState<Album | null>(null);
@@ -68,7 +71,7 @@ export default function Profile() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
 
-  // Define fetchAnimatedBorder function inside the Profile component
+  // Fetch animated border image based on user data
   const fetchAnimatedBorder = async () => {
     if (auth.currentUser) {
       try {
@@ -77,7 +80,7 @@ export default function Profile() {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.AnimatedBorder && gifImages[userData.AnimatedBorder]) {
-            setAnimatedBorder(gifImages[userData.AnimatedBorder] as ImageSourcePropType); // Ensure correct type
+            setAnimatedBorder(gifImages[userData.AnimatedBorder] as ImageSourcePropType);
           }
         }
       } catch (error) {
@@ -86,7 +89,7 @@ export default function Profile() {
     }
   };
 
-// Fetch user data and register push notifications
+  // Fetch user data and register push notifications
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -94,6 +97,7 @@ export default function Profile() {
         if (!currentUser) throw new Error('User not authenticated');
         const userDocRef = doc(db, 'users', currentUser.uid);
         
+        // Listen for real-time updates to user data
         const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
           if (docSnapshot.exists()) {
             const userData = docSnapshot.data();
@@ -104,9 +108,10 @@ export default function Profile() {
               gender: userData.gender || '',
             });
 
-            // Use fetchAnimatedBorder function
+            // Fetch animated border image
             fetchAnimatedBorder();
 
+            // Parse and set tune of the month
             if (userData.tuneOfMonth) {
               try {
                 const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
@@ -120,6 +125,7 @@ export default function Profile() {
               setTuneOfMonth(null);
             }
 
+            // Parse and set favorite album data
             if (userData.favoriteAlbum) {
               try {
                 const parsedFavoriteAlbum = JSON.parse(userData.favoriteAlbum);
@@ -132,6 +138,7 @@ export default function Profile() {
               setFavoriteAlbumData(null);
             }
 
+            // Parse and set favorite artists
             if (userData.favoriteArtists) {
               try {
                 const parsedFavoriteArtists = JSON.parse(userData.favoriteArtists);
@@ -144,10 +151,11 @@ export default function Profile() {
               setFavoriteArtists([]);
             }
 
+            // Set other user preferences
             setFavoritePerformance(userData.favoritePerformance || '');
             setMusicPreference(userData.musicPreference || []);
 
-            // Fetch prompts from Firebase
+            // Fetch and set prompts
             const fetchedPrompts = userData.prompts || {};
             const promptsArray = Object.entries(fetchedPrompts).map(([question, answer]) => ({
               question,
@@ -166,6 +174,7 @@ export default function Profile() {
     fetchUserData();
   }, []);
 
+  // Register for push notifications and update user document with token
   useEffect(() => {
     console.log("Registering for push notifications");
     registerForPushNotificationsAsync().then(token => {
@@ -197,7 +206,7 @@ export default function Profile() {
       // addNotification(auth.currentUser.uid, 'New message from John!')
     }
 
-    // Initial check
+    // Initial check for unread notifications
     checkUnreadNotifications();
 
     // Checks for unread notifications every 3 seconds
@@ -210,7 +219,6 @@ export default function Profile() {
       clearInterval(intervalId);
     };
   }, [checkUnreadNotifications]);
-
 
 // Define helper functions for navigation and styling
   const handleSettingsPress = () => {

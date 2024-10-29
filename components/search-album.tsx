@@ -4,8 +4,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { searchSpotifyAlbums } from '../api/spotify-api'; // Import the centralized function
+import { searchSpotifyAlbums } from '../api/spotify-api'; // Import function to search albums from Spotify API
 
+// Define the Album interface to type the album data
 interface Album {
   id: string;
   name: string;
@@ -13,37 +14,45 @@ interface Album {
   albumArt: string;
 }
 
+// Define the props for the SearchAlbum component
 interface SearchAlbumProps {
-  onSelectAlbum: (album: Album) => void;
+  onSelectAlbum: (album: Album) => void; // Callback function when an album is selected
 }
 
 const SearchAlbum: React.FC<SearchAlbumProps> = ({ onSelectAlbum }) => {
+  // State to manage the search query input by the user
   const [searchQuery, setSearchQuery] = useState('');
+  // State to store the search results from Spotify
   const [searchResults, setSearchResults] = useState<Album[]>([]);
+  // State to control the visibility of the search modal
   const [modalVisible, setModalVisible] = useState(false);
 
+  // Function to handle the search operation
   const handleSearch = async () => {
-    if (searchQuery.trim() === '') return;
+    if (searchQuery.trim() === '') return; // Do nothing if the search query is empty
     try {
-      const albums = await searchSpotifyAlbums(searchQuery);
-      setSearchResults(albums);
+      const albums = await searchSpotifyAlbums(searchQuery); // Fetch albums from Spotify API
+      setSearchResults(albums); // Update the search results state
     } catch (error) {
-      console.error('Error searching Spotify albums:', error);
+      console.error('Error searching Spotify albums:', error); // Log any errors
     }
   };
 
+  // Function to handle the selection of an album
   const handleSelectAlbum = (album: Album) => {
-    onSelectAlbum(album);
-    setModalVisible(false);
+    onSelectAlbum(album); // Call the parent component's callback with the selected album
+    setModalVisible(false); // Close the modal
   };
 
   return (
     <View style={styles.container}>
+      {/* Touchable area to open the search modal */}
       <TouchableOpacity style={styles.searchBox} onPress={() => setModalVisible(true)}>
         <Text style={styles.placeholderText}>Search for an album</Text>
         <Ionicons name="search" size={24} color="#999" />
       </TouchableOpacity>
 
+      {/* Modal to display the search input and results */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -52,6 +61,7 @@ const SearchAlbum: React.FC<SearchAlbumProps> = ({ onSelectAlbum }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            {/* Search input and button */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -63,6 +73,7 @@ const SearchAlbum: React.FC<SearchAlbumProps> = ({ onSelectAlbum }) => {
                 <Ionicons name="search" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
+            {/* List of search results */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
@@ -79,6 +90,7 @@ const SearchAlbum: React.FC<SearchAlbumProps> = ({ onSelectAlbum }) => {
                 </TouchableOpacity>
               )}
             />
+            {/* Button to close the modal */}
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>

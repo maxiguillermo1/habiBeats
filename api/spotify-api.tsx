@@ -2,10 +2,12 @@
 // Mariann Grace Dizon
 
 // Centralized Spotify API interactions
+// This module handles interactions with the Spotify API, including authentication and search functionalities.
 import axios, { AxiosError } from 'axios';
 import { encode } from 'base-64';
 
 // Spotify API credentials
+// These are the client ID and secret used for authenticating with the Spotify API.
 const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
 const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
 
@@ -13,6 +15,7 @@ let accessToken = '';
 let tokenExpirationTime = 0;
 
 // Function to obtain Spotify access token
+// Retrieves and caches the Spotify access token, refreshing it if expired.
 const getSpotifyAccessToken = async () => {
   const currentTime = Date.now();
   if (accessToken && tokenExpirationTime > currentTime) {
@@ -44,6 +47,7 @@ const getSpotifyAccessToken = async () => {
 };
 
 // Function to search for artists on Spotify
+// Searches for artists on Spotify using the provided query string.
 export const searchSpotifyArtists = async (query: string) => {
   try {
     const token = await getSpotifyAccessToken();
@@ -71,6 +75,7 @@ export const searchSpotifyArtists = async (query: string) => {
 };
 
 // Function to search for albums on Spotify
+// Searches for albums on Spotify using the provided query string.
 export const searchSpotifyAlbums = async (query: string) => {
   try {
     const token = await getSpotifyAccessToken();
@@ -99,6 +104,7 @@ export const searchSpotifyAlbums = async (query: string) => {
 };
 
 // Function to search for tracks on Spotify
+// Searches for tracks on Spotify using the provided query string.
 export const searchSpotifyTracks = async (query: string) => {
   try {
     const token = await getSpotifyAccessToken();
