@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingRight: 20,
-    paddingTop: 10,
+    paddingTop: 1,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 40,
     paddingRight: 30,
-    paddingTop: 20,
-    paddingBottom: 15,
+    paddingTop: 5,
+    paddingBottom: 13,
   },
   profileImageContainer: {
     borderWidth: 3,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: '100%',
     height: '100%',
-    zIndex: 0, // Ensure profile picture is below the animated border
+    zIndex: 0,
     position: 'relative',
   },
   userInfo: {
@@ -447,21 +447,21 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   location: {
-    fontSize: 13,
+    fontSize: 15,
     marginLeft: 4,
   },
   placeholderImage: {
     backgroundColor: '#f7e9da',
   },
   content: {
-    paddingTop: 20,
+    paddingTop: 10,
     paddingLeft: 30,
     paddingRight: 30,
   },

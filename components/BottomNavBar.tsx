@@ -61,14 +61,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
   },
   navItem: {
-    fontSize: 11,
+    fontSize: 14,
     color: 'black',
-    marginHorizontal: 10,
+    marginHorizontal: 12,
   },
   activeNavItem: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#37bdd5',
-    marginHorizontal: 10,
+    marginHorizontal: 12,
   },
   boldText: {
     fontWeight: 'bold',

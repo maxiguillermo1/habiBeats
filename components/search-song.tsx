@@ -1,18 +1,11 @@
 // search-song.tsx
 // Maxwell Guillermo
 
-// START of Search Song Component
-// START of Maxwell Guillermo Contribution  
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-import { encode } from 'base-64';
-
-const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
-const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
+import { searchSpotifyTracks } from '../api/spotify-api'; // Import the centralized function
 
 interface Song {
   id: string;
@@ -30,12 +23,7 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(initialSong || null);
-  const [accessToken, setAccessToken] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-
-  useEffect(() => {
-    getSpotifyAccessToken();
-  }, []);
 
   useEffect(() => {
     if (initialSong) {
@@ -43,42 +31,11 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
     }
   }, [initialSong]);
 
-  const getSpotifyAccessToken = async () => {
-    try {
-      const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
-      const response = await axios.post('https://accounts.spotify.com/api/token', 
-        'grant_type=client_credentials',
-        {
-          headers: {
-            'Authorization': `Basic ${authString}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-      setAccessToken(response.data.access_token);
-    } catch (error) {
-      console.error('Error getting Spotify access token:', error);
-    }
-  };
-
   const handleSearch = async () => {
-    if (searchQuery.trim() === '' || !accessToken) return;
+    if (searchQuery.trim() === '') return;
     setSearchResults([]); // Clear previous results
     try {
-      const response = await axios.get(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const tracks = response.data.tracks.items.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        artist: item.artists[0].name,
-        albumArt: item.album.images[0].url,
-      }));
+      const tracks = await searchSpotifyTracks(searchQuery);
       setSearchResults(tracks);
     } catch (error) {
       console.error('Error searching Spotify:', error);
@@ -268,6 +225,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-// END of Search Song Component
-// END of Maxwell Guillermo Contribution    

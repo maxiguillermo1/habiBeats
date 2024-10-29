@@ -1,19 +1,11 @@
 // SpotifyAlbumSearch.tsx
 // Mariann Grace Dizon
 
-// START of Spotify Album Search Component
-// START of Mariann Grace Dizon Contribution
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal, StyleSheet } from 'react-native';
-import axios from 'axios';
-import { encode } from 'base-64';
 import { Ionicons } from '@expo/vector-icons';
+import { searchSpotifyAlbums } from '../api/spotify-api'; // Import the centralized function
 
-// Spotify API credentials
-const CLIENT_ID = 'f947f2727da74807960190670ee93b6d';
-const CLIENT_SECRET = '3eab1b4a8c684c50b6cee76aa226ac5b';
-
-// Define the structure of an album object
 interface Album {
   id: string;
   name: string;
@@ -21,66 +13,25 @@ interface Album {
   albumArt: string;
 }
 
-// Props for the SpotifyAlbumSearch component
 interface SpotifyAlbumSearchProps {
   onSelectAlbum: (album: Album) => void;
 }
 
 const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }) => {
-  // State variables
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Album[]>([]);
-  const [accessToken, setAccessToken] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Function to obtain Spotify access token
-  const getSpotifyAccessToken = async () => {
-    const authString = encode(`${CLIENT_ID}:${CLIENT_SECRET}`);
-    const response = await axios.post('https://accounts.spotify.com/api/token', 
-      'grant_type=client_credentials',
-      {
-        headers: {
-          'Authorization': `Basic ${authString}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-    setAccessToken(response.data.access_token);
-  };
-
-  // Function to search for albums on Spotify
-  const searchSpotifyAlbums = async (query: string) => {
+  const handleSearch = async () => {
+    if (searchQuery.trim() === '') return;
     try {
-      if (!accessToken) await getSpotifyAccessToken();
-      const response = await axios.get(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
-      // Map the response data to our Album interface
-      const albums = response.data.albums.items.map((album: any) => ({
-        id: album.id,
-        name: album.name,
-        artist: album.artists[0].name,
-        albumArt: album.images[0]?.url || '',
-      }));
+      const albums = await searchSpotifyAlbums(searchQuery);
       setSearchResults(albums);
     } catch (error) {
       console.error('Error searching Spotify albums:', error);
-      // TODO: Handle the error appropriately, e.g., show an error message to the user
     }
   };
 
-  // Handler for search button press
-  const handleSearch = () => {
-    if (searchQuery.trim() === '') return;
-    searchSpotifyAlbums(searchQuery);
-  };
-
-  // Handler for selecting an album
   const handleSelectAlbum = (album: Album) => {
     onSelectAlbum(album);
     setModalVisible(false);
@@ -88,13 +39,11 @@ const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }
 
   return (
     <View style={styles.container}>
-      {/* Search box that opens the modal when pressed */}
       <TouchableOpacity style={styles.searchBox} onPress={() => setModalVisible(true)}>
         <Text style={styles.placeholderText}>Search for an album</Text>
         <Ionicons name="search" size={24} color="#999" />
       </TouchableOpacity>
 
-      {/* Modal for album search */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -103,7 +52,6 @@ const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* Search input and button */}
             <View style={styles.searchContainer}>
               <TextInput
                 style={styles.searchInput}
@@ -115,7 +63,6 @@ const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }
                 <Ionicons name="search" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
-            {/* List of search results */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
@@ -132,7 +79,6 @@ const SpotifyAlbumSearch: React.FC<SpotifyAlbumSearchProps> = ({ onSelectAlbum }
                 </TouchableOpacity>
               )}
             />
-            {/* Close button for the modal */}
             <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -230,6 +176,3 @@ const styles = StyleSheet.create({
 });
 
 export default SpotifyAlbumSearch;
-
-// END of Spotify Album Search Component
-// END of Mariann Grace Dizon Contribution
