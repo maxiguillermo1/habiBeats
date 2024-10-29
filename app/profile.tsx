@@ -198,13 +198,11 @@ export default function Profile() {
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(() => { 
     // Add sample notifications
-    if (auth.currentUser) {
-      // addNotification(auth.currentUser.uid, 'You have a new match!')
-      // addNotification(auth.currentUser.uid, 'Someone liked your profile!')
-      // addNotification(auth.currentUser.uid, 'New message from John!')
-    }
+    // addNotification(auth.currentUser!.uid, 'You have a new match!')
+    // addNotification(auth.currentUser!.uid, 'Someone liked your profile!')
+    // addNotification(auth.currentUser!.uid, 'New message from John!')
 
     // Initial check for unread notifications
     checkUnreadNotifications();
