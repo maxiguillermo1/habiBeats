@@ -9,13 +9,13 @@ import { doc, updateDoc, getDoc, deleteField } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import SearchSong from '../components/search-song';
-import SpotifySearch from '../components/SpotifySearch';
-import SpotifyAlbumSearch from '../components/SpotifyAlbumSearch';
+import SearchAlbum from '../components/search-album';
 import { Picker } from '@react-native-picker/picker';
 import { PromptSelector } from '../components/PromptSelector';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
+import SearchArtist from '../components/search-artist';
 
 // START of defining interfaces for Prompt, Song, Artist, and Album
 // START of Mariann Grace Dizon Contribution 
@@ -410,7 +410,7 @@ export default function EditProfile() {
               
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Favorite Artists</Text>
-                <SpotifySearch 
+                <SearchArtist 
                   onSelectArtist={handleSelectArtist} 
                   onRemoveArtist={handleRemoveArtist} 
                   selectedArtists={favoriteArtists}
@@ -419,7 +419,7 @@ export default function EditProfile() {
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Favorite Album</Text>
-                <SpotifyAlbumSearch onSelectAlbum={handleSelectAlbum} />
+                <SearchAlbum onSelectAlbum={handleSelectAlbum} />
                 {favoriteAlbum && (
                   <View style={styles.albumContainer}>
                     <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />

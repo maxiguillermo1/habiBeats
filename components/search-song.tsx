@@ -1,5 +1,5 @@
 // search-song.tsx
-// Maxwell Guillermo
+// Mariann Grace Dizon
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
@@ -141,10 +141,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   songName: {
-    fontSize: 12,
+    fontSize: 15,
+    color: '#0e1514',
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 2,
   },
   artistName: {
     fontSize: 14,
@@ -164,10 +163,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    backgroundColor: 'white',
-    marginTop: 50,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: '#fff8f0',
+    marginTop: 47,
+    marginLeft: 15,
+    marginRight: 15,
+    marginBottom: 25,
+    borderRadius: 30,
     padding: 20,
   },
   searchContainer: {
@@ -182,7 +183,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 15,
-    marginRight: 10,
+    marginRight: 20,
+    marginLeft: 10,
   },
   searchButton: {
     backgroundColor: '#1DB954',
@@ -193,8 +195,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    marginHorizontal: 15,
   },
   resultAlbumArt: {
     width: 60,
@@ -216,12 +220,15 @@ const styles = StyleSheet.create({
   closeButton: {
     backgroundColor: '#1DB954',
     borderRadius: 20,
-    padding: 10,
+    padding: 13,
     alignItems: 'center',
     marginTop: 20,
+    marginLeft: 50,
+    marginRight: 50,
   },
   closeButtonText: {
-    color: '#fff',
+    color: '#fff8f0',
     fontWeight: 'bold',
+    fontSize: 15,
   },
 });

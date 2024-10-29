@@ -1,4 +1,4 @@
-// SpotifySearch.tsx
+// search-artist.tsx
 // Mariann Grace Dizon
 
 import React, { useState } from 'react';
@@ -18,7 +18,7 @@ interface SpotifySearchProps {
   selectedArtists: Artist[];
 }
 
-const SpotifySearch: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveArtist, selectedArtists }) => {
+const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveArtist, selectedArtists }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Artist[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -126,10 +126,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    backgroundColor: 'white',
-    marginTop: 50,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: '#fff8f0',
+    marginTop: 47,
+    marginLeft: 15,
+    marginRight: 15,
+    marginBottom: 25,
+    borderRadius: 30,
     padding: 20,
   },
   searchContainer: {
@@ -144,7 +146,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 15,
-    marginRight: 10,
+    marginRight: 20,
+    marginLeft: 10,
   },
   searchButton: {
     backgroundColor: '#1DB954',
@@ -155,8 +158,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    marginHorizontal: 15,
   },
   artistImage: {
     width: 60,
@@ -164,20 +169,24 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   artistName: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#0e1514',
+    fontWeight: 'bold'
   },
   closeButton: {
     backgroundColor: '#1DB954',
     borderRadius: 20,
-    padding: 10,
+    padding: 13,
     alignItems: 'center',
     marginTop: 20,
+    marginLeft: 50,
+    marginRight: 50,
   },
   closeButtonText: {
-    color: '#fff',
+    color: '#fff8f0',
     fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 
-export default SpotifySearch;
+export default SearchArtist;
