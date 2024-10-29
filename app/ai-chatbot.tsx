@@ -1,8 +1,8 @@
 // ai-chatbot.tsx
 // Reyna Aguirre
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
@@ -90,6 +90,9 @@ const Chatbot = () => {
     const [userInput, setUserInput] = useState('');
     const [response, setResponse] = useState('');
 
+    // Add new state to track chat history
+    const [chatHistory, setChatHistory] = useState<{ input: string; response: string }[]>([]);
+
     const generateAIResponse = async (userInput: string) => {
         setIsLoading(true);
         let prompt = '';
@@ -97,19 +100,19 @@ const Chatbot = () => {
         // different prompts based on active button
         switch (activeButton) {
             case 'weather':
-                prompt = `As a weather expert for concert events, please provide a brief and friendly response about what the weather will be like for this event: ${userInput}. Include temperature expectations and any weather-related tips for concert-goers.`;
+                prompt = `Provide a very brief (2-3 sentences max) response about the weather for this event: ${userInput}. Include only temperature and essential weather tips.`;
                 break;
                 
             case 'planShirt':
-                prompt = `As a fashion expert for concert events, please suggest outfit ideas for this event: ${userInput}. Consider the artist's genre, typical fan fashion at their concerts, and provide 2-3 specific outfit suggestions. Keep the response concise and stylish.`;
+                prompt = `In 2-3 sentences max, suggest 1-2 outfit ideas for this event: ${userInput}. Be specific but concise.`;
                 break;
                 
             case 'planDay':
-                prompt = `As a concert planning expert, please provide a brief timeline and tips for this event: ${userInput}. Include when to arrive, what to do before the show, and any venue-specific advice. Keep the response focused on timing and practical tips.`;
+                prompt = `In 2-3 bullet points max, list the key timing and practical tips for this event: ${userInput}. Focus only on the most important details.`;
                 break;
                 
             default:
-                prompt = userInput;
+                prompt = `Please provide a brief response (2-3 sentences max) to: ${userInput}`;
         }
 
         try {
@@ -130,6 +133,8 @@ const Chatbot = () => {
             
             const generatedResponse = response.data.candidates[0].content.parts[0].text;
             setResponse(generatedResponse);
+            // Add to chat history
+            setChatHistory(prev => [...prev, { input: userInput, response: generatedResponse }]);
         } catch (error) {
             console.error('Error generating AI response:', error);
             setResponse('Sorry, I encountered an error. Please try again.');
@@ -140,82 +145,99 @@ const Chatbot = () => {
 
     const handleSend = () => {
         if (!userInput.trim()) {
-            return; // Don't send empty messages
+            return;
         }
 
         generateAIResponse(userInput);
-        setUserInput(''); // Clear input after sending
+        setUserInput('');
+        Keyboard.dismiss();
     };
 
-    
-  return (
-    <SafeAreaView style={styles.container}>
-    <Stack.Screen options={{ headerShown: false }} />
-    <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
+    // Add ref for ScrollView
+    const scrollViewRef = React.useRef<ScrollView>(null);
 
-    <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
-        {/* weather button */}
-        <TouchableOpacity 
-            onPress={handleWeatherButtonPressed}
-            style={styles.iconButton}
-            activeOpacity={1}
+    return (
+        <SafeAreaView style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
+
+        <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
+            {/* weather button */}
+            <TouchableOpacity 
+                onPress={handleWeatherButtonPressed}
+                style={styles.iconButton}
+                activeOpacity={1}
+            >
+                <Ionicons 
+                    name="sunny" 
+                    size={40} 
+                    color={activeButton === 'weather' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                />
+            </TouchableOpacity>
+
+            {/* plan my outfit button */}
+            <TouchableOpacity 
+                onPress={handlePlanMyOutfitButtonPressed}
+                style={styles.iconButton}
+                activeOpacity={1}
+            >
+                <Ionicons 
+                    name="shirt" 
+                    size={37} 
+                    color={activeButton === 'planShirt' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                />
+            </TouchableOpacity>
+
+            {/* plan my day button */}
+            <TouchableOpacity 
+                onPress={handlePlanMyDayButtonPressed}
+                style={styles.iconButton}
+                activeOpacity={1}
+            >
+                <Ionicons 
+                    name="stopwatch" 
+                    size={40} 
+                    color={activeButton === 'planDay' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                />
+            </TouchableOpacity>
+        </Animated.View>
+
+        {/* response container */}
+        <ScrollView 
+            ref={scrollViewRef}
+            style={styles.responseContainer}
+            onContentSizeChange={() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+            }}
         >
-            <Ionicons 
-                name="sunny" 
-                size={40} 
-                color={activeButton === 'weather' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
-            />
-        </TouchableOpacity>
+            {chatHistory.map((chat, index) => (
+                <View key={index} style={styles.responseBox}>
+                    <Text style={styles.inputLabel}>Input:</Text>
+                    <Text style={styles.inputText}>{chat.input}</Text>
+                    <Text style={styles.responseLabel}>Response:</Text>
+                    <Text style={styles.responseText}>{chat.response}</Text>
+                </View>
+            ))}
+        </ScrollView>
 
-        {/* plan my outfit button */}
-        <TouchableOpacity 
-            onPress={handlePlanMyOutfitButtonPressed}
-            style={styles.iconButton}
-            activeOpacity={1}
+        {/* user input container */}
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            style={styles.keyboardAvoidingView}
         >
-            <Ionicons 
-                name="shirt" 
-                size={37} 
-                color={activeButton === 'planShirt' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
-            />
-        </TouchableOpacity>
-
-        {/* plan my day button */}
-        <TouchableOpacity 
-            onPress={handlePlanMyDayButtonPressed}
-            style={styles.iconButton}
-            activeOpacity={1}
-        >
-            <Ionicons 
-                name="stopwatch" 
-                size={40} 
-                color={activeButton === 'planDay' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
-            />
-        </TouchableOpacity>
-    </Animated.View>
-
-    {/* response container */}
-    <ScrollView style={styles.responseContainer}>
-                {response && (
-                    <View style={styles.responseBox}>
-                        <Text style={styles.responseText}>{response}</Text>
-                    </View>
-                )}
-    </ScrollView>
-
-    {/* user input container */}
-    <View style={styles.inputContainer}>
+            <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
                     placeholder={getPlaceholderText()}
                     placeholderTextColor="#999"
                     value={userInput}
                     onChangeText={setUserInput}
-                    onSubmitEditing={() => handleSend()}
+                    onSubmitEditing={handleSend}
                 />
                 <TouchableOpacity 
                     style={styles.sendButton}
-                    onPress={() => handleSend()}
+                    onPress={handleSend}
                     disabled={isLoading}
                 >
                     {isLoading ? (
@@ -225,10 +247,11 @@ const Chatbot = () => {
                     )}
                 </TouchableOpacity>
             </View>
-    
-    <BottomNavBar />
-    </SafeAreaView>
-  );
+        </KeyboardAvoidingView>
+
+        <BottomNavBar />
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -254,7 +277,8 @@ const styles = StyleSheet.create({
   responseContainer: {
     flex: 1,
     paddingHorizontal: 15,
-    marginBottom: 10,
+    marginBottom: 140,
+    marginTop: 50,
 },
 responseBox: {
     backgroundColor: '#fff',
@@ -276,16 +300,12 @@ responseText: {
     lineHeight: 20,
 },
   inputContainer: {
-    position: 'absolute',
-    bottom: 110, 
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     paddingHorizontal: 15,
     paddingVertical: 10,
     backgroundColor: '#fff8f0',
     borderTopWidth: 1,
-    borderTopColor: '#fff8f0', // can be changed to #eee
+    borderTopColor: '#fff8f0',
 },
 input: {
     flex: 1,
@@ -300,6 +320,30 @@ sendButton: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 40,
+},
+  keyboardAvoidingView: {
+    position: 'absolute',
+    bottom: 110,
+    left: 0,
+    right: 0,
+},
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#37bdd5',
+    marginBottom: 5,
+},
+  inputText: {
+    fontSize: 14,
+    color: '#0e1514',
+    marginBottom: 10,
+    fontStyle: 'italic',
+},
+  responseLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#37bdd5',
+    marginBottom: 5,
 },
 });
 
