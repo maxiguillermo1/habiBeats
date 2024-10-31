@@ -91,7 +91,11 @@ const Chatbot = () => {
     const [response, setResponse] = useState('');
 
     // Add new state to track chat history
-    const [chatHistory, setChatHistory] = useState<{ input: string; response: string }[]>([]);
+    const [chatHistory, setChatHistory] = useState<{ 
+        input: string; 
+        response: string; 
+        buttonType: string | null;
+    }[]>([]);
 
     const generateAIResponse = async (userInput: string) => {
         setIsLoading(true);
@@ -133,8 +137,12 @@ const Chatbot = () => {
             
             const generatedResponse = response.data.candidates[0].content.parts[0].text;
             setResponse(generatedResponse);
-            // Add to chat history
-            setChatHistory(prev => [...prev, { input: userInput, response: generatedResponse }]);
+            // Add buttonType to chat history
+            setChatHistory(prev => [...prev, { 
+                input: userInput, 
+                response: generatedResponse,
+                buttonType: activeButton // This will be null for default prompts
+            }]);
         } catch (error) {
             console.error('Error generating AI response:', error);
             setResponse('Sorry, I encountered an error. Please try again.');
@@ -170,8 +178,8 @@ const Chatbot = () => {
             >
                 <Ionicons 
                     name="sunny" 
-                    size={40} 
-                    color={activeButton === 'weather' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                    size={30} 
+                    color={activeButton === 'weather' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
 
@@ -183,8 +191,8 @@ const Chatbot = () => {
             >
                 <Ionicons 
                     name="shirt" 
-                    size={37} 
-                    color={activeButton === 'planShirt' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                    size={27} 
+                    color={activeButton === 'planShirt' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
 
@@ -195,9 +203,9 @@ const Chatbot = () => {
                 activeOpacity={1}
             >
                 <Ionicons 
-                    name="stopwatch" 
-                    size={40} 
-                    color={activeButton === 'planDay' ? 'rgba(55,189,213,1)' : 'rgba(55,189,213,0.6)'}
+                    name="information-circle-outline" 
+                    size={30} 
+                    color={activeButton === 'planDay' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
         </Animated.View>
@@ -212,9 +220,24 @@ const Chatbot = () => {
         >
             {chatHistory.map((chat, index) => (
                 <View key={index} style={styles.responseBox}>
-                    <Text style={styles.inputLabel}>Input:</Text>
-                    <Text style={styles.inputText}>{chat.input}</Text>
-                    <Text style={styles.responseLabel}>Response:</Text>
+                    <View style={styles.responseHeader}>
+                        <View>
+                            <Text style={styles.inputLabel}>Input:</Text>
+                            <Text style={styles.inputText}>{chat.input}</Text>
+                            <Text style={styles.responseLabel}>Response:</Text>
+                        </View>
+                        {chat.buttonType && (
+                            <Ionicons 
+                                name={
+                                    chat.buttonType === 'weather' ? 'sunny' :
+                                    chat.buttonType === 'planShirt' ? 'shirt' :
+                                    chat.buttonType === 'planDay' ? 'information-circle-outline' : 'help-circle'
+                                }
+                                size={16}
+                                color="rgba(252,108,133, 0.6)"
+                            />
+                        )}
+                    </View>
                     <Text style={styles.responseText}>{chat.response}</Text>
                 </View>
             ))}
@@ -272,7 +295,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconButton: {
-    marginHorizontal: 30,
+    marginHorizontal: 40,
   },
   responseContainer: {
     flex: 1,
@@ -295,9 +318,10 @@ responseBox: {
     elevation: 2,
 },
 responseText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#0e1514',
     lineHeight: 20,
+    fontWeight: 'bold',
 },
   inputContainer: {
     flexDirection: 'row',
@@ -330,19 +354,27 @@ sendButton: {
   inputLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#37bdd5',
+    color: '#79ce54',
     marginBottom: 5,
 },
   inputText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#0e1514',
-    marginBottom: 10,
+    marginBottom: 20,
+    marginHorizontal: 10,
+    lineHeight: 18,
     fontStyle: 'italic',
 },
   responseLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#37bdd5',
+    color: '#79ce54',
+    marginBottom: 5,
+},
+  responseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 5,
 },
 });
