@@ -11,6 +11,7 @@ export type RootStackParamList = {
   profilesettings: undefined;
   editprofile: undefined;
   DirectMessage: { recipientId: string; recipientName: string };
+  GroupMessage: { groupId: string; groupName: string };
 };
 
 // Define the RootLayout component

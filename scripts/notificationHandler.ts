@@ -7,6 +7,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDoc
 // Define the type for the push token, which can be a string or undefined
 type PushToken = string | undefined;
 
+// Register for push notifications and get the push token
 export async function registerForPushNotificationsAsync(): Promise<PushToken> {
   let token: PushToken;
 
