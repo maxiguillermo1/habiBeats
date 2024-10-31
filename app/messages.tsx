@@ -1,14 +1,15 @@
 // messages.tsx
 // Jesus Donate and Maxwell Guillermo
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc, Timestamp, deleteDoc, updateDoc, deleteField } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { Menu, Provider } from 'react-native-paper';
 
 // Define structure for conversation data
 interface Conversation {
@@ -35,6 +36,32 @@ const Messages = () => {
   const [isLoadingMatches, setIsLoadingMatches] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [groupMenuVisible, setGroupMenuVisible] = useState(false);
+  const [groupConversations, setGroupConversations] = useState([]);
+
+  const params = useLocalSearchParams();
+
+  useEffect(() => {
+
+    // This if statement checks if we need to redirect to group-message after creating a group
+    if (params.redirectTo === 'group-message' && params.groupId && params.groupName) {
+      // Store the params we need
+      const groupId = params.groupId as string;
+      const groupName = params.groupName as string;
+      
+      // Clear the redirect params by pushing to messages without params
+      router.replace('/messages');
+      
+      // Then navigate to group-message
+      router.push({
+        pathname: '/group-message',
+        params: {
+          groupId,
+          groupName
+        }
+      });
+    }
+  }, [params]);
 
   // START of Jesus Donate Contributation
   // Fetch existing conversations from Firestore
@@ -163,7 +190,14 @@ const Messages = () => {
 
   // START of Jesus Donate Contributation
   // Calculate and return a human-readable time difference
-  const getTimeAgo = (date: Date) => {
+  const getTimeAgo = (timestamp: any) => {
+    if (!timestamp) return '';
+    
+    // Convert Firestore timestamp to Date if necessary
+    const date = timestamp instanceof Date ? timestamp : 
+                 timestamp.toDate ? timestamp.toDate() : 
+                 new Date(timestamp);
+
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     let interval = seconds / 31536000;
     if (interval > 1) return Math.floor(interval) + " years ago";
@@ -222,100 +256,241 @@ const Messages = () => {
   };
   // END of Jesus Donate Contributation
 
-  // START of Messages component rendering
-  // START of Maxwell Guillermo Contribution
-  return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-      {/* This is the scrollview that displays the conversations and new matches */}
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Messages</Text>
-          <TouchableOpacity 
-            style={styles.groupMessageButton}
-            onPress={() => router.push('/create-group')}
-          >
-            <Ionicons name="people" size={24} color="#fba904" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.title}>Recent Messages</Text>
-        {/* Displays the conversations */}
-        {isLoadingConversations ? (
-          <ActivityIndicator size="large" color="#fba904" />
-        ) : conversations.length > 0 ? (
-          // Maps the conversations to the messageItem style
-          conversations.map((conversation) => (
-            <TouchableOpacity 
-              key={conversation.recipientId} 
-              style={styles.messageItem}
-              onPress={() => navigateToDirectMessage(conversation.recipientId, conversation.friendName)}
-              onLongPress={() => handleLongPress(conversation)}
-            >
-              {/* Displays the profile image of the conversation partner */}
-              <Image 
-                source={{ uri: conversation.profileImageUrl }} 
-                style={styles.avatar} 
-              />
-              {/* Displays the name and last message of the conversation partner */}
-              <View style={styles.messageContent}>
-                <Text style={styles.name}>{conversation.friendName}</Text>
-                <Text style={styles.messageText} numberOfLines={1}>{conversation.lastMessage}</Text>
-              </View>
-              <Text style={styles.timeText}>{getTimeAgo(conversation.timestamp)}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={styles.noMessagesText}>No recent messages</Text>
-        )}
 
-        {/* Displays the new matches */}
-        <Text style={styles.title}>Send your first message!</Text>
-        {isLoadingMatches ? (
-          <ActivityIndicator size="large" color="#fba904" />
-        ) : newMatches.length > 0 ? (
-          newMatches.map((match) => (
-            <TouchableOpacity 
-              key={match.userId} 
-              style={styles.newMatchItem}
-              onPress={() => navigateToDirectMessage(match.userId, match.name)}
+  useEffect(() => {
+    if (!auth?.currentUser) return;
+
+    // Fetch group conversations
+    const fetchGroupConversations = async () => {
+      const userRef = doc(db, 'users', auth?.currentUser?.uid as string);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists() && userDoc.data().groupList) {
+        const groupPromises = userDoc.data().groupList.map(async (group: any) => {
+          const groupRef = doc(db, 'groups', group.groupId);
+          const groupDoc = await getDoc(groupRef);
+          
+          if (groupDoc.exists()) {
+            const groupData = groupDoc.data();
+            const lastMessage = groupData.messages?.[groupData.messages.length - 1];
+            
+            // Only return group if it has messages
+            if (lastMessage) {
+              return {
+                groupId: group.groupId,
+                groupName: group.groupName,
+                lastMessage: lastMessage.message,
+                timestamp: lastMessage.timestamp,
+                groupImage: groupData.groupImage || 'https://via.placeholder.com/50'
+              };
+            }
+          }
+          return null;
+        });
+
+        const groups = (await Promise.all(groupPromises)).filter(group => group !== null);
+        setGroupConversations(groups as any);
+      }
+    };
+
+    fetchGroupConversations();
+  }, []);
+
+  useEffect(() => {
+    if (!auth?.currentUser) return;
+
+    const pollMessages = setInterval(async () => {
+      // Fetch direct messages
+      const fetchConversations = async () => {
+        const userRef = doc(db, 'users', auth.currentUser!.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().conversationIds) {
+          // ... existing conversation fetching logic ...
+        }
+      };
+
+      // Fetch group messages
+      const fetchGroupConversations = async () => {
+        const userRef = doc(db, 'users', auth.currentUser!.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().groupList) {
+          const groupPromises = userDoc.data().groupList.map(async (group: any) => {
+            const groupRef = doc(db, 'groups', group.groupId);
+            const groupDoc = await getDoc(groupRef);
+            
+            if (groupDoc.exists()) {
+              const groupData = groupDoc.data();
+              const lastMessage = groupData.messages?.[groupData.messages.length - 1];
+              return {
+                groupId: group.groupId,
+                groupName: group.groupName,
+                lastMessage: lastMessage?.message || 'No messages yet',
+                timestamp: lastMessage?.timestamp || group.timestamp,
+                groupImage: groupData.groupImage || 'https://via.placeholder.com/50'
+              };
+            }
+            return null;
+          });
+
+          const groups = (await Promise.all(groupPromises)).filter(group => group !== null);
+          setGroupConversations(groups as any);
+        }
+      };
+
+      fetchConversations();
+      fetchGroupConversations();
+    }, 4000); // Poll every 4 seconds
+
+    return () => clearInterval(pollMessages);
+  }, []);
+
+  return (
+    <Provider>
+      <SafeAreaView style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {/* This is the scrollview that displays the conversations and new matches */}
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Messages</Text>
+            <Menu
+              visible={groupMenuVisible}
+              onDismiss={() => setGroupMenuVisible(false)}
+              anchor={
+                <TouchableOpacity 
+                  onPress={() => setGroupMenuVisible(true)}
+                >
+                  <Ionicons name="people" size={24} color="#fba904" />
+                </TouchableOpacity>
+              }
+              contentStyle={styles.menuContent}
             >
-              <Image source={{ uri: match.profileImageUrl }} style={styles.avatar} />
-              <Text style={styles.name}>{match.name}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={styles.noMatchesText}>No new matches</Text>
-        )}
-      </ScrollView>
-      <BottomNavBar />
-      <Modal
-        transparent={true}
-        visible={isDeleteModalVisible}
-        onRequestClose={() => setIsDeleteModalVisible(false)}
-      >
-        {/* Modal for deleting a conversation */}
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Delete Conversation</Text>
-            <Text style={styles.modalText}>Are you sure you want to delete this conversation?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsDeleteModalVisible(false)}
+              <Menu.Item 
+                onPress={() => {
+                  setGroupMenuVisible(false);
+                  router.push('/create-group');
+                }} 
+                title="Create Group" 
+                leadingIcon="account-group-outline"
+              />
+              <Menu.Item 
+                onPress={() => {
+                  setGroupMenuVisible(false);
+                  router.push('/view-groups');
+                }} 
+                title="View Groups" 
+                leadingIcon="format-list-bulleted"
+              />
+            </Menu>
+          </View>
+          <Text style={styles.title}>Recent Messages</Text>
+          {/* Displays the conversations */}
+          {isLoadingConversations ? (
+            <ActivityIndicator size="large" color="#fba904" />
+          ) : (
+            <>
+              {[...conversations, ...groupConversations]
+                .filter((conv: any) => {
+                  // For direct messages
+                  if (conv.recipientId) {
+                    return conv.lastMessage && conv.lastMessage.trim() !== '';
+                  }
+                  // For group messages
+                  return conv.lastMessage && conv.lastMessage !== 'No messages yet';
+                })
+                .sort((a: any, b: any) => {
+                  const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
+                  const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
+                  return timeB.getTime() - timeA.getTime();
+                })
+                .map((conv: any) => (
+                  <TouchableOpacity 
+                    key={conv.groupId || conv.recipientId} 
+                    style={styles.messageItem}
+                    onPress={() => {
+                      if (conv.groupId) {
+                        router.push({
+                          pathname: '/group-message',
+                          params: {
+                            groupId: conv.groupId,
+                            groupName: conv.groupName
+                          }
+                        });
+                      } else {
+                        navigateToDirectMessage(conv.recipientId, conv.friendName);
+                      }
+                    }}
+                  >
+                    <Image 
+                      source={{ 
+                        uri: conv.groupId ? conv.groupImage : conv.profileImageUrl || 'https://via.placeholder.com/50'
+                      }} 
+                      style={styles.avatar} 
+                    />
+                    <View style={styles.messageContent}>
+                      <Text style={styles.name}>{conv.groupName || conv.friendName}</Text>
+                      <Text style={styles.messageText} numberOfLines={1}>
+                        {conv.lastMessage}
+                      </Text>
+                    </View>
+                    <Text style={styles.timeText}>
+                      {getTimeAgo(conv.timestamp)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </>
+          )}
+
+          {/* Displays the new matches */}
+          <Text style={styles.title}>Send your first message!</Text>
+          {isLoadingMatches ? (
+            <ActivityIndicator size="large" color="#fba904" />
+          ) : newMatches.length > 0 ? (
+            newMatches.map((match) => (
+              <TouchableOpacity 
+                key={match.userId} 
+                style={styles.newMatchItem}
+                onPress={() => navigateToDirectMessage(match.userId, match.name)}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Image source={{ uri: match.profileImageUrl }} style={styles.avatar} />
+                <Text style={styles.name}>{match.name}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleDeleteConversation}
-              >
-                <Text style={styles.modalButtonText}>Delete</Text>
-              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noMatchesText}>No new matches</Text>
+          )}
+        </ScrollView>
+        <BottomNavBar />
+        <Modal
+          transparent={true}
+          visible={isDeleteModalVisible}
+          onRequestClose={() => setIsDeleteModalVisible(false)}
+        >
+          {/* Modal for deleting a conversation */}
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Delete Conversation</Text>
+              <Text style={styles.modalText}>Are you sure you want to delete this conversation?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setIsDeleteModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.deleteButton]}
+                  onPress={handleDeleteConversation}
+                >
+                  <Text style={styles.modalButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </Provider>
   );
 };
   // END of Messages component rendering
@@ -428,13 +603,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: 20,
-    padding: 10,
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  menuContent: {
+    backgroundColor: '#666',
+    marginTop: 35,
+    marginRight: 10,
   },
 });
 

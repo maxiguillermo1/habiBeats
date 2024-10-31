@@ -12,18 +12,22 @@ const BottomNavBar = () => {
   const router = useRouter();
   const currentPath = usePathname();
 
+  // Navigate to a specific route
   const navigateTo = (route: Href<string>) => {
     router.push(route);
   };
 
+  // Get the navigation item style based on the current path
   const getNavItemStyle = (path: string) => {
     return currentPath === path ? styles.activeNavItem : styles.navItem;
   };
 
+  // Check if the current path is an event page
   const isEventActive = () => {
     return ['/myevents', '/search', '/trending'].includes(currentPath);
   };
 
+  // Render the bottom navigation bar
   return (
     <View style={styles.bottomNav}>
       <TouchableOpacity onPress={() => navigateTo('/events/search')}>
