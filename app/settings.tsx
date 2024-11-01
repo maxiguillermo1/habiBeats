@@ -678,16 +678,6 @@ const Settings = () => {
         </View>
         <View style={styles.divider} />
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Pause</Text>
-            <Text style={styles.settingDescription}>
-              Pausing prevents your profile from being shown to new people. You can still chat with your current matches.
-            </Text>
-          </View>
-          <Switch />
-        </View>
-        <View style={styles.divider} />
 
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
@@ -768,6 +758,17 @@ const Settings = () => {
         </View>
         <View style={styles.divider} />
         
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('settings/pause-new-interaction' as never)}
+        >
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Pause Account</Text>
+            <Text style={styles.settingDescription}>Stop being shown to new people in the matching feature.</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
 
         <TouchableOpacity 
           style={styles.settingItem}
