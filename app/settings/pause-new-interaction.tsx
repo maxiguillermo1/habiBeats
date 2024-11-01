@@ -1,7 +1,7 @@
 import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 
 export default function PauseNewInteraction() {
   const [isPaused, setIsPaused] = useState(false);
@@ -43,32 +43,56 @@ export default function PauseNewInteraction() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentWrapper}>
-        <Text style={styles.title}>
-          Pause New Matches
-        </Text>
-        <Text style={styles.description}>
-          Would you like to temporarily pause being shown to other users?
-        </Text>
-        <View style={styles.statusWrapper}>
-          <Text style={styles.statusText}>Current status of account: </Text>
-          <Text style={styles.statusValue}>{isPaused ? 'Paused' : 'Active'}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentWrapper}>
+          <Text style={styles.title}>
+            Pause New Matches
+          </Text>
+          <Text style={styles.description}>
+            would you like to temporarily pause being shown to other users?
+          </Text>
+          <View style={styles.statusWrapper}>
+            <Text style={styles.statusText}>current status of account: </Text>
+            <Text style={[
+              styles.statusValue, 
+              { color: isPaused ? '#de3c3c' : '#79ce54' }
+            ]}>
+              {isPaused ? 'Paused' : 'Active'}
+            </Text>
+          </View>
+          <Text style={styles.subtitle}>paused example: </Text>
+          <Image 
+            source={require('../../assets/images/IMG_9331.jpg')} 
+            style={styles.statusImage}
+          />
+
+          <Text style={styles.subtitle}>active example: </Text>
+            <Image 
+                source={require('../../assets/images/IMG_9332.jpg')} 
+                style={styles.statusImage}
+            />
         </View>
+      </ScrollView>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          onPress={togglePauseStatus}
+          style={[
+            styles.button,
+            { backgroundColor: isPaused ? '#79ce54' : '#de3c3c' }
+          ]}
+        >
+          <Text style={styles.buttonText}>{isPaused ? 'Resume' : 'Pause'}</Text>
+        </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity
-        onPress={togglePauseStatus}
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>{isPaused ? 'Unpause' : 'Pause'}</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    flex: 1,
+    backgroundColor: '#fff8f0',
   },
   contentWrapper: {
     flexDirection: 'column',
@@ -76,33 +100,80 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    margin: 20,
+    color: '#0e1514',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginHorizontal: 20,
+    color: '#7d7d7d',
+    textAlign: 'left',
+    marginTop: 30,
   },
   description: {
-    color: '#4B5563',
+    fontSize: 14,
+    marginHorizontal: 20,
+    color: '#0e1514',
+    lineHeight: 20,
+    textAlign: 'center',
   },
   statusWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginHorizontal: 60,
+    marginTop: 40,
   },
   statusText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#0e1514',
+    textAlign: 'center',
   },
   statusValue: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '800',
     marginLeft: 4,
-  },
-  button: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#2563EB',
-    borderRadius: 6,
-    marginTop: 16,
-  },
-  buttonText: {
-    color: '#FFFFFF',
     textAlign: 'center',
   },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginHorizontal: 20,
+  },
+  buttonText: {
+    color: '#fff8f0',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 120, // Add padding to prevent content from being hidden behind button
+  },
+  statusImage: {
+    width: '80%',
+    height: 500,
+    alignSelf: 'center',
+    marginTop: 20,
+    resizeMode: 'contain',
+    borderWidth: 2,
+    borderColor: '#fc6c85',
+    borderRadius: 8,
+    marginHorizontal: 'auto',
+    padding: 40,
+
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff8f0',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+
+  }
 });

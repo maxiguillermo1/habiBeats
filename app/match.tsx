@@ -1,7 +1,7 @@
 // match.tsx
 // Mariann Grace Dizon, Reyna Aguirre and Maxwell Guillermo
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { getAuth } from 'firebase/auth';
 import { app } from '../firebaseConfig'; 
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore"; // to store matches 
+import { useFocusEffect } from '@react-navigation/native';
 
 // END of Mariann Grace Dizon Contribution
 // Define gifImages for animated borders
@@ -105,24 +106,38 @@ const Match = () => {
   // END of Mariann Grace Dizon Contribution
 
   // START of Reyna Aguirre Contribution
-  useEffect(() => {
-    const fetchUsers = async () => {
-    
-      // fetch current user (user1)
-      const auth = getAuth(app);
-      const currentUser = auth.currentUser;
-      setIsLoading(true);
+  const [isPaused, setIsPaused] = useState(false);
 
-      if (currentUser) {
-        // Fetch current user's profile image from Firestore
-        const db = getFirestore(app);
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
+  // Replace the useEffect with useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Match screen is focused - reloading data");
+      fetchUsers();
+    }, [])
+  );
+
+  // Move fetchUsers logic into separate function for reusability
+  const fetchUsers = async () => {
+    // fetch current user (user1)
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+    setIsLoading(true);
+
+    if (currentUser) {
+      // Fetch current user's profile image from Firestore
+      const db = getFirestore(app);
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as User;
+        setUser1(userData);
+        setCurrentUserImage(userData.profileImageUrl || null);
         
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data() as User;
-          setUser1(userData);
-          setCurrentUserImage(userData.profileImageUrl || null);
+        if (userData.paused) {
+          setIsPaused(true);
+          setIsLoading(false);
+          return; // Exit early if paused
         }
 
         const fetchedUsers = await fetchCompatibleUsers();
@@ -148,18 +163,22 @@ const Match = () => {
           })
         );
         const compatibleUsers = mutuallyCompatibleUsers.filter((user): user is User => user !== null);
-        setCompatibleUsers(compatibleUsers); // fetch compatible users using the algorithm
+        setCompatibleUsers(compatibleUsers);
 
         if (compatibleUsers.length > 0) {
           setUser2(compatibleUsers[0]);
-          setCurrentIndex(0);  // Start at the first user in compatibleUsers
+          setCurrentIndex(0);
           setNoMoreUsers(false);
         } else {
           setNoMoreUsers(true);
         }
       }
-      setIsLoading(false);
-    };
+    }
+    setIsLoading(false);
+  };
+
+  // Initial data load
+  useEffect(() => {
     fetchUsers();
   }, []);
   //  END of fetch two users from Firestore
@@ -415,362 +434,385 @@ const Match = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-
-      {/* reset button */}
-      { noMoreUsers && (
-        <View style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => {
-              console.log("Reset button pressed");
-              confirmResetMatches();
-            }}
-          >
-            <Ionicons name="refresh" size={40} color="#0e1514" />
-          </TouchableOpacity>
-        </View>
-      )}
       
-      <View style={styles.header}>
-        {user2 && (
-          <>
-            <View style={[
-              styles.profileImageContainer,
-              { borderColor: getBorderColor(user2.gender) }
-            ]}>
-              <Image
-                source={{ uri: user2.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
-                style={styles.profilePicture}
-              />
-              {user2AnimatedBorder && (
-                <Image
-                  source={user2AnimatedBorder}
-                  style={styles.animatedBorder} // Apply the new animated border style
-                />
-              )}
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.name}>{user2.displayName}</Text>
-              <View style={styles.locationContainer}>
-                <Ionicons name="location-outline" size={12} color={getTextColor(user2.gender)} />
-                <Text style={[styles.location, { color: getTextColor(user2.gender) }]}>{user2.location}</Text>
-              </View>
-            </View>
-          </>
-        )}
-        
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {isLoading ? (
-          <View style={styles.messageContainer}>
-            <Text style={styles.message}>loading users ...</Text>
+      {isPaused ? (
+        <View style={styles.pausedContainer}>
+          <View style={styles.pauseIconContainer}>
+          <Ionicons name="pause" size={50} color="#0e1514" />
           </View>
-        ) : user2 ? (
-          <View style={styles.content}>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Music Preference</Text>
-                <Text style={styles.inputText}>
-                  {Array.isArray(user2.musicPreference) 
-                    ? user2.musicPreference.join(', ') 
-                    : user2.musicPreference || 'No preferences set'}
-                </Text>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('musicPreference')}
-              >
-                <Ionicons 
-                  name={likedContent.has('musicPreference') ? "heart" : "heart-outline"} 
-                  size={18} // Reduced size from 24 to 18
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
+          <Text style={styles.pausedTitle}>new interactions are currently paused</Text>
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={() => router.push('/settings')}
+          >
+            <Text style={styles.settingsButtonText}>
+              click here to go to settings to resume interactions and see new matches 
+            </Text>
+          </TouchableOpacity>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Tune of the Month</Text>
-                {user2?.tuneOfMonth ? (
-                  (() => {
-                    try {
-                      const tuneData = JSON.parse(user2.tuneOfMonth);
-                      return (
-                        <View style={styles.songContainer}>
-                          {tuneData.albumArt && (
-                            <Image source={{ uri: tuneData.albumArt }} style={styles.albumArt} />
-                          )}
-                          <View style={styles.songInfo}>
-                            <Text style={styles.songTitle}>{tuneData.name || 'Unknown Title'}</Text>
-                            <Text style={styles.songArtist}>{tuneData.artist || 'Unknown Artist'}</Text>
-                          </View>
-                        </View>
-                      );
-                    } catch (error) {
-                      console.error('Error parsing tuneOfMonth:', error);
-                      return <Text style={styles.inputText}>{user2.tuneOfMonth}</Text>;
-                    }
-                  })()
-                ) : (
-                  <Text style={styles.inputText}>No tune of the month set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('tuneOfMonth')}
-              >
-                <Ionicons 
-                  name={likedContent.has('tuneOfMonth') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Artists</Text>
-                {user2?.favoriteArtists ? (
-                  (() => {
-                    try {
-                      const artistsData = JSON.parse(user2.favoriteArtists);
-                      return Array.isArray(artistsData) && artistsData.length > 0 ? (
-                        artistsData.map((artist) => (
-                          <View key={artist.id} style={styles.artistContainer}>
-                            {artist.picture && (
-                              <Image source={{ uri: artist.picture }} style={styles.artistImage} />
-                            )}
-                            <Text style={styles.artistName}>{artist.name || 'Unknown Artist'}</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={styles.inputText}>No favorite artists set</Text>
-                      );
-                    } catch (error) {
-                      console.error('Error parsing favoriteArtists:', error);
-                      return <Text style={styles.inputText}>{user2.favoriteArtists}</Text>;
-                    }
-                  })()
-                ) : (
-                  <Text style={styles.inputText}>No favorite artists set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('favoriteArtists')}
-              >
-                <Ionicons 
-                  name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
-
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Album</Text>
-                {user2?.favoriteAlbum ? (
-                  (() => {
-                    try {
-                      const albumData = JSON.parse(user2.favoriteAlbum);
-                      return (
-                        <View style={styles.albumContainer}>
-                          {albumData.albumArt && (
-                            <Image source={{ uri: albumData.albumArt }} style={styles.albumArt} />
-                          )}
-                          <View style={styles.albumInfo}>
-                            <Text style={styles.albumName}>{albumData.name || 'Unknown Album'}</Text>
-                            <Text style={styles.albumArtist}>{albumData.artist || 'Unknown Artist'}</Text>
-                          </View>
-                        </View>
-                      );
-                    } catch (error) {
-                      console.error('Error parsing favoriteAlbum:', error);
-                      return <Text style={styles.inputText}>{user2.favoriteAlbum}</Text>;
-                    }
-                  })()
-                ) : (
-                  <Text style={styles.inputText}>No favorite album set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('favoriteAlbum')}
-              >
-                <Ionicons 
-                  name={likedContent.has('favoriteAlbum') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
-
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Performance</Text>
-                {user2.favoritePerformance ? (
-                  <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
-                ) : (
-                  <Text style={styles.inputText}>No favorite performance set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('favoritePerformance')}
-              >
-                <Ionicons 
-                  name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Written Prompts</Text>
-                {user2.prompts && typeof user2.prompts === 'object' ? (
-                  Object.entries(user2.prompts).map(([promptTitle, response], index) => (
-                    <View key={index} style={styles.promptContainer}>
-                      <Text style={styles.promptQuestion}>{promptTitle}</Text>
-                      <Text style={styles.promptAnswer}>{response || 'No response provided'}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.inputText}>No prompts set</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                style={styles.contentLikeButton}
-                onPress={() => handleContentLike('prompts')}
-              >
-                <Ionicons 
-                  name={likedContent.has('prompts') ? "heart" : "heart-outline"} 
-                  size={18} 
-                  color="#fc6c85" 
-                />
-              </TouchableOpacity>
-            </View>
-
-            
-          </View>
-        ) : noMoreUsers ? (
-          <View style={styles.messageContainer}>
-            <Text style={styles.message}>no more matches for now !</Text>
-          </View>
-        ) : null}
-      </ScrollView>
-
-      {/* Action buttons (like and dislike) */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.dislikeButton]}
-          onPress={handleClosePress}
-        >
-          <Ionicons name="close" size={30} color={dislikeButtonColor} />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={handleHeartPress}
-        >
-          <Ionicons name="heart" size={26} color={likeButtonColor} />
-        </TouchableOpacity>
-      </View>
-      {/* END of Action buttons (like and dislike) */}
-
-      {/* START of Match modal */}
-      <Modal
-        transparent={true}
-        visible={showMatchModal}
-        onRequestClose={handleModalClose}
-      >
-        <Animated.View 
-          style={[
-            styles.modalContainer,
-            {
-              transform: [{ scale: scaleValue }],
-              backgroundColor: '#fff8f0',
-            }
-          ]}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
-                <Ionicons name="close" size={50} color="#1E1E1E" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.messageButton} 
+          <Text style={styles.pauseSettingsButtonText}>
+              you may need to refresh the page to see update
+            </Text>
+        </View>
+      ) : (
+        <>
+          {/* reset button */}
+          { noMoreUsers && (
+            <View style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+              <TouchableOpacity
+                style={styles.resetButton}
                 onPress={() => {
-                  setShowMatchModal(false);
-                  navigateToDirectMessage(user2?.uid || '', user2?.displayName || '');
+                  console.log("Reset button pressed");
+                  confirmResetMatches();
                 }}
               >
-                <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
+                <Ionicons name="refresh" size={40} color="#0e1514" />
               </TouchableOpacity>
             </View>
-            <View style={styles.modalBody}>
-              <Image
-                source={{ uri: currentUserImage || 'https://example.com/placeholder-profile.png' }}
-                style={styles.modalProfilePic}
-              />
-              <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
-              <Image
-                source={{ uri: user2?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
-                style={styles.modalProfilePic}
-              />
-            </View>
+          )}
+          
+          <View style={styles.header}>
+            {user2 && (
+              <>
+                <View style={[
+                  styles.profileImageContainer,
+                  { borderColor: getBorderColor(user2.gender) }
+                ]}>
+                  <Image
+                    source={{ uri: user2.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
+                    style={styles.profilePicture}
+                  />
+                  {user2AnimatedBorder && (
+                    <Image
+                      source={user2AnimatedBorder}
+                      style={styles.animatedBorder} // Apply the new animated border style
+                    />
+                  )}
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.name}>{user2.displayName}</Text>
+                  <View style={styles.locationContainer}>
+                    <Ionicons name="location-outline" size={12} color={getTextColor(user2.gender)} />
+                    <Text style={[styles.location, { color: getTextColor(user2.gender) }]}>{user2.location}</Text>
+                  </View>
+                </View>
+              </>
+            )}
+            
           </View>
-        </Animated.View>
-      </Modal>
-      {/* END of Match modal */}
 
-      {/* START of Waiting modal */}
-      <Modal
-        transparent={true}
-        visible={showWaitingModal}
-        onRequestClose={() => setShowWaitingModal(false)}
-      >
-        <Animated.View 
-          style={[
-            styles.waitingModalContainer,
-            {
-              transform: [{ scale: waitingModalScale }],
-              backgroundColor: '#fff8f0',
-            }
-          ]}
-        >
-          <Ionicons name="heart" size={100} color="#fc6c85" />
-          <Text style={styles.waitingText}>Waiting for a mutual like...</Text>
-        </Animated.View>
-      </Modal>
-      {/* END of Waiting modal */}
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {isLoading ? (
+              <View style={styles.messageContainer}>
+                <Text style={styles.message}>loading users ...</Text>
+              </View>
+            ) : user2 ? (
+              <View style={styles.content}>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Music Preference</Text>
+                    <Text style={styles.inputText}>
+                      {Array.isArray(user2.musicPreference) 
+                        ? user2.musicPreference.join(', ') 
+                        : user2.musicPreference || 'No preferences set'}
+                    </Text>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('musicPreference')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('musicPreference') ? "heart" : "heart-outline"} 
+                      size={18} // Reduced size from 24 to 18
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
 
-      {/* START of Dislike modal */}
-      <Modal
-        transparent={true}
-        visible={showDislikeModal}
-        onRequestClose={() => setShowDislikeModal(false)}
-      >
-        <Animated.View 
-          style={[
-            styles.dislikeModalContainer,
-            {
-              transform: [{ scale: dislikeModalScale }],
-              backgroundColor: '#fff8f0',
-            }
-          ]}
-        >
-          <Ionicons name="close" size={100} color="#de3c3c" />
-          <Text style={styles.dislikeText}>Moving to the next user...</Text>
-        </Animated.View>
-      </Modal>
-      {/* END of Dislike modal */}
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Tune of the Month</Text>
+                    {user2?.tuneOfMonth ? (
+                      (() => {
+                        try {
+                          const tuneData = JSON.parse(user2.tuneOfMonth);
+                          return (
+                            <View style={styles.songContainer}>
+                              {tuneData.albumArt && (
+                                <Image source={{ uri: tuneData.albumArt }} style={styles.albumArt} />
+                              )}
+                              <View style={styles.songInfo}>
+                                <Text style={styles.songTitle}>{tuneData.name || 'Unknown Title'}</Text>
+                                <Text style={styles.songArtist}>{tuneData.artist || 'Unknown Artist'}</Text>
+                              </View>
+                            </View>
+                          );
+                        } catch (error) {
+                          console.error('Error parsing tuneOfMonth:', error);
+                          return <Text style={styles.inputText}>{user2.tuneOfMonth}</Text>;
+                        }
+                      })()
+                    ) : (
+                      <Text style={styles.inputText}>No tune of the month set</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('tuneOfMonth')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('tuneOfMonth') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Favorite Artists</Text>
+                    {user2?.favoriteArtists ? (
+                      (() => {
+                        try {
+                          const artistsData = JSON.parse(user2.favoriteArtists);
+                          return Array.isArray(artistsData) && artistsData.length > 0 ? (
+                            artistsData.map((artist) => (
+                              <View key={artist.id} style={styles.artistContainer}>
+                                {artist.picture && (
+                                  <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                                )}
+                                <Text style={styles.artistName}>{artist.name || 'Unknown Artist'}</Text>
+                              </View>
+                            ))
+                          ) : (
+                            <Text style={styles.inputText}>No favorite artists set</Text>
+                          );
+                        } catch (error) {
+                          console.error('Error parsing favoriteArtists:', error);
+                          return <Text style={styles.inputText}>{user2.favoriteArtists}</Text>;
+                        }
+                      })()
+                    ) : (
+                      <Text style={styles.inputText}>No favorite artists set</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('favoriteArtists')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Favorite Album</Text>
+                    {user2?.favoriteAlbum ? (
+                      (() => {
+                        try {
+                          const albumData = JSON.parse(user2.favoriteAlbum);
+                          return (
+                            <View style={styles.albumContainer}>
+                              {albumData.albumArt && (
+                                <Image source={{ uri: albumData.albumArt }} style={styles.albumArt} />
+                              )}
+                              <View style={styles.albumInfo}>
+                                <Text style={styles.albumName}>{albumData.name || 'Unknown Album'}</Text>
+                                <Text style={styles.albumArtist}>{albumData.artist || 'Unknown Artist'}</Text>
+                              </View>
+                            </View>
+                          );
+                        } catch (error) {
+                          console.error('Error parsing favoriteAlbum:', error);
+                          return <Text style={styles.inputText}>{user2.favoriteAlbum}</Text>;
+                        }
+                      })()
+                    ) : (
+                      <Text style={styles.inputText}>No favorite album set</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('favoriteAlbum')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('favoriteAlbum') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Favorite Performance</Text>
+                    {user2.favoritePerformance ? (
+                      <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
+                    ) : (
+                      <Text style={styles.inputText}>No favorite performance set</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('favoritePerformance')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Written Prompts</Text>
+                    {user2.prompts && typeof user2.prompts === 'object' ? (
+                      Object.entries(user2.prompts).map(([promptTitle, response], index) => (
+                        <View key={index} style={styles.promptContainer}>
+                          <Text style={styles.promptQuestion}>{promptTitle}</Text>
+                          <Text style={styles.promptAnswer}>{response || 'No response provided'}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.inputText}>No prompts set</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('prompts')}
+                  >
+                    <Ionicons 
+                      name={likedContent.has('prompts') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                
+              </View>
+            ) : noMoreUsers ? (
+              <View style={styles.messageContainer}>
+                <Text style={styles.message}>no more matches for now !</Text>
+              </View>
+            ) : null}
+          </ScrollView>
+
+          {/* Action buttons (like and dislike) */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.dislikeButton]}
+              onPress={handleClosePress}
+            >
+              <Ionicons name="close" size={30} color={dislikeButtonColor} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.likeButton]}
+              onPress={handleHeartPress}
+            >
+              <Ionicons name="heart" size={26} color={likeButtonColor} />
+            </TouchableOpacity>
+          </View>
+          {/* END of Action buttons (like and dislike) */}
+
+          {/* START of Match modal */}
+          <Modal
+            transparent={true}
+            visible={showMatchModal}
+            onRequestClose={handleModalClose}
+          >
+            <Animated.View 
+              style={[
+                styles.modalContainer,
+                {
+                  transform: [{ scale: scaleValue }],
+                  backgroundColor: '#fff8f0',
+                }
+              ]}
+            >
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
+                    <Ionicons name="close" size={50} color="#1E1E1E" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.messageButton} 
+                    onPress={() => {
+                      setShowMatchModal(false);
+                      navigateToDirectMessage(user2?.uid || '', user2?.displayName || '');
+                    }}
+                  >
+                    <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.modalBody}>
+                  <Image
+                    source={{ uri: currentUserImage || 'https://example.com/placeholder-profile.png' }}
+                    style={styles.modalProfilePic}
+                  />
+                  <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
+                  <Image
+                    source={{ uri: user2?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
+                    style={styles.modalProfilePic}
+                  />
+                </View>
+              </View>
+            </Animated.View>
+          </Modal>
+          {/* END of Match modal */}
+
+          {/* START of Waiting modal */}
+          <Modal
+            transparent={true}
+            visible={showWaitingModal}
+            onRequestClose={() => setShowWaitingModal(false)}
+          >
+            <Animated.View 
+              style={[
+                styles.waitingModalContainer,
+                {
+                  transform: [{ scale: waitingModalScale }],
+                  backgroundColor: '#fff8f0',
+                }
+              ]}
+            >
+              <Ionicons name="heart" size={100} color="#fc6c85" />
+              <Text style={styles.waitingText}>Waiting for a mutual like...</Text>
+            </Animated.View>
+          </Modal>
+          {/* END of Waiting modal */}
+
+          {/* START of Dislike modal */}
+          <Modal
+            transparent={true}
+            visible={showDislikeModal}
+            onRequestClose={() => setShowDislikeModal(false)}
+          >
+            <Animated.View 
+              style={[
+                styles.dislikeModalContainer,
+                {
+                  transform: [{ scale: dislikeModalScale }],
+                  backgroundColor: '#fff8f0',
+                }
+              ]}
+            >
+              <Ionicons name="close" size={100} color="#de3c3c" />
+              <Text style={styles.dislikeText}>Moving to the next user...</Text>
+            </Animated.View>
+          </Modal>
+          {/* END of Dislike modal */}
+        </>
+      )}
 
       <BottomNavBar />
     </SafeAreaView>
@@ -1095,6 +1137,37 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 50,
     zIndex: 1, // Ensure it is on top of the profile picture
+  },
+  pausedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  pausedTitle: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 20,
+  },
+  settingsButton: {
+    padding: 15,
+  },
+  settingsButtonText: {
+    fontSize: 14,
+    color: '#79ce54',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  pauseSettingsButtonText: {
+    fontSize: 12,
+    color: '#7d7d7d',
+    textAlign: 'center',
+  },
+  pauseIconContainer: {
+    marginBottom: 30,
   },
 });
 

@@ -29,6 +29,7 @@ export interface User {
     favoriteAlbum?: string; // JSON string containing album details
     favoriteArtists?: string; // JSON string containing an array of artist objects
     prompts?: string[]; // Add this line to include the prompts property
+    paused?: boolean;  // for pausing account
   }
   // function structure for compatibility
   // 1. gender compatibility
@@ -185,9 +186,12 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
   const currentUser = auth.currentUser;
   if (!currentUser) throw new Error("No authenticated user found");
 
-  // query to get users from firestore aside from current user
+  // Only query for users that aren't the current user
   const usersRef = collection(db, "users");
-  const userQuery = query(usersRef, where("uid", "!=", currentUser.uid)); 
+  const userQuery = query(
+    usersRef, 
+    where("uid", "!=", currentUser.uid)
+  ); 
 
   try {
     const user1 = await getCurrentUserData(currentUser.uid);
@@ -200,36 +204,34 @@ export const fetchCompatibleUsers = async (): Promise<User[]> => {
         .map(([uid]) => uid)
     );
 
-    // query users that are not in the interactedUIDs set
+    // Query all users and filter paused users in memory
     const querySnapshot = await getDocs(userQuery);
     console.log("STARTING MATCHING QUERY")
     console.log("Fetched users:", querySnapshot.docs.map((doc) => doc.data().displayName));
-    /*console.log("Already interacted users:", Array.from(interactedUIDs).map(uid => {
-      const user = querySnapshot.docs.find(doc => doc.id === uid);
-      return user ? user.data().displayName : uid;
-    })); */
 
     const potentialMatches = await Promise.all(
-      querySnapshot.docs.map(async (doc) => {
-        const user2 = doc.data() as User;
+      querySnapshot.docs
+        .map(doc => doc.data() as User)
+        // Filter out paused users in memory
+        .filter(user => !user.paused)
+        .map(async (user2) => {
+          // skip users that are already interacted
+          if (interactedUIDs.has(user2.uid)) { 
+            console.log(`User ${user2.displayName} skipped (already interacted)`);
+            return null; 
+          }
 
-        // skip users that are already interacted
-        if (interactedUIDs.has(user2.uid)) { 
-          console.log(`User ${user2.displayName} skipped (already interacted)`);
-          return null; 
-        }
+          // Also check if user2 has blocked user1
+          const user2Matches = user2.matches ?? {};
+          if (user2Matches[currentUser.uid] === "blocked" || user2Matches[currentUser.uid] === "reported") {
+            console.log(`User ${user2.displayName} has blocked or reported current user`);
+            return null;
+          }
 
-        // Also check if user2 has blocked user1
-        const user2Matches = user2.matches ?? {};
-        if (user2Matches[currentUser.uid] === "blocked" || user2Matches[currentUser.uid] === "reported") {
-          console.log(`User ${user2.displayName} has blocked or reported current user`);
-          return null;
-        }
-
-        const isCompatible = await isMatch(user1, user2);
-        console.log(`Compatibility result for ${user1.displayName} and ${user2.displayName}: ${isCompatible}`);
-        return isCompatible ? user2 : null;
-      })
+          const isCompatible = await isMatch(user1, user2);
+          console.log(`Compatibility result for ${user1.displayName} and ${user2.displayName}: ${isCompatible}`);
+          return isCompatible ? user2 : null;
+        })
     );
 
     const compatibleUsers = potentialMatches.filter((user): user is User => user !== null);
