@@ -254,6 +254,9 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.cameraButton} onPress={() => router.push('/disposable-camera')}>
+          <Ionicons name="camera-outline" size={24} color="black" />
+        </TouchableOpacity>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
             <Ionicons name="create-outline" size={25} color="#333" />
@@ -589,5 +592,11 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 50,
     zIndex: 1, // Ensure animated border is on top
+  },
+  cameraButton: {
+    padding: 5,
+    position: 'absolute',
+    left: 20,
+    top: 10,
   },
 });
