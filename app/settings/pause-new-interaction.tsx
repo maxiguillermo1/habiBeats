@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
+    marginTop: 80,
     fontSize: 18,
     fontWeight: 'bold',
     margin: 20,
