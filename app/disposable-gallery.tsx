@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { storage } from '../firebaseConfig.js';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 // Match the type definition with the camera component
 type RootStackParamList = {
@@ -23,6 +24,7 @@ export default function DisposableGallery() {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   useEffect(() => {
     const loadPhotos = async () => {
@@ -72,21 +74,53 @@ export default function DisposableGallery() {
   }, []);
 
   const renderPhoto = ({ item }: { item: PhotoItem }) => (
-    <View style={styles.photoContainer}>
+    <TouchableOpacity 
+      style={styles.photoContainer}
+      onPress={() => setSelectedPhoto(item)}
+    >
       <Image
         source={{ uri: item.url }}
         style={styles.photo}
         onLoadStart={() => {/* Optional: handle load start */}}
         onLoadEnd={() => {/* Optional: handle load end */}}
       />
-    </View>
+    </TouchableOpacity>
   );
+
+  const handleDelete = async (photo: PhotoItem) => {
+    try {
+      const userId = getAuth().currentUser?.uid;
+      if (!userId) throw new Error('User not authenticated');
+
+      // Create reference to the file in Firebase Storage
+      const photoRef = ref(storage, `disposableImages/${userId}/${photo.timestamp}.jpg`);
+      
+      // Delete from Firebase Storage
+      await deleteObject(photoRef);
+
+      // Update local state
+      setPhotos(prevPhotos => prevPhotos.filter(p => p.timestamp !== photo.timestamp));
+      
+      // Close modal
+      setSelectedPhoto(null);
+
+      // Update AsyncStorage
+      const updatedPhotos = photos.filter(p => p.timestamp !== photo.timestamp);
+      await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(updatedPhotos));
+    } catch (err) {
+      console.error('Error deleting photo:', err);
+      Alert.alert('Error', 'Failed to delete photo');
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('disposable-camera')}>
-          <Text style={styles.backButtonText}>Back</Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.navigate('disposable-camera')}
+        >
+          <Ionicons name="chevron-back-outline" size={24} color="#fba904" />
         </TouchableOpacity>
         <Text style={styles.headerText}>My Disposables</Text>
       </View>
@@ -107,6 +141,35 @@ export default function DisposableGallery() {
           numColumns={3}
         />
       )}
+
+      <Modal
+        visible={selectedPhoto !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedPhoto(null)}
+      >
+        <TouchableOpacity 
+          style={styles.modalContainer}
+          activeOpacity={1}
+          onPress={() => setSelectedPhoto(null)}
+        >
+          {selectedPhoto && (
+            <>
+              <TouchableOpacity 
+                style={styles.deleteButton}
+                onPress={() => handleDelete(selectedPhoto)}
+              >
+                <Ionicons name="trash-outline" size={24} color="#fba904" />
+              </TouchableOpacity>
+              <Image
+                source={{ uri: selectedPhoto.url }}
+                style={styles.fullScreenPhoto}
+                resizeMode="contain"
+              />
+            </>
+          )}
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -122,15 +185,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0e1514',
+    backgroundColor: '#fff8f0',
     paddingTop: 60,
     paddingBottom: 10,
     paddingHorizontal: 10,
+    justifyContent: 'center',
+    position: 'relative',
   },
-  backButtonText: {
-    color: '#fba904',
-    fontSize: 16,
-    marginRight: 10,
+  backButton: {
+    padding: 10,
+    marginRight: 5,
+    position: 'absolute',
+    left: 0,
+    zIndex: 1,
+    top: 50,
   },
   headerText: {
     color: '#fba904',
@@ -168,5 +236,24 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#0e1514',
     fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenPhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 2,
+    padding: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
   },
 });
