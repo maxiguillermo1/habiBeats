@@ -131,34 +131,40 @@ export const searchSpotifyTracks = async (query: string) => {
     throw error;
   }
 };
-
+// Function to get Spotify recommendations based on seed artists and tracks
+// Takes in arrays of artist IDs and track IDs, and returns a list of recommended tracks
 export const getSpotifyRecommendations = async (artistIds: string[], trackIds: string[]) => {
   try {
+    // Get the Spotify access token
     const token = await getSpotifyAccessToken();
+    
+    // Make a GET request to the Spotify recommendations endpoint
     const response = await axios.get(
       'https://api.spotify.com/v1/recommendations',
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Set the authorization header with the access token
         },
         params: {
-          seed_artists: artistIds.slice(0, 2).join(','), // Spotify allows max 5 seed values total
-          seed_tracks: trackIds.slice(0, 2).join(','),
-          limit: 10
+          seed_artists: artistIds.slice(0, 2).join(','), // Use up to 2 seed artist IDs
+          seed_tracks: trackIds.slice(0, 2).join(','), // Use up to 2 seed track IDs
+          limit: 10 // Limit the number of recommendations to 10
         }
       }
     );
 
+    // Map the response data to extract relevant track information
     return response.data.tracks.map((track: any) => ({
-      id: track.id,
-      name: track.name,
+      id: track.id, // Track ID
+      name: track.name, // Track name
       artists: track.artists.map((artist: any) => ({
-        id: artist.id,
-        name: artist.name
+        id: artist.id, // Artist ID
+        name: artist.name // Artist name
       })),
-      albumArt: track.album.images[0]?.url || '', // Ensure safe access to the first image
+      albumArt: track.album.images[0]?.url || '', // Album art URL (if available)
     }));
   } catch (error) {
+    // Handle errors
     if (error instanceof AxiosError) {
       console.error('Error getting Spotify recommendations:', error.response?.data || error.message);
     } else {
@@ -168,25 +174,32 @@ export const getSpotifyRecommendations = async (artistIds: string[], trackIds: s
   }
 };
 
+// Function to get related artists for a given artist on Spotify
+// Takes in an artist ID and returns a list of related artists
 export const getSpotifyRelatedArtists = async (artistId: string) => {
   try {
+    // Get the Spotify access token
     const token = await getSpotifyAccessToken();
+    
+    // Make a GET request to the Spotify related artists endpoint
     const response = await axios.get(
       `https://api.spotify.com/v1/artists/${artistId}/related-artists`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Set the authorization header with the access token
         }
       }
     );
 
+    // Map the response data to extract relevant artist information
     return response.data.artists.map((artist: any) => ({
-      id: artist.id,
-      name: artist.name,
-      popularity: artist.popularity,
-      imageUrl: artist.images[0]?.url || '', // Extract the first image URL
-    })).slice(0, 10); // Limit to 10 related artists
+      id: artist.id, // Artist ID
+      name: artist.name, // Artist name
+      popularity: artist.popularity, // Artist popularity
+      imageUrl: artist.images[0]?.url || '', // Artist image URL (if available)
+    })).slice(0, 10); // Limit the number of related artists to 10
   } catch (error) {
+    // Handle errors
     if (error instanceof AxiosError) {
       console.error('Error getting related artists:', error.response?.data || error.message);
     } else {
