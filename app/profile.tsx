@@ -36,6 +36,11 @@ interface Prompt {
   question: string;
   answer: string;
 }
+
+interface DisposablePhoto {
+  url: string;
+  timestamp: number;
+}
 // End of imports and type definitions
 
 // Define Profile component and initialize state
@@ -59,6 +64,7 @@ export default function Profile() {
     location: 'Location not set',
     profileImageUrl: '',
     gender: '',
+    myDisposables: '',
   });
 
   // State for various user preferences and data
@@ -70,6 +76,7 @@ export default function Profile() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [selectedDisposable, setSelectedDisposable] = useState<DisposablePhoto | null>(null);
 
   // Fetch animated border image based on user data
   const fetchAnimatedBorder = async () => {
@@ -106,6 +113,7 @@ export default function Profile() {
               location: userData.displayLocation || 'Location not set',
               profileImageUrl: userData.profileImageUrl || '',
               gender: userData.gender || '',
+              myDisposables: userData.myDisposables || '',
             });
 
             // Fetch animated border image
@@ -162,6 +170,12 @@ export default function Profile() {
               answer: answer as string
             }));
             setPrompts(promptsArray);
+
+            if (userData.myDisposables) {
+              setSelectedDisposable({ url: userData.myDisposables, timestamp: Date.now() });
+            } else {
+              setSelectedDisposable(null);
+            }
           }
         });
 
@@ -385,6 +399,17 @@ export default function Profile() {
               </View>
             </View>
           ))}
+
+          <View style={styles.inputContainer}>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>My Disposables</Text>
+              {user.myDisposables ? (
+                <Image source={{ uri: user.myDisposables }} style={styles.imageInput} />
+              ) : (
+                <Text style={styles.inputText}>No disposable photo selected</Text>
+              )}
+            </View>
+          </View>
         </View>
       </ScrollView>
 

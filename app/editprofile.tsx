@@ -12,7 +12,7 @@ import SearchSong from '../components/search-song';
 import SearchAlbum from '../components/search-album';
 import { Picker } from '@react-native-picker/picker';
 import { PromptSelector } from '../components/PromptSelector';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import SearchArtist from '../components/search-artist';
@@ -43,10 +43,15 @@ interface Album {
   albumArt: string;
 }
 
+// Add this type for the route params
+type RouteParams = {
+  selectedPhoto?: string;
+}
+
 // Main component for editing user profile
 export default function EditProfile() {
   const router = useRouter();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   // State variables to manage user data and UI state
   const [user, setUser] = useState({
@@ -67,6 +72,7 @@ export default function EditProfile() {
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [myDisposables, setMyDisposables] = useState<string | null>(null);
 
   // Predefined prompt options for user to select from
   const promptOptions = [
@@ -168,6 +174,10 @@ export default function EditProfile() {
           // Fetch prompts from Firebase
           const fetchedPrompts = userData.prompts || [];
           setPrompts(Object.entries(fetchedPrompts).map(([question, answer]) => ({ question, answer: answer as string })));
+
+          if (userData.myDisposables) {
+            setMyDisposables(userData.myDisposables);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -176,6 +186,23 @@ export default function EditProfile() {
 
     fetchUserData();
   }, []);
+
+  // Add effect to handle navigation params
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // @ts-ignore - Assuming the route params contain selectedPhoto
+      const selectedPhoto = navigation.getState().routes.find(r => r.name === 'editprofile')?.params?.selectedPhoto;
+      
+      if (selectedPhoto) {
+        setMyDisposables(selectedPhoto);
+        setHasChanges(true);
+        // Clear the navigation params
+        navigation.setParams({ selectedPhoto: undefined });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   // Handle saving changes to Firebase
   const handleSave = async () => {
@@ -216,6 +243,7 @@ export default function EditProfile() {
         favoriteAlbum: favoriteAlbum ? JSON.stringify(favoriteAlbum) : null,
         musicPreference: musicPreference,
         prompts: promptsData,
+        myDisposables: myDisposables,
         updatedAt: new Date(),
       });
 
@@ -287,8 +315,10 @@ export default function EditProfile() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
-      handleInputChange('favoritePerformance', result.assets[0].uri);
+      const selectedImageUri = result.assets[0].uri;
+      setImage(selectedImageUri);
+      setMyDisposables(selectedImageUri);
+      setHasChanges(true);
     }
   };
 
@@ -334,6 +364,12 @@ export default function EditProfile() {
   // Handle back button press
   const handleBackPress = () => {
     router.back();
+  };
+
+  // Handle disposable photo deletion
+  const handleDeleteDisposable = () => {
+    setMyDisposables(null);
+    setHasChanges(true);
   };
 
   // Render the component UI
@@ -446,6 +482,30 @@ export default function EditProfile() {
                 {prompts.length < 8 && (
                   <TouchableOpacity style={styles.addPromptButton} onPress={handleAddPrompt}>
                     <Text style={styles.addPromptButtonText}>+</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>My Disposables</Text>
+                {myDisposables ? (
+                  <View style={styles.disposableContainer}>
+                    <TouchableOpacity 
+                      style={styles.deleteButton}
+                      onPress={handleDeleteDisposable}
+                    >
+                      <Ionicons name="close-circle" size={24} color="red" />
+                    </TouchableOpacity>
+                    <Image 
+                      source={{ uri: myDisposables }} 
+                      style={styles.disposableImage} 
+                    />
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.selectPhotoButton} 
+                    onPress={() => navigation.navigate('disposable-gallery', { selectMode: true })}
+                  >
+                    <Text style={styles.selectPhotoButtonText}>Select Photo</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -678,5 +738,35 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#fff',
     color: '#542f11',
+  },
+  selectPhotoButton: {
+    backgroundColor: '#fba904',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  selectPhotoButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  disposableContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  disposableImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: -10,
+    top: -10,
+    zIndex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
   },
 });

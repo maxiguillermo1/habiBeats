@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { storage } from '../firebaseConfig.js';
 import { ref, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../firebaseConfig.js';
+import { doc, updateDoc } from 'firebase/firestore';
+import { RouteProp } from '@react-navigation/native';
+import { auth } from '../firebaseConfig.js';
 
 // Match the type definition with the camera component
 type RootStackParamList = {
   'disposable-camera': undefined;
-  'disposable-gallery': undefined;
+  'disposable-gallery': { selectMode?: boolean };
+  'profile': undefined;
+  'editprofile': undefined;
 };
 
 type PhotoItem = {
@@ -19,12 +25,16 @@ type PhotoItem = {
   timestamp: number;
 };
 
+type DisposableGalleryRouteProp = RouteProp<RootStackParamList, 'disposable-gallery'>;
+
 export default function DisposableGallery() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+  const route = useRoute<DisposableGalleryRouteProp>();
+  const selectMode = route.params?.selectMode;
 
   useEffect(() => {
     const loadPhotos = async () => {
@@ -76,13 +86,17 @@ export default function DisposableGallery() {
   const renderPhoto = ({ item }: { item: PhotoItem }) => (
     <TouchableOpacity 
       style={styles.photoContainer}
-      onPress={() => setSelectedPhoto(item)}
+      onPress={() => {
+        if (selectMode) {
+          handlePhotoSelect(item);
+        } else {
+          setSelectedPhoto(item);
+        }
+      }}
     >
       <Image
         source={{ uri: item.url }}
         style={styles.photo}
-        onLoadStart={() => {/* Optional: handle load start */}}
-        onLoadEnd={() => {/* Optional: handle load end */}}
       />
     </TouchableOpacity>
   );
@@ -113,16 +127,55 @@ export default function DisposableGallery() {
     }
   };
 
+  const handleSelectPhoto = async (photo: PhotoItem) => {
+    try {
+      const userId = getAuth().currentUser?.uid;
+      if (!userId) throw new Error('User not authenticated');
+
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, {
+        selectedDisposable: JSON.stringify(photo)
+      });
+
+      // Navigate back to profile
+      navigation.navigate('profile');
+    } catch (error) {
+      console.error('Error selecting photo:', error);
+      Alert.alert('Error', 'Failed to select photo');
+    }
+  };
+
+  const handlePhotoSelect = async (photo: PhotoItem) => {
+    if (!selectMode) return;
+    
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+      
+      // Navigate back to edit profile with the selected photo
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('editprofile');
+      }
+    } catch (error) {
+      console.error('Error selecting photo:', error);
+      Alert.alert('Error', 'Failed to select photo');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.navigate('disposable-camera')}
+          onPress={() => navigation.goBack()}
         >
           <Ionicons name="chevron-back-outline" size={24} color="#fba904" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>My Disposables</Text>
+        <Text style={styles.headerText}>
+          {selectMode ? 'Select Photo' : 'My Disposables'}
+        </Text>
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>

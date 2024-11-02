@@ -8,11 +8,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '../firebaseConfig.js';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import { ImageFilter } from 'react-native-image-filter-kit';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': undefined;
+};
+
+const applyFilter = async (uri: string) => {
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      // [
+      //   { action: 'saturate', value: 1.5 },
+      //   { action: 'brightness', value: 0.9 },
+      //   { action: 'contrast', value: 1.2 }
+      // ],
+      // { compress: 1 }
+    );
+    return result.uri;
+  } catch (error) {
+    console.error('Error applying filter:', error);
+    return uri;
+  }
 };
 
 export default function DisposableCamera() {
@@ -61,14 +79,18 @@ export default function DisposableCamera() {
       
       if (!photo) return;
       
+      // Apply filter to the photo
+      const filteredUri = await applyFilter(photo.uri);
+
       const userId = getAuth().currentUser?.uid;
       if (!userId) {
         console.error('User not authenticated');
         return;
       }
 
-      // Convert photo URI to blob
-      const response = await fetch(photo.uri);
+      // Convert filtered photo URI to blob
+      const filteredUriString = typeof filteredUri === 'string' ? filteredUri : photo.uri;
+      const response = await fetch(filteredUriString);
       const blob = await response.blob();
 
       // Create unique filename with timestamp
@@ -95,6 +117,10 @@ export default function DisposableCamera() {
     }
   };
 
+  const toggleCameraType = () => {
+    setType((prevType) => (prevType === 'back' ? 'front' : 'back'));
+  };
+
   return (
     <View style={styles.container}>
       <CameraView 
@@ -109,21 +135,28 @@ export default function DisposableCamera() {
           >
             <Ionicons name="arrow-back" size={30} color="white" />
           </TouchableOpacity>
-          
+        </View>
+        
+        <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.galleryButton}
             onPress={() => navigation.navigate('disposable-gallery')}
           >
             <Ionicons name="images" size={30} color="white" />
           </TouchableOpacity>
-        </View>
-        
-        <View style={styles.buttonContainer}>
+
           <TouchableOpacity 
             style={styles.button}
             onPress={takePicture}
           >
-            <Ionicons name="camera" size={40} color="white" />
+            <Ionicons name="camera" size={65} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.flipButton}
+            onPress={toggleCameraType}
+          >
+            <Ionicons name="camera-reverse" size={30} color="white" />
           </TouchableOpacity>
         </View>
       </CameraView>
@@ -143,7 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    margin: 64,
+    margin: 50,
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
@@ -151,6 +184,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 50,
     backgroundColor: 'rgba(0,0,0,0.3)',
+    marginHorizontal: 20,
   },
   text: {
     fontSize: 24,
@@ -159,7 +193,7 @@ const styles = StyleSheet.create({
   },
   topButtonsContainer: {
     position: 'absolute',
-    top: 40,
+    top: 50,
     left: 20,
     right: 20,
     zIndex: 2,
@@ -172,12 +206,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   galleryButton: {
-    padding: 8,
+    padding: 15,
     borderRadius: 50,
     backgroundColor: 'rgba(0,0,0,0.3)',
+    marginRight: 20,
   },
   permissionButtons: {
     gap: 10,
     alignItems: 'center',
+  },
+  flipButton: {
+    padding: 15,
+    borderRadius: 50,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    marginLeft: 20,
   },
 });
