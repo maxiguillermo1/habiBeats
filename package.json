@@ -56,6 +56,7 @@
     "react-native-gesture-handler": "~2.16.1",
     "react-native-get-random-values": "^1.11.0",
     "react-native-google-places-autocomplete": "^2.5.7",
+    "react-native-image-filter-kit": "^0.8.0",
     "react-native-maps": "1.14.0",
     "react-native-paper": "^5.12.5",
     "react-native-picker-select": "^9.3.1",

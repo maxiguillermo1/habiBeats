@@ -53,12 +53,16 @@ export default function RootLayout() {
       <Stack.Screen name="settings/pause-new-interaction" options={{ headerShown: false }} />
       {/* Define the ai chatbot screen with no header */}
       <Stack.Screen name="ai-chatbot" options={{ headerShown: false }} />
+      {/* Define the disposable camera screen with no header */}
+      <Stack.Screen name="disposable-camera" options={{ headerShown: false }} />
       {/* Define the event tickets screen with no header */}
       <Stack.Screen name="events/event-tickets" options={{ headerShown: false }} />
       {/* Define the event location screen with no header */}
       <Stack.Screen name="events/event-location" options={{ headerShown: false }} />
        {/* Define the artist details screen with no header */}
       <Stack.Screen name="events/artist-details" options={{ headerShown: false }} />
+      {/* Define the disposable gallery screen with no header */}
+      <Stack.Screen name="disposable-gallery" options={{ headerShown: false }} />
     </Stack>
   );
 }
