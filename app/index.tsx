@@ -56,7 +56,8 @@ export default function Index() {
         { name: "Change Password", route: "/settings/change-password" },
         { name: "Change Email", route: "/settings/change-email" },
         { name: "Block List", route: "/settings/block-list" },
-        { name: "Hidden Words", route: "/settings/hidden-words" }
+        { name: "Hidden Words", route: "/settings/hidden-words" },
+        { name: "Download Data", route: "/settings/download-data" },
       ]
     },
   ];

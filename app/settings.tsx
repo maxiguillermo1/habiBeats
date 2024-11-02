@@ -851,6 +851,39 @@ const Settings = () => {
         </TouchableOpacity>
         <View style={styles.divider} />
 
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Explore safety resources</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('settings/crisis-hotlines' as never)}
+        >
+          <View style={styles.settingContent}>
+            <View style={styles.settingTitleContainer}>
+              <Ionicons name="call-outline" size={24} color="#000" />
+              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Crisis Hotlines</Text>
+            </View>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('settings/safety-resources/help-center' as never)}
+        >
+          <View style={styles.settingContent}>
+            <View style={styles.settingTitleContainer}>
+              <Ionicons name="help-circle-outline" size={24} color="#000" />
+              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Help Center</Text>
+            </View>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
         <View style={styles.accountActionsContainer}>
           <View style={styles.divider} />
           
@@ -1370,6 +1403,10 @@ const styles = StyleSheet.create({
     height: '100%',
     top: 0,
     left: 0,
+  },
+  settingTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

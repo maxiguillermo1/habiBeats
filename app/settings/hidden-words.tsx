@@ -28,11 +28,13 @@ export const censorMessage = (message: string, hiddenWords: string[]): string =>
   let censoredMessage = message;
   const messageLower = message.toLowerCase();
   
+  // Censors the message by replacing the hidden words with asterisks
   hiddenWords.forEach(word => {
     if (word.trim()) {
       const wordLower = word.trim().toLowerCase();
       let startIndex = 0;
       
+      // Replaces the hidden words with asterisks
       while ((startIndex = messageLower.indexOf(wordLower, startIndex)) !== -1) {
         const endIndex = startIndex + wordLower.length;
         const asterisks = '*'.repeat(endIndex - startIndex);
@@ -48,6 +50,41 @@ export const censorMessage = (message: string, hiddenWords: string[]): string =>
   return censoredMessage;
 };
 
+// Function to check if a message contains any hidden words
+export const containsHiddenWords = (message: string, hiddenWords: string[]): boolean => {
+  if (!message || !hiddenWords || hiddenWords.length === 0) return false;
+  
+  const messageLower = message.toLowerCase();
+  return hiddenWords.some(word => {
+    const wordLower = word.trim().toLowerCase();
+    return messageLower.includes(wordLower);
+  });
+};
+
+// Function to get all instances of hidden words in a message
+export const findHiddenWordsInMessage = (message: string, hiddenWords: string[]): string[] => {
+  if (!message || !hiddenWords || hiddenWords.length === 0) return [];
+  
+  const messageLower = message.toLowerCase();
+  return hiddenWords.filter(word => {
+    const wordLower = word.trim().toLowerCase();
+    return messageLower.includes(wordLower);
+  });
+};
+
+// Function to validate a word before adding to hidden words
+export const validateHiddenWord = (word: string): boolean => {
+  if (!word || word.trim().length === 0) return false;
+  if (word.trim().length > 50) return false; // Max length check
+  return true;
+};
+
+// Function to sanitize hidden words before storing
+export const sanitizeHiddenWord = (word: string): string => {
+  return word.trim().toLowerCase();
+};
+
+// A component that allows the user to add and remove hidden words
 const HiddenWords: React.FC = () => {
   const [hiddenWord, setHiddenWord] = useState('');
   const [hiddenWords, setHiddenWords] = useState<string[]>([]);
@@ -69,7 +106,7 @@ const HiddenWords: React.FC = () => {
     fetchHiddenWords();
   }, []);
 
-  // Add word to hidden words
+  // Adds a word to the hidden words list
   const handleAddWord = async () => {
     if (!hiddenWord.trim() || !auth.currentUser) return;
 
@@ -87,7 +124,7 @@ const HiddenWords: React.FC = () => {
     }
   };
 
-  // Remove word from hidden words (new)
+  // Removes a word from the hidden words list
   const handleRemoveWord = async (wordToRemove: string) => {
     if (!auth.currentUser) return;
 

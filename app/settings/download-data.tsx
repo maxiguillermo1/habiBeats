@@ -52,6 +52,13 @@ export default function DownloadData() {
           <p>Location Visible: ${userData.locationVisible ? 'Yes' : 'No'}</p>
           <p>My Events Visible: ${userData.myEventsVisible ? 'Yes' : 'No'}</p>
           <p>Hidden Words: ${userData.hiddenWords?.join(', ') || 'None'}</p>
+
+          <h2>Profile Prompts</h2> 
+            ${Object.entries(userData.prompts || {}).map(([question, answer]) => 
+                ` <div> 
+                    <p><strong>Q: ${question}</strong></p> 
+                    <p>A: ${answer}</p> 
+                </div> `).join('')}
         </body>
       </html>
     `;
