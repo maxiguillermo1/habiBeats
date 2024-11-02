@@ -1,3 +1,6 @@
+// disposable-camera.tsx
+// Mariann Grace Dizon
+
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,11 +13,13 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import * as ImageManipulator from 'expo-image-manipulator';
 
+// Define the types for the navigation stack
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': undefined;
 };
 
+// Function to apply a filter to the photo
 const applyFilter = async (uri: string) => {
   try {
     const result = await ImageManipulator.manipulateAsync(
@@ -34,11 +39,12 @@ const applyFilter = async (uri: string) => {
 };
 
 export default function DisposableCamera() {
-  const [type, setType] = useState<CameraType>('back');
-  const [permission, requestPermission] = useCameraPermissions();
-  const [camera, setCamera] = useState<CameraView | null>(null);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [type, setType] = useState<CameraType>('back'); // State to manage camera type (front/back)
+  const [permission, requestPermission] = useCameraPermissions(); // State to manage camera permissions
+  const [camera, setCamera] = useState<CameraView | null>(null); // State to manage camera reference
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Navigation hook
 
+  // If permission is not yet determined, show loading text
   if (!permission) {
     return (
       <View style={styles.container}>
@@ -47,6 +53,7 @@ export default function DisposableCamera() {
     );
   }
 
+  // If permission is not granted, show permission request buttons
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -69,6 +76,7 @@ export default function DisposableCamera() {
     );
   }
 
+  // Function to take a picture
   const takePicture = async () => {
     try {
       if (!camera) return;
@@ -117,6 +125,7 @@ export default function DisposableCamera() {
     }
   };
 
+  // Function to toggle camera type (front/back)
   const toggleCameraType = () => {
     setType((prevType) => (prevType === 'back' ? 'front' : 'back'));
   };
@@ -164,6 +173,7 @@ export default function DisposableCamera() {
   );
 }
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

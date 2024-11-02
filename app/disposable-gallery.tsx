@@ -1,3 +1,6 @@
+// disposable-gallery.tsx
+// Mariann Grace Dizon
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -12,7 +15,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { RouteProp } from '@react-navigation/native';
 import { auth } from '../firebaseConfig.js';
 
-// Match the type definition with the camera component
+// Define the type for the navigation stack parameters
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': { selectMode?: boolean };
@@ -20,11 +23,13 @@ type RootStackParamList = {
   'editprofile': undefined;
 };
 
+// Define the type for a photo item
 type PhotoItem = {
   url: string;
   timestamp: number;
 };
 
+// Define the type for the route prop specific to this component
 type DisposableGalleryRouteProp = RouteProp<RootStackParamList, 'disposable-gallery'>;
 
 export default function DisposableGallery() {
@@ -44,7 +49,7 @@ export default function DisposableGallery() {
           throw new Error('User not authenticated');
         }
 
-        // Load from AsyncStorage first
+        // Load photos from AsyncStorage first
         const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
         let photosList: PhotoItem[] = [];
         
@@ -52,7 +57,7 @@ export default function DisposableGallery() {
           photosList = JSON.parse(savedPhotos);
         }
 
-        // Then load from Firebase Storage
+        // Then load photos from Firebase Storage
         const storageRef = ref(storage, `disposableImages/${userId}`);
         const result = await listAll(storageRef);
         const firebaseUrls = await Promise.all(
@@ -63,13 +68,13 @@ export default function DisposableGallery() {
           })
         );
 
-        // Merge and deduplicate photos
+        // Merge and deduplicate photos from both sources
         const allPhotos = [...photosList, ...firebaseUrls];
         const uniquePhotos = Array.from(
           new Map(allPhotos.map(item => [item.timestamp, item])).values()
         );
 
-        // Sort by timestamp, newest first
+        // Sort photos by timestamp, newest first
         uniquePhotos.sort((a, b) => b.timestamp - a.timestamp);
         setPhotos(uniquePhotos);
       } catch (err) {
@@ -83,6 +88,7 @@ export default function DisposableGallery() {
     loadPhotos();
   }, []);
 
+  // Render each photo item in the FlatList
   const renderPhoto = ({ item }: { item: PhotoItem }) => (
     <TouchableOpacity 
       style={styles.photoContainer}
@@ -101,6 +107,7 @@ export default function DisposableGallery() {
     </TouchableOpacity>
   );
 
+  // Handle the deletion of a photo
   const handleDelete = async (photo: PhotoItem) => {
     try {
       const userId = getAuth().currentUser?.uid;
@@ -109,16 +116,16 @@ export default function DisposableGallery() {
       // Create reference to the file in Firebase Storage
       const photoRef = ref(storage, `disposableImages/${userId}/${photo.timestamp}.jpg`);
       
-      // Delete from Firebase Storage
+      // Delete the photo from Firebase Storage
       await deleteObject(photoRef);
 
-      // Update local state
+      // Update local state to remove the deleted photo
       setPhotos(prevPhotos => prevPhotos.filter(p => p.timestamp !== photo.timestamp));
       
-      // Close modal
+      // Close the modal
       setSelectedPhoto(null);
 
-      // Update AsyncStorage
+      // Update AsyncStorage to remove the deleted photo
       const updatedPhotos = photos.filter(p => p.timestamp !== photo.timestamp);
       await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(updatedPhotos));
     } catch (err) {
@@ -127,17 +134,19 @@ export default function DisposableGallery() {
     }
   };
 
+  // Handle the selection of a photo
   const handleSelectPhoto = async (photo: PhotoItem) => {
     try {
       const userId = getAuth().currentUser?.uid;
       if (!userId) throw new Error('User not authenticated');
 
+      // Update the user's document in Firestore with the selected photo
       const userDocRef = doc(db, 'users', userId);
       await updateDoc(userDocRef, {
         selectedDisposable: JSON.stringify(photo)
       });
 
-      // Navigate back to profile
+      // Navigate back to the profile screen
       navigation.navigate('profile');
     } catch (error) {
       console.error('Error selecting photo:', error);
@@ -145,6 +154,7 @@ export default function DisposableGallery() {
     }
   };
 
+  // Handle the photo selection in select mode
   const handlePhotoSelect = async (photo: PhotoItem) => {
     if (!selectMode) return;
     
@@ -152,7 +162,7 @@ export default function DisposableGallery() {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       
-      // Navigate back to edit profile with the selected photo
+      // Navigate back to the edit profile screen with the selected photo
       if (navigation.canGoBack()) {
         navigation.goBack();
       } else {
