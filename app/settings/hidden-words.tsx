@@ -21,14 +21,39 @@ type RootStackParamList = {
 // Define the navigation prop for the hidden words screen
 type HiddenWordsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
 
+// Function to censor messages (new)
+export const censorMessage = (message: string, hiddenWords: string[]): string => {
+  if (!message || !hiddenWords || hiddenWords.length === 0) return message;
+  
+  let censoredMessage = message;
+  const messageLower = message.toLowerCase();
+  
+  hiddenWords.forEach(word => {
+    if (word.trim()) {
+      const wordLower = word.trim().toLowerCase();
+      let startIndex = 0;
+      
+      while ((startIndex = messageLower.indexOf(wordLower, startIndex)) !== -1) {
+        const endIndex = startIndex + wordLower.length;
+        const asterisks = '*'.repeat(endIndex - startIndex);
+        censoredMessage = 
+          censoredMessage.substring(0, startIndex) + 
+          asterisks + 
+          censoredMessage.substring(endIndex);
+        startIndex = endIndex;
+      }
+    }
+  });
+  
+  return censoredMessage;
+};
+
 const HiddenWords: React.FC = () => {
-  // Get the navigation object
-  const navigation = useNavigation<HiddenWordsScreenNavigationProp>();
-  // State for the hidden word
   const [hiddenWord, setHiddenWord] = useState('');
   const [hiddenWords, setHiddenWords] = useState<string[]>([]);
+  const navigation = useNavigation<HiddenWordsScreenNavigationProp>();
 
-  // Fetch existing hidden words on component mount
+  // Fetch hidden words when component mounts
   useEffect(() => {
     const fetchHiddenWords = async () => {
       if (!auth.currentUser) return;
@@ -44,30 +69,32 @@ const HiddenWords: React.FC = () => {
     fetchHiddenWords();
   }, []);
 
-  // Handle adding a new hidden word
+  // Add word to hidden words
   const handleAddWord = async () => {
     if (!hiddenWord.trim() || !auth.currentUser) return;
 
     try {
+      const lowerCaseWord = hiddenWord.trim().toLowerCase();
       const userRef = doc(db, 'users', auth.currentUser.uid);
       await updateDoc(userRef, {
-        hiddenWords: arrayUnion(hiddenWord.trim())
+        hiddenWords: arrayUnion(lowerCaseWord)
       });
 
-      setHiddenWords([...hiddenWords, hiddenWord.trim()]);
+      setHiddenWords([...hiddenWords, lowerCaseWord]);
       setHiddenWord('');
     } catch (error) {
       console.error('Error adding hidden word:', error);
     }
   };
 
-  // Handle removing a hidden word
+  // Remove word from hidden words (new)
   const handleRemoveWord = async (wordToRemove: string) => {
     if (!auth.currentUser) return;
 
     try {
-      const updatedWords = hiddenWords.filter(word => word !== wordToRemove);
       const userRef = doc(db, 'users', auth.currentUser.uid);
+      const updatedWords = hiddenWords.filter(word => word !== wordToRemove);
+      
       await updateDoc(userRef, {
         hiddenWords: updatedWords
       });
@@ -78,15 +105,10 @@ const HiddenWords: React.FC = () => {
     }
   };
 
-  // Handle the back button press
-  const handleBackPress = () => {
-    navigation.navigate('settings' as never);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hidden Words</Text>
@@ -96,7 +118,7 @@ const HiddenWords: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionTitle}>Add hidden words</Text>
         <Text style={styles.description}>
-          We'll hide likes with comments containing any words you add here. This will not block words you see on profiles.
+          We'll hide messages containing any words you add here.
         </Text>
         
         <View style={styles.inputContainer}>
@@ -118,32 +140,20 @@ const HiddenWords: React.FC = () => {
         </View>
 
         <View style={styles.hiddenWordsContainer}>
-          <ScrollView style={styles.wordsList}>
-            {hiddenWords.map((word, index) => (
-              <View key={index} style={styles.wordItem}>
-                <Text style={styles.wordText}>{word}</Text>
-                <TouchableOpacity 
-                  onPress={() => handleRemoveWord(word)}
-                  style={styles.removeButton}
-                >
-                  <Ionicons name="close-circle" size={20} color="#999" />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
+          <Text style={styles.listTitle}>Hidden Words List</Text>
+          {hiddenWords.map((word, index) => (
+            <View key={index} style={styles.wordItem}>
+              <Text style={styles.wordText}>{word}</Text>
+              <TouchableOpacity 
+                onPress={() => handleRemoveWord(word)}
+                style={styles.removeButton}
+              >
+                <Ionicons name="trash-outline" size={20} color="#ff4444" />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       </ScrollView>
-
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.noHiddenLikesButton}>
-          <Text style={styles.noHiddenLikesText}>No hidden likes</Text>
-          <Ionicons name="chevron-forward" size={24} color="#8e8e8e" />
-        </TouchableOpacity>
-
-        <Text style={styles.footer}>
-          Wondering how Hidden Words works? <Text style={styles.learnMore}>Learn more</Text>
-        </Text>
-      </View>
     </SafeAreaView>
   );
 };
@@ -185,47 +195,54 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#dbdbdb',
-    marginBottom: 20,
+    marginTop: 15,
   },
   input: {
     flex: 1,
-    paddingVertical: 8,
+    backgroundColor: '#fff',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 5,
     fontSize: 16,
   },
   addButton: {
-    backgroundColor: '#37bdd5',
+    backgroundColor: '#fba904',
     paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 15,
+    borderRadius: 5,
     marginLeft: 10,
   },
   addButtonText: {
-    color: 'white',
+    color: '#fff',
     fontWeight: '600',
   },
   hiddenWordsContainer: {
-    maxHeight: 200,
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
-  wordsList: {
-    flex: 1,
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#333',
   },
   wordItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   wordText: {
     fontSize: 16,
-    flex: 1,
+    color: '#333',
   },
   removeButton: {
-    padding: 4,
+    padding: 5,
   },
   bottomContainer: {
     paddingHorizontal: 30,

@@ -832,6 +832,25 @@ const Settings = () => {
         </View>
         <View style={styles.divider} />
 
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Data & Privacy</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('settings/download-data' as never)}
+        >
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Download Your Data</Text>
+            <Text style={styles.settingDescription}>
+              Get a copy of your profile data in PDF or JSON format
+            </Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
         <View style={styles.accountActionsContainer}>
           <View style={styles.divider} />
           

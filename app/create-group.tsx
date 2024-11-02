@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig';
 import { Alert } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
 
 interface User {
   uid: string;
@@ -25,6 +26,7 @@ const CreateGroup = () => {
   const [uploading, setUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [groupId, setGroupId] = useState('');
+  const { user, userData } = useAuth();
 
   useEffect(() => {
     const newGroupId = doc(collection(db, 'groups')).id;
@@ -159,6 +161,7 @@ const CreateGroup = () => {
             groupList: arrayUnion({
               groupId: groupId,
               groupName: groupName,
+              groupOwner: user?.uid,
               timestamp: new Date()
             })
           });

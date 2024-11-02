@@ -14,7 +14,8 @@ const BottomNavBar = () => {
 
   // Navigate to a specific route
   const navigateTo = (route: Href<string>) => {
-    router.push(route);
+    router.back(); // Gets rid of previous page
+    router.push(route); // Navigates to the new page
   };
 
   // Get the navigation item style based on the current path

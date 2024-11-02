@@ -10,6 +10,8 @@ import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
+import { censorMessage } from './settings/hidden-words';
+import { useAuth } from '../hooks/useAuth';
 
 // Define the message structure
 interface Message {
@@ -31,6 +33,16 @@ const DirectMessageScreen = () => {
     const flatListRef = useRef<FlatList>(null);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
+
+    // Fetch hidden words from current user
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            setUserHiddenWords(docSnapshot.data()?.hiddenWords || []);
+        });
+    }, []);
 
     // START of Jesus Donate Contribution
     // Fetches the messages from the database
@@ -48,7 +60,6 @@ const DirectMessageScreen = () => {
                 const conversationData = docSnapshot.data();
                 // Sort the messages by timestamp
                 setMessages(conversationData.messages?.sort((a: Message, b: Message) => a.timestamp - b.timestamp) || []);
-
                 // Fetch the profile image url of the recipient
                 if (!profileImageUrl) {
                     const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', recipientId)));
@@ -248,7 +259,7 @@ const DirectMessageScreen = () => {
                 <FlatList
                     ref={flatListRef}
                     data={messages}
-                    keyExtractor={(item, index) => index.toString()}
+                    keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         // When the user long presses on a message, the delete modal is shown
                         <TouchableOpacity
@@ -256,7 +267,12 @@ const DirectMessageScreen = () => {
                             delayLongPress={500}
                         >
                             <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
-                                <Text style={styles.messageText}>{item.message}</Text>
+                                <Text style={styles.messageText}>
+                                    {/* If the message is sent by the current user, show the message as is. Otherwise, censor the message */}
+                                    {item.senderId === auth.currentUser?.uid 
+                                        ? item.message 
+                                        : censorMessage(item.message, userHiddenWords)}
+                                </Text>
                             </View>
                         </TouchableOpacity>
                     )}

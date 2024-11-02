@@ -1,5 +1,5 @@
 // messages.tsx
-// Jesus Donate and Maxwell Guillermo
+// Jesus Donate
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
@@ -10,6 +10,7 @@ import { db, auth } from '../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Menu, Provider } from 'react-native-paper';
+import { censorMessage } from './settings/hidden-words';
 
 // Define structure for conversation data
 interface Conversation {
@@ -38,6 +39,7 @@ const Messages = () => {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [groupMenuVisible, setGroupMenuVisible] = useState(false);
   const [groupConversations, setGroupConversations] = useState([]);
+  const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
 
   const params = useLocalSearchParams();
 
@@ -214,9 +216,12 @@ const Messages = () => {
   // END of Jesus Donate Contributation
 
   // START of Jesus Donate Contributation
-  const handleLongPress = (conversation: Conversation) => {
-    setSelectedConversation(conversation);
-    setIsDeleteModalVisible(true);
+  const handleLongPress = (conversation: any) => {
+    // Only allow long press for direct messages (conversations with recipientId)
+    if (conversation.recipientId) {
+      setSelectedConversation(conversation);
+      setIsDeleteModalVisible(true);
+    }
   };
   // END of Jesus Donate Contributation
 
@@ -260,46 +265,10 @@ const Messages = () => {
   useEffect(() => {
     if (!auth?.currentUser) return;
 
-    // Fetch group conversations
-    const fetchGroupConversations = async () => {
-      const userRef = doc(db, 'users', auth?.currentUser?.uid as string);
-      const userDoc = await getDoc(userRef);
+    // Store interval ID for cleanup
+    let pollInterval: NodeJS.Timeout;
 
-      if (userDoc.exists() && userDoc.data().groupList) {
-        const groupPromises = userDoc.data().groupList.map(async (group: any) => {
-          const groupRef = doc(db, 'groups', group.groupId);
-          const groupDoc = await getDoc(groupRef);
-          
-          if (groupDoc.exists()) {
-            const groupData = groupDoc.data();
-            const lastMessage = groupData.messages?.[groupData.messages.length - 1];
-            
-            // Only return group if it has messages
-            if (lastMessage) {
-              return {
-                groupId: group.groupId,
-                groupName: group.groupName,
-                lastMessage: lastMessage.message,
-                timestamp: lastMessage.timestamp,
-                groupImage: groupData.groupImage || 'https://via.placeholder.com/50'
-              };
-            }
-          }
-          return null;
-        });
-
-        const groups = (await Promise.all(groupPromises)).filter(group => group !== null);
-        setGroupConversations(groups as any);
-      }
-    };
-
-    fetchGroupConversations();
-  }, []);
-
-  useEffect(() => {
-    if (!auth?.currentUser) return;
-
-    const pollMessages = setInterval(async () => {
+    const pollMessages = async () => {
       // Fetch direct messages
       const fetchConversations = async () => {
         const userRef = doc(db, 'users', auth.currentUser!.uid);
@@ -339,11 +308,37 @@ const Messages = () => {
         }
       };
 
-      fetchConversations();
-      fetchGroupConversations();
-    }, 4000); // Poll every 4 seconds
+      await fetchConversations();
+      await fetchGroupConversations();
+    };
 
-    return () => clearInterval(pollMessages);
+    // Initial fetch
+    pollMessages();
+
+    // Set up polling interval
+    pollInterval = setInterval(pollMessages, 4000);
+
+    // Cleanup function to clear interval when component unmounts
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, []); // Empty dependency array means this effect runs once on mount
+
+  useEffect(() => {
+    const fetchHiddenWords = async () => {
+      if (!auth.currentUser) return;
+      
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists() && userDoc.data().hiddenWords) {
+        setUserHiddenWords(userDoc.data().hiddenWords);
+      }
+    };
+
+    fetchHiddenWords();
   }, []);
 
   return (
@@ -384,6 +379,26 @@ const Messages = () => {
               />
             </Menu>
           </View>
+
+          {/* Displays the new matches */}
+          <Text style={styles.title}>Send your first message!</Text>
+          {isLoadingMatches ? (
+            <ActivityIndicator size="large" color="#fba904" />
+          ) : newMatches.length > 0 ? (
+            newMatches.map((match) => (
+              <TouchableOpacity 
+                key={match.userId} 
+                style={styles.newMatchItem}
+                onPress={() => navigateToDirectMessage(match.userId, match.name)}
+              >
+                <Image source={{ uri: match.profileImageUrl }} style={styles.avatar} />
+                <Text style={styles.name}>{match.name}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noMatchesText}>No new matches</Text>
+          )}
+
           <Text style={styles.title}>Recent Messages</Text>
           {/* Displays the conversations */}
           {isLoadingConversations ? (
@@ -421,6 +436,8 @@ const Messages = () => {
                         navigateToDirectMessage(conv.recipientId, conv.friendName);
                       }
                     }}
+                    onLongPress={() => handleLongPress(conv)}
+                    delayLongPress={500}
                   >
                     <Image 
                       source={{ 
@@ -429,9 +446,11 @@ const Messages = () => {
                       style={styles.avatar} 
                     />
                     <View style={styles.messageContent}>
-                      <Text style={styles.name}>{conv.groupName || conv.friendName}</Text>
-                      <Text style={styles.messageText} numberOfLines={1}>
-                        {conv.lastMessage}
+                      <Text style={styles.name}>{conv.groupId ? conv.groupName : conv.friendName}</Text>
+                      <Text style={styles.lastMessage} numberOfLines={1}>
+                        {conv.senderId === auth.currentUser?.uid 
+                          ? conv.lastMessage 
+                          : censorMessage(conv.lastMessage, userHiddenWords)}
                       </Text>
                     </View>
                     <Text style={styles.timeText}>
@@ -440,25 +459,6 @@ const Messages = () => {
                   </TouchableOpacity>
                 ))}
             </>
-          )}
-
-          {/* Displays the new matches */}
-          <Text style={styles.title}>Send your first message!</Text>
-          {isLoadingMatches ? (
-            <ActivityIndicator size="large" color="#fba904" />
-          ) : newMatches.length > 0 ? (
-            newMatches.map((match) => (
-              <TouchableOpacity 
-                key={match.userId} 
-                style={styles.newMatchItem}
-                onPress={() => navigateToDirectMessage(match.userId, match.name)}
-              >
-                <Image source={{ uri: match.profileImageUrl }} style={styles.avatar} />
-                <Text style={styles.name}>{match.name}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.noMatchesText}>No new matches</Text>
           )}
         </ScrollView>
         <BottomNavBar />
@@ -494,7 +494,6 @@ const Messages = () => {
   );
 };
   // END of Messages component rendering
-  // END of Maxwell Guillermo Contribution
 
 // Define styles for the Messages component
 const styles = StyleSheet.create({
@@ -505,6 +504,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
+    marginBottom: 100,
   },
   title: {
     fontSize: 18,
@@ -615,6 +615,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#666',
     marginTop: 35,
     marginRight: 10,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

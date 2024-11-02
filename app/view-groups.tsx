@@ -61,19 +61,37 @@ const ViewGroups = () => {
             try {
               // Remove user from group members
               const groupRef = doc(db, 'groups', group.groupId);
+              const groupDoc = await getDoc(groupRef);
+              
+              if (!groupDoc.exists()) {
+                throw new Error('Group not found');
+              }
+
+              // Get current members and remove the user
+              const currentMembers = groupDoc.data().members || [];
+              const updatedMembers = currentMembers.filter(
+                (memberId: string) => memberId !== auth.currentUser!.uid
+              );
+
+              // Update group with new members list
               await updateDoc(groupRef, {
-                members: arrayRemove(auth.currentUser!.uid)
+                members: updatedMembers
               });
 
               // Remove group from user's groupList
               const userRef = doc(db, 'users', auth.currentUser!.uid);
-              await updateDoc(userRef, {
-                groupList: arrayRemove({
-                  groupId: group.groupId,
-                  groupName: group.groupName,
-                  timestamp: group.timestamp
-                })
-              });
+              const userDoc = await getDoc(userRef);
+              
+              if (userDoc.exists()) {
+                const currentGroupList = userDoc.data().groupList || [];
+                const updatedGroupList = currentGroupList.filter(
+                  (g: any) => g.groupId !== group.groupId
+                );
+                
+                await updateDoc(userRef, {
+                  groupList: updatedGroupList
+                });
+              }
 
               // Refresh groups list
               fetchGroups();
@@ -88,7 +106,10 @@ const ViewGroups = () => {
   };
 
   const handleDeleteGroup = async (group: any) => {
-    if (!auth.currentUser || auth.currentUser.uid !== group.createdBy) return;
+    if (!auth.currentUser || auth.currentUser.uid !== group.createdBy) {
+      handleLeaveGroup(group);
+      return;
+    }
 
     Alert.alert(
       "Delete Group",
@@ -100,22 +121,39 @@ const ViewGroups = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              // Delete group document
-              await deleteDoc(doc(db, 'groups', group.groupId));
+              const groupRef = doc(db, 'groups', group.groupId);
+              const groupDoc = await getDoc(groupRef);
+              
+              if (!groupDoc.exists()) {
+                throw new Error('Group not found');
+              }
+
+              const members = groupDoc.data().members || [];
 
               // Remove group from all members' groupLists
-              const removePromises = group.members.map(async (memberId: string) => {
+              const removePromises = members.map(async (memberId: string) => {
                 const userRef = doc(db, 'users', memberId);
-                await updateDoc(userRef, {
-                  groupList: arrayRemove({
-                    groupId: group.groupId,
-                    groupName: group.groupName,
-                    timestamp: group.timestamp
-                  })
-                });
+                const userDoc = await getDoc(userRef);
+                
+                if (userDoc.exists()) {
+                  const currentGroupList = userDoc.data().groupList || [];
+                  const updatedGroupList = currentGroupList.filter(
+                    (g: any) => g.groupId !== group.groupId
+                  );
+                  
+                  await updateDoc(userRef, {
+                    groupList: updatedGroupList
+                  });
+                }
               });
 
+              // Wait for all member updates to complete
               await Promise.all(removePromises);
+
+              // Delete the group document
+              await deleteDoc(groupRef);
+
+              // Refresh groups list
               fetchGroups();
             } catch (error) {
               console.error("Error deleting group:", error);

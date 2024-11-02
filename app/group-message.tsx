@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
+import { censorMessage } from './settings/hidden-words';
 
 interface Message {
     id: string;
@@ -33,6 +34,7 @@ const GroupMessageScreen = () => {
     const flatListRef = useRef<FlatList>(null);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
 
     useEffect(() => {
         if (!auth.currentUser || !groupId) return;
@@ -70,6 +72,23 @@ const GroupMessageScreen = () => {
 
         return () => unsubscribe();
     }, [groupId]);
+
+    // Fetch hidden words
+    useEffect(() => {
+        const fetchHiddenWords = async () => {
+            if (!auth.currentUser) return;
+            
+            const userRef = doc(db, 'users', auth.currentUser.uid);
+            const userDoc = await getDoc(userRef);
+            
+            // If the user document exists and contains hidden words, set the state
+            if (userDoc.exists() && userDoc.data().hiddenWords) {
+                setUserHiddenWords(userDoc.data().hiddenWords);
+            }
+        };
+
+        fetchHiddenWords();
+    }, []);
 
     const sendMessage = async () => {
         if (newMessage.trim() === '' || !auth.currentUser) return;
@@ -165,7 +184,12 @@ const GroupMessageScreen = () => {
                         >
                             <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
                                 <Text style={styles.senderName}>{item.senderName}</Text>
-                                <Text style={styles.messageText}>{item.message}</Text>
+                                <Text style={styles.messageText}>
+                                    {/* If the message is sent by the current user, show the message as is. Otherwise, censor the message */}
+                                    {item.senderId === auth.currentUser?.uid 
+                                        ? item.message 
+                                        : censorMessage(item.message, userHiddenWords)}
+                                </Text>
                             </View>
                         </TouchableOpacity>
                     )}
