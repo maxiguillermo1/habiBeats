@@ -10,6 +10,7 @@ import { auth, db } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
+import { useNavigation } from '@react-navigation/native';
 
 // Define interfaces for data structures
 interface Song {
@@ -58,6 +59,7 @@ export default function Profile() {
   const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null);
 
   const router = useRouter();
+  const navigation = useNavigation();
   // State for user profile data
   const [user, setUser] = useState({
     name: 'Name not set',
@@ -262,15 +264,27 @@ export default function Profile() {
         return '#333';
     }
   };
+
+  const handleCameraPress = () => {
+    router.push('/disposable-camera');
+  };
 // End of helper functions for navigation and styling
 
 // Render Profile component
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.cameraButton} onPress={() => router.push('/disposable-camera')}>
+        <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
           <Ionicons name="camera-outline" size={24} color="black" />
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.discoverButton} 
+          onPress={() => router.push('/discography')}
+        >
+          <Ionicons name="disc-outline" size={24} color="black" />
+        </TouchableOpacity>
+        
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
             <Ionicons name="create-outline" size={25} color="#333" />
@@ -433,8 +447,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingRight: 20,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 1,
   },
   headerButtons: {
@@ -620,8 +635,9 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     padding: 5,
-    position: 'absolute',
-    left: 20,
-    top: 10,
+  },
+  discoverButton: {
+    padding: 5,
+    marginLeft: 10, // Add space between camera and discover buttons
   },
 });

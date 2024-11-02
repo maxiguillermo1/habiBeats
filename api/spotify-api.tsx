@@ -120,13 +120,77 @@ export const searchSpotifyTracks = async (query: string) => {
       id: item.id,
       name: item.name,
       artist: item.artists[0].name,
-      albumArt: item.album.images[0].url,
+      albumArt: item.album.images[0]?.url || '',
     }));
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error('Error searching Spotify tracks:', error.response?.data || error.message);
     } else {
       console.error('Error searching Spotify tracks:', error);
+    }
+    throw error;
+  }
+};
+
+export const getSpotifyRecommendations = async (artistIds: string[], trackIds: string[]) => {
+  try {
+    const token = await getSpotifyAccessToken();
+    const response = await axios.get(
+      'https://api.spotify.com/v1/recommendations',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        params: {
+          seed_artists: artistIds.slice(0, 2).join(','), // Spotify allows max 5 seed values total
+          seed_tracks: trackIds.slice(0, 2).join(','),
+          limit: 10
+        }
+      }
+    );
+
+    return response.data.tracks.map((track: any) => ({
+      id: track.id,
+      name: track.name,
+      artists: track.artists.map((artist: any) => ({
+        id: artist.id,
+        name: artist.name
+      })),
+      albumArt: track.album.images[0]?.url || '', // Ensure safe access to the first image
+    }));
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Error getting Spotify recommendations:', error.response?.data || error.message);
+    } else {
+      console.error('Error getting Spotify recommendations:', error);
+    }
+    throw error;
+  }
+};
+
+export const getSpotifyRelatedArtists = async (artistId: string) => {
+  try {
+    const token = await getSpotifyAccessToken();
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}/related-artists`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+
+    return response.data.artists.map((artist: any) => ({
+      id: artist.id,
+      name: artist.name,
+      popularity: artist.popularity,
+      imageUrl: artist.images[0]?.url || '', // Extract the first image URL
+    })).slice(0, 10); // Limit to 10 related artists
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Error getting related artists:', error.response?.data || error.message);
+    } else {
+      console.error('Error getting related artists:', error);
     }
     throw error;
   }

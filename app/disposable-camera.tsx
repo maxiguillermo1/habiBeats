@@ -79,14 +79,20 @@ export default function DisposableCamera() {
   // Function to take a picture
   const takePicture = async () => {
     try {
-      if (!camera) return;
+      if (!camera) {
+        console.error('Camera reference is null');
+        return;
+      }
       const photo = await camera.takePictureAsync({
         quality: 1,
         exif: true,
       });
-      
-      if (!photo) return;
-      
+
+      if (!photo) {
+        console.error('Failed to capture photo');
+        return;
+      }
+
       // Apply filter to the photo
       const filteredUri = await applyFilter(photo.uri);
 

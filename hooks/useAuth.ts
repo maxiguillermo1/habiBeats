@@ -30,6 +30,7 @@ interface UserData {
   tuneOfMonth: string;
   favoritePerformance: string;
   listenTo: string;
+  favoriteArtists: string;
   favoriteMusicArtists: string;
   favoriteAlbum: string;
   artistToSee: string;
