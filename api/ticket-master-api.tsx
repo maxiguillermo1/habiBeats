@@ -3,9 +3,9 @@
  * Documentation: https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/
  */
 // This is our secret key to access TicketMaster's services
-const TICKETMASTER_API_KEY = 'dUU6uAGlJCm1uSxAJJFjS8oeh1gPkaSe';
+export const TICKETMASTER_API_KEY = 'dUU6uAGlJCm1uSxAJJFjS8oeh1gPkaSe';
 // This is the main website address where we'll send our requests
-const BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
+export const BASE_URL = 'https://app.ticketmaster.com/discovery/v2';
 
 /**
  * Common search parameters for TicketMaster API
@@ -256,6 +256,18 @@ export const TicketMasterAPI = {
   getMarketById: async (marketId: string) => {
     const response = await fetch(
       `${BASE_URL}/markets/${marketId}?apikey=${TICKETMASTER_API_KEY}`
+    );
+    return await response.json();
+  },
+
+  /**
+   * Get pricing information for a specific event
+   * @param eventId Unique event identifier
+   * @returns Promise with pricing details
+   */
+  getEventPrices: async (eventId: string) => {
+    const response = await fetch(
+      `${BASE_URL}/events/${eventId}/prices?apikey=${TICKETMASTER_API_KEY}`
     );
     return await response.json();
   },

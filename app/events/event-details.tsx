@@ -11,6 +11,7 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaVi
 import { useLocalSearchParams, useRouter } from 'expo-router'; // Tools for navigation and getting URL parameters
 import axios from 'axios'; // Tool for making API requests
 import { Ionicons } from '@expo/vector-icons'; // Package for nice-looking icons
+import { Link } from 'expo-router'; // Add this import
 
 // API key for Google's Gemini AI service that generates event descriptions
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
@@ -102,13 +103,17 @@ const EventDetailsPage = () => {
   };
 
   const handleArtistDetails = () => {
-    // Future feature: Show artist details page
-    console.log('Navigate to artist details');
+    router.push({
+      pathname: '/events/artist-details',
+      params: { artistData: JSON.stringify(eventData) }
+    });
   };
 
   const handleTickets = () => {
-    // Future feature: Link to ticket purchasing
-    console.log('Navigate to tickets');
+    router.push({
+      pathname: '/events/event-tickets',
+      params: { eventData: JSON.stringify(eventData) }
+    });
   };
 
   const handleAttending = () => {
@@ -148,12 +153,21 @@ const EventDetailsPage = () => {
           <View style={styles.detailsContainer}>
             {/* Venue and location info */}
             {(eventData?.venue || eventData?.location) && (
-              <Text style={styles.detailText}>
-                {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
-              </Text>
+              <TouchableOpacity onPress={() => router.push({
+                pathname: '/events/event-location',
+                params: { venue: eventData.venue, location: eventData.location }
+              })}>
+                <Text style={styles.detailText}>
+                  {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
+                </Text>
+              </TouchableOpacity>
             )}
-            <Text style={styles.detailText}>Artist Details</Text>
-            <Text style={styles.detailText}>Tickets</Text>
+            <TouchableOpacity onPress={handleArtistDetails}>
+              <Text style={styles.detailText}>Artist Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleTickets}>
+              <Text style={styles.detailText}>Tickets</Text>
+            </TouchableOpacity>
             <Text style={styles.descriptionTitle}>Event Description</Text>
             
             {/* Show loading spinner or AI description */}
