@@ -8,10 +8,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getSpotifyRecommendations, getSpotifyRelatedArtists } from '@/api/spotify-api';
-import { Ionicons } from '@expo/vector-icons'; // Import icons for the back button
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-// Define types for our data structures
+// Type definitions for data structures
 interface Artist {
   id: string;
   name: string;
@@ -19,11 +19,13 @@ interface Artist {
   imageUrl: string;
 }
 
+// Simplified Artist interface used in Song interface
 interface Artist {
   id: string;
   name: string;
 }
 
+// Interface defining the structure of a song recommendation
 interface Song {
   id: string;
   name: string;
@@ -32,16 +34,21 @@ interface Song {
 }
 
 export default function Discography() {
+  // Authentication and user data hooks
   const { user, userData } = useAuth();
+  
+  // State management for recommendations and UI states
   const [similarArtists, setSimilarArtists] = useState<Artist[]>([]);
   const [similarSongs, setSimilarSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation(); // Initialize navigation
+  const navigation = useNavigation();
 
   useEffect(() => {
+    // Cleanup flag to prevent state updates after unmount
     let isMounted = true;
 
+    // Main async function to fetch user data and get recommendations
     const fetchUserDataAndRecommendations = async () => {
       try {
         if (!user) return;
@@ -49,7 +56,7 @@ export default function Discography() {
         setError(null);
         setLoading(true);
 
-        // Fetch user data from Firebase
+        // Fetch user's profile data from Firebase
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         
@@ -58,17 +65,17 @@ export default function Discography() {
         }
 
         const userData = userDocSnap.data();
-        console.log('Raw userData:', userData); // Debug log
+        console.log('Raw userData:', userData);
 
+        // Variables to store IDs for recommendations
         let firstArtistId: string | null = null;
         let tuneOfMonthId;
 
-        // Parse favoriteArtists with better error handling
+        // Parse favorite artists data with error handling
         try {
-          // Check if the data exists and is not empty
           if (userData.favoriteArtists) {
             let parsedArtists;
-            // Handle case where data might already be an object/array
+            // Handle both string and object/array data formats
             if (typeof userData.favoriteArtists === 'string') {
               parsedArtists = JSON.parse(userData.favoriteArtists);
             } else {
@@ -86,11 +93,11 @@ export default function Discography() {
           console.log('Raw favoriteArtists value:', userData.favoriteArtists);
         }
 
-        // Parse tuneOfMonth with better error handling
+        // Parse tune of month data with error handling
         try {
           if (userData.tuneOfMonth) {
             let parsedTune;
-            // Handle case where data might already be an object
+            // Handle both string and object data formats
             if (typeof userData.tuneOfMonth === 'string') {
               parsedTune = JSON.parse(userData.tuneOfMonth);
             } else {
@@ -105,6 +112,7 @@ export default function Discography() {
           console.log('Raw tuneOfMonth value:', userData.tuneOfMonth);
         }
 
+        // Validate required data exists
         if (!firstArtistId || !tuneOfMonthId) {
           console.error('Missing data - firstArtistId:', firstArtistId, 'tuneOfMonthId:', tuneOfMonthId);
           throw new Error('Please set at least one favorite artist and tune of the month in your profile');
@@ -113,12 +121,13 @@ export default function Discography() {
         console.log('Using first artist ID:', firstArtistId);
         console.log('Using track ID:', tuneOfMonthId);
 
-        // Get both similar artists and song recommendations
+        // Fetch recommendations in parallel for better performance
         const [artistRecommendations, songRecommendations] = await Promise.all([
-          getSpotifyRelatedArtists(firstArtistId),  // New function call
+          getSpotifyRelatedArtists(firstArtistId),
           getSpotifyRecommendations([firstArtistId], [tuneOfMonthId])
         ]);
 
+        // Update state only if component is still mounted
         if (isMounted) {
           setSimilarArtists(artistRecommendations || []);
           setSimilarSongs(songRecommendations || []);
@@ -137,15 +146,18 @@ export default function Discography() {
 
     fetchUserDataAndRecommendations();
 
+    // Cleanup function to prevent memory leaks
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user]); // Re-run effect when user changes
 
+  // Navigation handler for back button
   const handleBackPress = () => {
     navigation.goBack();
   };
 
+  // Loading state UI
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -155,6 +167,7 @@ export default function Discography() {
     );
   }
 
+  // Authentication check UI
   if (!user || !userData) {
     return (
       <View style={styles.centerContainer}>
@@ -163,6 +176,7 @@ export default function Discography() {
     );
   }
 
+  // Required data check UI
   if (!userData.favoriteArtists || !userData.tuneOfMonth) {
     return (
       <View style={styles.centerContainer}>
@@ -173,20 +187,26 @@ export default function Discography() {
     );
   }
 
+  // Main UI render
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header section with back button */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.header}>Discography</Text>
       </View>
+
+      {/* Main content section */}
       <View style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Similar Artists Section */}
           <Text style={styles.title}>Similar Artists You Might Like</Text>
           {similarArtists.length === 0 ? (
             <Text style={styles.noDataText}>No similar artists found</Text>
           ) : (
+            // Create rows of 2 artists each
             similarArtists.reduce<Artist[][]>((rows, artist, index) => {
               if (index % 2 === 0) {
                 rows.push([artist]);
@@ -207,10 +227,12 @@ export default function Discography() {
             ))
           )}
 
+          {/* Similar Songs Section */}
           <Text style={styles.title}>Songs You Might Like</Text>
           {similarSongs.length === 0 ? (
             <Text style={styles.noDataText}>No similar songs found</Text>
           ) : (
+            // Create rows of 2 songs each
             similarSongs.reduce<Song[][]>((rows, song, index) => {
               if (index % 2 === 0) {
                 rows.push([song]);
@@ -238,10 +260,11 @@ export default function Discography() {
   );
 }
 
+// Styles for component layout and appearance
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Light cream background
   },
   content: {
     flex: 1,
@@ -265,7 +288,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginBottom: 8,
-    alignSelf: 'center', // Center the image horizontally
+    alignSelf: 'center',
   },
   centerContainer: {
     flex: 1,
@@ -278,7 +301,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 30,
     marginBottom: 20,
-    textAlign: 'center', // Center the text
+    textAlign: 'center',
   },
   loadingText: {
     marginTop: 10,
@@ -298,32 +321,33 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   itemTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: 'bold',
     marginBottom: 4,
-    textAlign: 'center', // Center the text
+    textAlign: 'center',
   },
   itemSubtitle: {
-    fontSize: 13, // Adjust the font size as needed
-    color: '#666', // Adjust the color as needed
-    marginBottom: 4, // Optional: add margin if needed
-    textAlign: 'center', // Center the text
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'center',
   },
   header: {
-    fontSize: 25, // Adjust the font size as needed
+    fontSize: 25,
     fontWeight: 'bold',
-    textAlign: 'center', // Center the text
+    textAlign: 'center',
+    color: '#0e1514',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', // Center the header text
-    paddingHorizontal: 20, // Add padding to the left and right
+    justifyContent: 'center',
+    paddingHorizontal: 20,
     marginVertical: 20,
-    position: 'relative', // Allow absolute positioning of the back button
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
-    left: 10, // Position the back button on the left
+    left: 10,
   },
 });
