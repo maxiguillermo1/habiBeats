@@ -125,7 +125,12 @@ export const TicketMasterAPI = {
    * @param params SearchParams object containing search criteria
    * @returns Promise with event search results
    */
-  searchEvents: async (params: SearchParams) => {
+  searchEvents: async (searchQuery: string | SearchParams) => {
+    // Handle both string and SearchParams inputs
+    const params = typeof searchQuery === 'string' 
+      ? { keyword: searchQuery }
+      : searchQuery;
+    
     return fetchFromTicketMaster('events.json', params);
   },
 

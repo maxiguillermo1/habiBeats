@@ -24,72 +24,85 @@ const EventTicketsPage = () => {
   useEffect(() => {
     const fetchTicketData = async () => {
       try {
-        if (!eventData?.id) {
-          console.log('Missing event ID:', eventData);
-          setError('No event ID provided');
+        if (!eventData?.name) {
+          setError('Event information is missing');
+          setLoading(false);
           return;
         }
 
-        console.log('Fetching data for event ID:', eventData.id);
-        const response = await TicketMasterAPI.getEventById(eventData.id);
-        console.log('Raw API Response:', response);
+        // Search for the event using name and venue
+        const searchResponse = await TicketMasterAPI.searchEvents({
+          keyword: eventData.name,
+          size: 10,
+          sort: 'relevance,desc'
+        });
 
-        // Extract price ranges from the response
-        let priceRanges = [];
-        
-        if (response.priceRanges && response.priceRanges.length > 0) {
-          priceRanges = response.priceRanges;
-        } else if (response._embedded?.events?.[0]?.priceRanges) {
-          priceRanges = response._embedded.events[0].priceRanges;
+        console.log('Search response:', searchResponse);
+
+        if (!searchResponse._embedded?.events) {
+          setError('No ticket information available');
+          setLoading(false);
+          return;
         }
 
-        // Get the URL from the response
-        const ticketUrl = response.url || eventData?.url || response._embedded?.events?.[0]?.url;
+        // Find the best matching event
+        const matchedEvent = searchResponse._embedded.events.find((event: any) => 
+          event.name.toLowerCase().includes(eventData.name.toLowerCase()) &&
+          event._embedded?.venues?.some((venue: any) => 
+            venue.name.toLowerCase().includes(eventData.venue.toLowerCase())
+          )
+        );
+
+        if (!matchedEvent) {
+          setError('Event not found on Ticketmaster');
+          setLoading(false);
+          return;
+        }
+
+        // Extract price ranges and ticket URL
+        const priceRanges = matchedEvent.priceRanges || [];
+        const ticketUrl = matchedEvent.url;
 
         if (priceRanges.length > 0) {
-          setTicketTypes(priceRanges.map((price: any) => ({
+          setTicketTypes(priceRanges.map((price: { type?: string; min?: number; max?: number; currency?: string }) => ({
             type: price.type || 'Standard',
             min: price.min || null,
             max: price.max || null,
             currency: price.currency || 'USD',
-            url: ticketUrl || ''
+            url: ticketUrl
           })));
         } else {
-          // If no price ranges found, try to get price from eventData
-          const defaultPrice = eventData.priceRanges?.[0]?.min || null;
+          // Set default ticket type with just the URL if no price ranges available
           setTicketTypes([{
             type: 'Standard',
-            min: defaultPrice,
-            max: defaultPrice,
+            min: null,
+            max: null,
             currency: 'USD',
-            url: ticketUrl || ''
+            url: ticketUrl
           }]);
         }
 
         setLoading(false);
       } catch (error) {
-        console.error('Detailed error:', error);
+        console.error('Error fetching ticket data:', error);
         setError('Failed to load ticket information');
         setLoading(false);
       }
     };
 
     fetchTicketData();
-  }, [eventData?.id]);
+  }, [eventData]);
 
-  const handleBuyTickets = async (ticket: any) => {
+  const handleBuyTickets = async (ticket: PriceRange) => {
     try {
-      // Get the URL from the ticket data or event data
-      const ticketUrl = ticket.url || eventData?.url || eventData?.outlets?.[1]?.url;
-      
-      if (!ticketUrl) {
+      if (!ticket.url) {
         setError('No ticket purchase link available');
         return;
       }
 
-      const supported = await Linking.canOpenURL(ticketUrl);
+      const supported = await Linking.canOpenURL(ticket.url);
       if (supported) {
-        await Linking.openURL(ticketUrl);
+        await Linking.openURL(ticket.url);
       } else {
         setError('Cannot open ticket purchase link');
       }
