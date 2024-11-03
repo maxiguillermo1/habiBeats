@@ -1,0 +1,102 @@
+{
+  "settings": {
+    "title": "Configuración",
+    "appearance": "Apariencia",
+    "theme_mode": "Modo de Tema",
+    "theme_mode_description": "Modo Claro u Oscuro",
+    "language": "Idioma",
+    "language_description": "Elige tu idioma preferido",
+    "select_language": "Seleccionar Idioma",
+    "profile": {
+      "title": "Perfil",
+      "edit_profile": "Editar Perfil",
+      "change_profile_picture": "Cambiar Foto de Perfil",
+      "change_name": "Cambiar Nombre",
+      "change_location": "Cambiar Ubicación",
+      "change_border": "Cambiar Animación del Borde",
+      "location_not_set": "Ubicación no establecida"
+    },
+    "account": {
+      "title": "Cuenta",
+      "change_email": "Cambiar Correo",
+      "change_password": "Cambiar Contraseña",
+      "delete_account": "Eliminar Cuenta",
+      "delete_confirmation": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+      "current_password": "Contraseña Actual",
+      "new_password": "Nueva Contraseña",
+      "confirm_password": "Confirmar Nueva Contraseña",
+      "password_requirements": "La contraseña debe tener al menos 8 caracteres"
+    },
+    "activity": {
+      "last_active": "Mostrar Estado de Última Actividad",
+      "last_active_description": "Nadie puede ver tu estado de última actividad, y tú no puedes ver cuándo otros estuvieron activos por última vez."
+    },
+    "matches": {
+      "title": "Coincidencias",
+      "current_interactions": "Lista de Interacciones Actuales"
+    },
+    "visibility": {
+      "title": "Visibilidad",
+      "show_last_name": "Mostrar Apellido",
+      "show_location": "Mostrar Ubicación",
+      "show_events": "Mostrar Mis Eventos",
+      "show_activity": "Mostrar Estado de Actividad"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "push_notifications": "Notificaciones Push",
+      "email_notifications": "Notificaciones por Correo",
+      "push_description": "Recibir notificaciones push para nuevas coincidencias y mensajes",
+      "email_description": "Recibir notificaciones por correo para actualizaciones importantes"
+    },
+    "safety": {
+      "title": "Seguridad",
+      "pause_account": "Pausar Cuenta",
+      "pause_account_description": "Ocultar temporalmente tu perfil de nuevas coincidencias",
+      "selfie_verification": "Verificación por Selfie",
+      "not_verified": "Aún no estás verificado",
+      "block_list": "Lista de Bloqueos",
+      "block_list_description": "Administrar usuarios bloqueados",
+      "hidden_words": "Palabras Ocultas",
+      "hidden_words_description": "Filtrar contenido potencialmente ofensivo"
+    },
+    "phone_email": {
+      "title": "Teléfono y Correo",
+      "edit": "Editar",
+      "verify_phone": "Verificar Número de Teléfono",
+      "phone_verified": "Número de Teléfono Verificado",
+      "email_verified": "Correo Verificado"
+    },
+    "data_privacy": {
+      "title": "Datos y Privacidad",
+      "download_data": "Descargar tus Datos",
+      "privacy_policy": "Política de Privacidad",
+      "terms_of_service": "Términos de Servicio"
+    }
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "success": "Éxito",
+    "error": "Error",
+    "loading": "Cargando...",
+    "logout": "Cerrar Sesión"
+  },
+  "alerts": {
+    "logout_title": "Cerrar Sesión",
+    "logout_message": "¿Estás seguro de que quieres cerrar sesión?",
+    "delete_title": "Eliminar Cuenta",
+    "delete_message": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+    "success_email": "Tu correo ha sido cambiado exitosamente.",
+    "success_password": "Tu contraseña ha sido cambiada exitosamente.",
+    "error_required_fields": "Por favor completa todos los campos requeridos.",
+    "error_invalid_email": "El correo electrónico no es válido.",
+    "error_wrong_password": "La contraseña actual es incorrecta.",
+    "error_password_mismatch": "Las nuevas contraseñas no coinciden.",
+    "error_generic": "Ocurrió un error. Por favor intenta de nuevo."
+  }
+}

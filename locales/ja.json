@@ -1,0 +1,110 @@
+{
+  "settings": {
+    "title": "設定",
+    "appearance": "外観",
+    "theme_mode": "テーマモード",
+    "theme_mode_description": "ライトモードまたはダークモード",
+    "language": "言語",
+    "language_description": "希望する言語を選択してください",
+    "select_language": "言語を選択",
+    "profile": {
+      "title": "プロフィール",
+      "edit_profile": "プロフィール編集",
+      "change_profile_picture": "プロフィール写真を変更",
+      "change_name": "名前を変更",
+      "change_location": "場所を変更",
+      "change_border": "ボーダーアニメーションを変更",
+      "location_not_set": "場所が設定されていません"
+    },
+    "account": {
+      "title": "アカウント",
+      "change_email": "メールアドレスを変更",
+      "change_password": "パスワードを変更",
+      "delete_account": "アカウントを削除",
+      "delete_confirmation": "本当にアカウントを削除しますか？この操作は取り消せません。",
+      "current_password": "現在のパスワード",
+      "new_password": "新しいパスワード",
+      "confirm_password": "新しいパスワードを確認",
+      "password_requirements": "パスワードは8文字以上である必要があります"
+    },
+    "activity": {
+      "last_active": "最終アクティブ状態を表示",
+      "last_active_description": "誰もあなたの最終アクティブ状態を見ることができず、あなたも他の人の最終アクティブ状態を見ることができません。"
+    },
+    "matches": {
+      "title": "マッチング",
+      "current_interactions": "現在のやり取りリスト"
+    },
+    "visibility": {
+      "title": "表示設定",
+      "show_last_name": "姓を表示",
+      "show_location": "場所を表示",
+      "show_events": "自分のイベントを表示",
+      "show_activity": "アクティビティ状態を表示"
+    },
+    "notifications": {
+      "title": "通知",
+      "push_notifications": "プッシュ通知",
+      "email_notifications": "メール通知",
+      "push_description": "新しいマッチングやメッセージのプッシュ通知を受け取る",
+      "email_description": "重要な更新のメール通知を受け取る"
+    },
+    "safety": {
+      "title": "セキュリティ",
+      "pause_account": "アカウントを一時停止",
+      "pause_account_description": "新しいマッチングから一時的にプロフィールを非表示にする",
+      "selfie_verification": "自撮り認証",
+      "not_verified": "まだ認証されていません",
+      "block_list": "ブロックリスト",
+      "block_list_description": "ブロックしたユーザーを管理",
+      "hidden_words": "非表示の単語",
+      "hidden_words_description": "不適切な可能性のあるコンテンツをフィルタリング"
+    },
+    "phone_email": {
+      "title": "電話番号とメール",
+      "edit": "編集",
+      "verify_phone": "電話番号を認証",
+      "phone_verified": "電話番号認証済み",
+      "email_verified": "メール認証済み"
+    },
+    "data_privacy": {
+      "title": "データとプライバシー",
+      "download_data": "データをダウンロード"
+    }
+  },
+  "auth": {
+    "forgot_password": {
+      "reset_email_sent": "パスワードリセットメールを送信しました。受信トレイをご確認ください。",
+      "user_not_found": "このメールアドレスのユーザーが見つかりません。",
+      "title": "パスワードをお忘れの方",
+      "subtitle": "パスワードをリセットするメールアドレスを入力してください",
+      "send_reset": "リセットリンクを送信",
+      "back_to_login": "ログインに戻る"
+    }
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "back": "戻る",
+    "edit": "編集",
+    "delete": "削除",
+    "confirm": "確認",
+    "success": "成功",
+    "error": "エラー",
+    "loading": "読み込み中...",
+    "logout": "ログアウト"
+  },
+  "alerts": {
+    "logout_title": "ログアウト",
+    "logout_message": "ログアウトしてもよろしいですか？",
+    "delete_title": "アカウント削除",
+    "delete_message": "本当にアカウントを削除しますか？この操作は取り消せません。",
+    "success_email": "メールアドレスが正常に変更されました。",
+    "success_password": "パスワードが正常に変更されました。",
+    "error_required_fields": "必須項目をすべて入力してください。",
+    "error_invalid_email": "メールアドレスが無効です。",
+    "error_wrong_password": "現在のパスワードが正しくありません。",
+    "error_password_mismatch": "新しいパスワードが一致しません。",
+    "error_generic": "エラーが発生しました。もう一度お試しください。"
+  }
+}

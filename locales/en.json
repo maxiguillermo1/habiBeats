@@ -1,0 +1,102 @@
+{
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme_mode": "Theme Mode",
+    "theme_mode_description": "Light or Dark Mode",
+    "language": "Language",
+    "language_description": "Choose your preferred language",
+    "select_language": "Select Language",
+    "profile": {
+      "title": "Profile",
+      "edit_profile": "Edit Profile",
+      "change_profile_picture": "Change Profile Picture",
+      "change_name": "Change Name",
+      "change_location": "Change Location",
+      "change_border": "Change Border Animation",
+      "location_not_set": "Location not set"
+    },
+    "account": {
+      "title": "Account",
+      "change_email": "Change Email",
+      "change_password": "Change Password",
+      "delete_account": "Delete Account",
+      "delete_confirmation": "Are you sure you want to delete your account? This action cannot be undone.",
+      "current_password": "Current Password",
+      "new_password": "New Password",
+      "confirm_password": "Confirm New Password",
+      "password_requirements": "Password must be at least 8 characters"
+    },
+    "activity": {
+      "last_active": "Show Last Active Status",
+      "last_active_description": "No one can see your last active status, and you cannot see when others were last active."
+    },
+    "matches": {
+      "title": "Matches",
+      "current_interactions": "Current Interactions List"
+    },
+    "visibility": {
+      "title": "Visibility",
+      "show_last_name": "Show Last Name",
+      "show_location": "Show Location",
+      "show_events": "Show My Events",
+      "show_activity": "Show Activity Status"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "push_notifications": "Push Notifications",
+      "email_notifications": "Email Notifications",
+      "push_description": "Receive push notifications for new matches and messages",
+      "email_description": "Receive email notifications for important updates"
+    },
+    "safety": {
+      "title": "Safety",
+      "pause_account": "Pause Account",
+      "pause_account_description": "Temporarily hide your profile from new matches",
+      "selfie_verification": "Selfie Verification",
+      "not_verified": "You're not verified yet",
+      "block_list": "Block List",
+      "block_list_description": "Manage blocked users",
+      "hidden_words": "Hidden Words",
+      "hidden_words_description": "Filter potentially offensive content"
+    },
+    "phone_email": {
+      "title": "Phone & Email",
+      "edit": "Edit",
+      "verify_phone": "Verify Phone Number",
+      "phone_verified": "Phone Number Verified",
+      "email_verified": "Email Verified"
+    },
+    "data_privacy": {
+      "title": "Data & Privacy",
+      "download_data": "Download Your Data",
+      "privacy_policy": "Privacy Policy",
+      "terms_of_service": "Terms of Service"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "success": "Success",
+    "error": "Error",
+    "loading": "Loading...",
+    "logout": "Log Out"
+  },
+  "alerts": {
+    "logout_title": "Log Out",
+    "logout_message": "Are you sure you want to log out?",
+    "delete_title": "Delete Account",
+    "delete_message": "Are you sure you want to delete your account? This action cannot be undone.",
+    "success_email": "Your email has been changed successfully.",
+    "success_password": "Your password has been changed successfully.",
+    "error_required_fields": "Please fill in all required fields.",
+    "error_invalid_email": "The email address is invalid.",
+    "error_wrong_password": "Current password is incorrect.",
+    "error_password_mismatch": "New passwords do not match.",
+    "error_generic": "An error occurred. Please try again."
+  }
+} 

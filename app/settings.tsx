@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal, Platform, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut, verifyBeforeUpdateEmail, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, deleteDoc, updateDoc, getDoc, addDoc, collection, Timestamp, query, where, getDocs, getFirestore } from 'firebase/firestore';
 import { db, app } from '../firebaseConfig'; // Ensure this path is correct
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig'; // Ensure this import is correct
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -14,6 +14,8 @@ import PushNotificationsSettings from './settings/push-notifications';
 import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
 import { getGooglePlacesQueryConfig } from '../api/google-places-api';
+import { useTranslation } from 'react-i18next';
+import '../i18n';
 
 interface UserMatch {
   uid: string;
@@ -27,6 +29,9 @@ interface UserMatch {
 const Settings = () => {
   const navigation = useNavigation();
   const auth = getAuth();
+  const { t, i18n } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   // Existing state variables
   const [lastNameVisible, setLastNameVisible] = useState(true);
@@ -57,13 +62,22 @@ const Settings = () => {
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [tempName, setTempName] = useState(name);
   const [tempLocation, setTempLocation] = useState(location);
-  const googlePlacesRef = useRef(null);
+  const googlePlacesRef = useRef<GooglePlacesAutocompleteRef | null>(null);
   const router = useRouter();
 
   const [userGender, setUserGender] = useState('');
   const [isEditingBorder, setIsEditingBorder] = useState(false);
   const [selectedGif, setSelectedGif] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Add these modal states
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showBorderModal, setShowBorderModal] = useState(false);
+
+  // Add these state variables if not already present
+  const [isNameModalVisible, setIsNameModalVisible] = useState(false);
+  const [nameInput, setNameInput] = useState('');
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -121,10 +135,10 @@ const Settings = () => {
   // START of Reyna Aguirre Contribution
   const handleLogout = () => {
     Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
+      t('alerts.logout_title'),
+      t('alerts.logout_message'),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         { 
           text: "OK", 
           onPress: async () => {
@@ -374,7 +388,7 @@ const Settings = () => {
           style: "destructive",
           onPress: () => {
             // Navigate to a separate screen for changing password
-            navigation.navigate('settings/changepassword' as never);
+            navigation.navigate('settings/changep-assword' as never);
           }
         }
       ]
@@ -487,50 +501,61 @@ const Settings = () => {
 
 
   // Jesus Donate - Display Name is used for the user's display name
-  const handleSaveNameChange = async () => {
-    // Changes name, even if is authenticated or not
-    
-    setIsEditingName(false);
-    let firstName = '';
-    let lastName = '';
-    // Update name in Firestore
-    if (auth.currentUser) {
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
-      const nameParts = tempName.split(' ');
-      firstName = nameParts[0];
-      lastName = nameParts.slice(1).join(' ');
-      await updateDoc(userDocRef, {
-        firstName: firstName,
-        lastName: lastName,
-        // If the user has their last name hidden, then the display name is just the first name
-        displayName: lastNameVisible ? tempName : firstName
-      });
-      // Update the name state with the new display name
+  const handleSaveNameChange = async (newName: string) => {
+    if (!newName.trim()) {
+      Alert.alert('Error', 'Name cannot be empty');
+      return;
     }
 
-    setName(lastNameVisible ? tempName : firstName);
-    console.log('Inside handleSaveNameChange:', lastName, lastName ? tempName : firstName);
+    try {
+      if (auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const nameParts = newName.trim().split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ');
+        
+        await updateDoc(userDocRef, {
+          firstName: firstName,
+          lastName: lastName,
+          displayName: lastNameVisible ? newName.trim() : firstName
+        });
+        
+        // Update local state
+        setName(lastNameVisible ? newName.trim() : firstName);
+        setNameInput('');
+        setIsNameModalVisible(false);
+        console.log('Name updated successfully:', newName);
+      }
+    } catch (error) {
+      console.error('Error updating name:', error);
+      Alert.alert('Error', 'Failed to update name. Please try again.');
+    }
   };
 
 
 
-  const handleSaveLocationChange = async () => {
-    if (tempLocation) {
-      setLocation(locationVisible ? tempLocation : 'N/A');
-      setIsEditingLocation(false);
-
-      // Save the new location to Firestore
-      if (auth.currentUser) {
+  const handleSaveLocationChange = async (newLocation: string) => {
+    if (newLocation && auth.currentUser) {
+      try {
         const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        try {
-          await updateDoc(userDocRef, {
-            location: tempLocation,
-            displayLocation: locationVisible ? tempLocation : 'N/A'
-          });
-          console.log('Location updated successfully in Firestore');
-        } catch (error) {
-          console.error('Error updating location in Firestore:', error);
-        }
+        await updateDoc(userDocRef, {
+          location: newLocation,
+          displayLocation: locationVisible ? newLocation : 'N/A'
+        });
+        
+        setLocation(newLocation);
+        setIsEditingLocation(false);
+        
+        Alert.alert(
+          'Success',
+          'Location updated successfully'
+        );
+      } catch (error) {
+        console.error('Error updating location:', error);
+        Alert.alert(
+          'Error',
+          'Failed to update location. Please try again.'
+        );
       }
     }
   };
@@ -538,7 +563,7 @@ const Settings = () => {
   // END of Jesus Donate Contribution
 
   const getBorderColor = (gender: string) => {
-    console.log('Getting border color for gender:', gender);
+    
     switch (gender.toLowerCase()) {
       case 'male':
         return '#37bdd5';
@@ -592,6 +617,436 @@ const Settings = () => {
   // END of Cancel Border Change Function
   // END of Mariann Grace Dizon Contribution
 
+  // START of Maxwell Guillermo Contribution - Language Functions
+  const handleLanguageChange = (language: string) => {
+    try {
+      i18n.changeLanguage(language).then(() => {
+        setCurrentLanguage(language);
+        setShowLanguageModal(false);
+      }).catch((error) => {
+        console.error('Error changing language:', error);
+      });
+    } catch (error) {
+      console.error('Error in handleLanguageChange:', error);
+    }
+  };
+
+  const languageNames = {
+    en: 'English',
+    es: 'Español',
+    fr: 'Français',
+    ja: '日本'
+  };
+
+  // Language Modal Styles
+  const languageModalStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    content: {
+      backgroundColor: '#fff8f0',
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingTop: 20,
+      paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+      width: '100%',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      textAlign: 'center',
+      marginBottom: 15,
+      color: '#0e1514',
+    },
+    option: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 15,
+      paddingHorizontal: 20,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: '#e0e0e0',
+    },
+    selectedOption: {
+      backgroundColor: 'rgba(251, 169, 4, 0.1)',
+    },
+    optionText: {
+      fontSize: 16,
+      color: '#0e1514',
+    },
+    selectedText: {
+      color: '#fba904',
+      fontWeight: '600',
+    },
+    cancelOption: {
+      marginTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: '#e0e0e0',
+    }
+  });
+  // END of Maxwell Guillermo Contribution - Language Functions
+
+  // Name Change Modal Styles
+  const nameModalStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      padding: 20,
+    },
+    content: {
+      backgroundColor: '#fff8f0',
+      borderRadius: 20,
+      padding: 20,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 20,
+      color: '#0e1514',
+      textAlign: 'center',
+    },
+    input: {
+      width: '100%',
+      borderWidth: 1,
+      borderColor: '#fba904',
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 20,
+      backgroundColor: '#fff',
+    },
+  });
+
+  // Location Change Modal Styles
+  const locationStyles = StyleSheet.create({
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      paddingHorizontal: 20,
+    },
+    modalContent: {
+      backgroundColor: '#FFF8F0',
+      borderRadius: 20,
+      padding: 20,
+      maxHeight: '80%',
+    },
+    headerContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E0E0E0',
+      paddingBottom: 10,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#333',
+    },
+    closeButton: {
+      padding: 5,
+    },
+    autocompleteContainer: {
+      position: 'relative',
+      zIndex: 999,
+      height: 200,
+      marginBottom: 20,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 10,
+      marginTop: 'auto',
+      zIndex: 1,
+    },
+  });
+
+  // Border Change Modal Styles
+  const borderModalStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      padding: 20,
+    },
+    content: {
+      backgroundColor: '#fff8f0',
+      borderRadius: 20,
+      padding: 20,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 20,
+      color: '#0e1514',
+      textAlign: 'center',
+    },
+    gifOption: {
+      width: 100,
+      height: 100,
+      margin: 5,
+      borderRadius: 50,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    selectedGifOption: {
+      borderColor: '#fba904',
+    },
+    gifThumbnail: {
+      width: '100%',
+      height: '100%',
+    }
+  });
+
+  // Then update your modal components to use these specific styles:
+  const LanguageModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showLanguageModal}
+      onRequestClose={() => setShowLanguageModal(false)}
+    >
+      <View style={languageModalStyles.container}>
+        <View style={languageModalStyles.content}>
+          <Text style={languageModalStyles.title}>{t('settings.select_language')}</Text>
+          <TouchableOpacity 
+            style={[languageModalStyles.option, currentLanguage === 'en' && languageModalStyles.selectedOption]}
+            onPress={() => handleLanguageChange('en')}
+          >
+            <Text style={[languageModalStyles.optionText, currentLanguage === 'en' && languageModalStyles.selectedText]}>English</Text>
+            {currentLanguage === 'en' && <Ionicons name="checkmark" size={20} color="#fba904" />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[languageModalStyles.option, currentLanguage === 'es' && languageModalStyles.selectedOption]}
+            onPress={() => handleLanguageChange('es')}
+          >
+            <Text style={[languageModalStyles.optionText, currentLanguage === 'es' && languageModalStyles.selectedText]}>Español</Text>
+            {currentLanguage === 'es' && <Ionicons name="checkmark" size={20} color="#fba904" />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[languageModalStyles.option, currentLanguage === 'fr' && languageModalStyles.selectedOption]}
+            onPress={() => handleLanguageChange('fr')}
+          >
+            <Text style={[languageModalStyles.optionText, currentLanguage === 'fr' && languageModalStyles.selectedText]}>Français</Text>
+            {currentLanguage === 'fr' && <Ionicons name="checkmark" size={20} color="#fba904" />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[languageModalStyles.option, currentLanguage === 'ja' && languageModalStyles.selectedOption]}
+            onPress={() => handleLanguageChange('ja')}
+          >
+            <Text style={[languageModalStyles.optionText, currentLanguage === 'ja' && languageModalStyles.selectedText]}>日本語</Text>
+            {currentLanguage === 'ja' && <Ionicons name="checkmark" size={20} color="#fba904" />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[languageModalStyles.option, languageModalStyles.cancelOption]}
+            onPress={() => setShowLanguageModal(false)}
+          >
+            <Text style={languageModalStyles.optionText}>{t('common.cancel')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const NameChangeModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isNameModalVisible}
+      onRequestClose={() => {
+        setIsNameModalVisible(false);
+        setNameInput(name);
+      }}
+    >
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View style={nameModalStyles.container}>
+          <View style={nameModalStyles.content}>
+            <Text style={nameModalStyles.title}>Change Name</Text>
+            <TextInput
+              style={nameModalStyles.input}
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder="Enter new name"
+              autoFocus={false}
+            />
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={() => handleSaveNameChange(nameInput)}
+            >
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, styles.cancelButton]} 
+              onPress={() => {
+                setNameInput(name);
+                setIsNameModalVisible(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+
+  const LocationChangeModal = () => {
+    const [selectedLocation, setSelectedLocation] = useState('');
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isEditingLocation}
+        onRequestClose={() => setIsEditingLocation(false)}
+      >
+        <View style={locationStyles.modalContainer}>
+          <View style={locationStyles.modalContent}>
+            <View style={locationStyles.headerContainer}>
+              <Text style={locationStyles.modalTitle}>Change Location</Text>
+              <TouchableOpacity 
+                onPress={() => setIsEditingLocation(false)}
+                style={locationStyles.closeButton}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={locationStyles.autocompleteContainer}>
+              <GooglePlacesAutocomplete
+                placeholder='Search for a city'
+                fetchDetails={true}
+                onPress={(data) => {
+                  setSelectedLocation(data.description);
+                }}
+                query={{
+                  key: 'AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc',
+                  language: 'en',
+                  types: '(cities)',
+                }}
+                styles={{
+                  container: {
+                    flex: 0,
+                  },
+                  textInput: {
+                    height: 46,
+                    backgroundColor: '#FFFFFF',
+                    fontSize: 16,
+                    borderWidth: 1,
+                    borderColor: '#E0E0E0',
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                  },
+                  listView: {
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 8,
+                    marginTop: 0,
+                    maxHeight: 150,
+                  },
+                  row: {
+                    padding: 13,
+                    height: 44,
+                    backgroundColor: '#FFFFFF',
+                  },
+                  separator: {
+                    height: 1,
+                    backgroundColor: '#E0E0E0',
+                  },
+                }}
+                enablePoweredByContainer={false}
+                debounce={300}
+                minLength={2}
+                listViewDisplayed="auto"
+              />
+            </View>
+
+            <View style={locationStyles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, { flex: 1, backgroundColor: '#ff4444' }]} 
+                onPress={() => setIsEditingLocation(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.button, { flex: 1 }]}
+                onPress={() => {
+                  if (selectedLocation) {
+                    handleSaveLocationChange(selectedLocation);
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const BorderChangeModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isEditingBorder}
+      onRequestClose={() => setIsEditingBorder(false)}
+    >
+      <View style={borderModalStyles.container}>
+        <View style={borderModalStyles.content}>
+          <Text style={borderModalStyles.title}>Select an Animated Border</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {Object.keys(gifImages).map((gifKey) => (
+              <TouchableOpacity
+                key={gifKey}
+                onPress={() => setSelectedGif(gifKey)}
+                style={[
+                  borderModalStyles.gifOption,
+                  selectedGif === gifKey && borderModalStyles.selectedGifOption
+                ]}
+              >
+                <Image source={gifImages[gifKey]} style={borderModalStyles.gifThumbnail} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={handleSaveBorderChange}>
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.button, styles.cancelButton]} 
+            onPress={handleCancelBorderChange}
+          >
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Add these useEffects to handle state updates
+  useEffect(() => {
+    if (isEditingName) {
+      setTempName(name);
+    }
+  }, [isEditingName]);
+
+  useEffect(() => {
+    if (isEditingLocation) {
+      setTempLocation(location);
+    }
+  }, [isEditingLocation]);
+
+  // Update the name editing functionality
+  const handleEditName = () => {
+    setNameInput(name); // Initialize with current name
+    setIsNameModalVisible(true);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -600,7 +1055,7 @@ const Settings = () => {
           <TouchableOpacity onPress={handleBackPress}>
             <Text style={styles.backButton}>‹</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerTitle}>{t('settings.title')}</Text>
           <View style={styles.placeholder}></View>
         </View>
 
@@ -629,61 +1084,86 @@ const Settings = () => {
 
         {/* Edit Profile Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Edit Profile</Text>
+          <Text style={styles.sectionTitle}>{t('settings.profile.edit_profile')}</Text>
         </View>
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={handleImagePicker}>
-          <Text style={styles.settingTitle}>Change Profile Picture</Text>
+          <Text style={styles.settingTitle}>{t('settings.profile.change_profile_picture')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingName(true)}>
-          <Text style={styles.settingTitle}>Change Name</Text>
+        <TouchableOpacity 
+          style={styles.settingItem} 
+          onPress={handleEditName}
+        >
+          <Text style={styles.settingTitle}>{t('settings.profile.change_name')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingLocation(true)}>
-          <Text style={styles.settingTitle}>Change Location</Text>
+          <Text style={styles.settingTitle}>{t('settings.profile.change_location')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingBorder(true)}>
-          <Text style={styles.settingTitle}>Change Border Animation</Text>
+          <Text style={styles.settingTitle}>{t('settings.profile.change_border')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
-        {/* Theme Toggle Section */}
-                <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-        </View>
-        <View style={styles.divider} />
-
-        <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>Theme Mode</Text>
-          <Text style={styles.settingDescription}>
-            Light or Dark Mode.
-          </Text>
-          <Switch value={theme === 'dark'} onValueChange={handleThemeToggle} />
-        </View>
-        <View style={styles.divider} />
-
-        {/* Rest of the settings sections */}
+        {/* Theme and Language Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Profile</Text>
+          <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
         </View>
         <View style={styles.divider} />
 
+        {/* Theme Toggle */}
+        <View style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>{t('settings.theme_mode')}</Text>
+            <Text style={styles.settingDescription}>
+              {t('settings.theme_mode_description')}
+            </Text>
+          </View>
+          <Switch
+            value={theme === 'dark'}
+            onValueChange={handleThemeToggle}
+            trackColor={{ false: '#767577', true: '#fba904' }}
+            thumbColor={theme === 'dark' ? '#f4f3f4' : '#f4f3f4'}
+          />
+        </View>
+        <View style={styles.divider} />
+
+        {/* Language Selector */}
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => setShowLanguageModal(true)}
+        >
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>{t('settings.language')}</Text>
+            <Text style={styles.settingDescription}>
+              {languageNames[currentLanguage as keyof typeof languageNames]}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#666" />
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
+        {/* Profile Section */}
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>{t('settings.profile.title')}</Text>
+        </View>
+        <View style={styles.divider} />
 
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Show Last Active Status</Text>
+            <Text style={styles.settingTitle}>{t('settings.activity.last_active')}</Text>
             <Text style={styles.settingDescription}>
-              No one can see your last active status, and you cannot see when others were last active.
+              {t('settings.activity.last_active_description')}
             </Text>
           </View>
           <Switch />
@@ -692,43 +1172,42 @@ const Settings = () => {
 
         {/* Matches Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Matches</Text>
+          <Text style={styles.sectionTitle}>{t('settings.matches.title')}</Text>
         </View>
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('settings/current-liked-list' as never)}>
-          <Text style={styles.settingTitle}>Current Interactions List</Text>
+          <Text style={styles.settingTitle}>{t('settings.matches.current_interactions')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
-
         {/* Visibility Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Visibility</Text>
+          <Text style={styles.sectionTitle}>{t('settings.visibility.title')}</Text>
         </View>
         <View style={styles.divider} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>Show Last Name</Text>
+          <Text style={styles.settingTitle}>{t('settings.visibility.show_last_name')}</Text>
           <Switch value={lastNameVisible} onValueChange={handlelastNameToggle} />
         </View>
         <View style={styles.divider} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>Show Location</Text>
+          <Text style={styles.settingTitle}>{t('settings.visibility.show_location')}</Text>
           <Switch value={locationVisible} onValueChange={handleShowLocationToggle} />
         </View>
         <View style={styles.divider} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>Show My Events</Text>
+          <Text style={styles.settingTitle}>{t('settings.visibility.show_events')}</Text>
           <Switch value={myEventsVisible} onValueChange={setMyEventsVisible} />
         </View>
         <View style={styles.divider} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+          <Text style={styles.sectionTitle}>{t('settings.notifications.title')}</Text>
         </View>
         <View style={styles.divider} />
 
@@ -736,7 +1215,7 @@ const Settings = () => {
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/push-notifications' as never)}
         >
-          <Text style={styles.settingTitle}>Push Notifications</Text>
+          <Text style={styles.settingTitle}>{t('settings.notifications.push_notifications')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
@@ -745,16 +1224,13 @@ const Settings = () => {
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/email-notifications' as never)}
         >
-          <Text style={styles.settingTitle}>Email Notifications</Text>
+          <Text style={styles.settingTitle}>{t('settings.notifications.email_notifications')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
 
-
-        
-
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Safety</Text>
+          <Text style={styles.sectionTitle}>{t('settings.safety.title')}</Text>
         </View>
         <View style={styles.divider} />
         
@@ -763,8 +1239,10 @@ const Settings = () => {
           onPress={() => navigation.navigate('settings/pause-new-interaction' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Pause Account</Text>
-            <Text style={styles.settingDescription}>Stop being shown to new people in the matching feature.</Text>
+            <Text style={styles.settingTitle}>{t('settings.safety.pause_account')}</Text>
+            <Text style={styles.settingDescription}>
+              {t('settings.safety.pause_account_description')}
+            </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -775,8 +1253,8 @@ const Settings = () => {
           onPress={() => navigation.navigate('settings/selfie-verification' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Selfie Verification</Text>
-            <Text style={styles.settingDescription}>You're not verified yet.</Text>
+            <Text style={styles.settingTitle}>{t('settings.safety.selfie_verification')}</Text>
+            <Text style={styles.settingDescription}>{t('settings.safety.not_verified')}</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -787,9 +1265,9 @@ const Settings = () => {
           onPress={() => navigation.navigate('settings/block-list' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Block List</Text>
+            <Text style={styles.settingTitle}>{t('settings.safety.block_list')}</Text>
             <Text style={styles.settingDescription}>
-              Block people you know. They won't see you and you won't see them on Hinge.
+              {t('settings.safety.block_list_description')}
             </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -801,9 +1279,9 @@ const Settings = () => {
           onPress={() => navigation.navigate('settings/hidden-words' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Hidden Words</Text>
+            <Text style={styles.settingTitle}>{t('settings.safety.hidden_words')}</Text>
             <Text style={styles.settingDescription}>
-              Hide likes from people who use offensive words in their comments.
+              {t('settings.safety.hidden_words_description')}
             </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -811,7 +1289,7 @@ const Settings = () => {
         <View style={styles.divider} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Phone & email</Text>
+          <Text style={styles.sectionTitle}>{t('settings.phone_email.title')}</Text>
         </View>
         <View style={styles.divider} />
 
@@ -827,313 +1305,38 @@ const Settings = () => {
             <Ionicons name="checkmark-circle" size={14} color="green" />
           </View>
           <TouchableOpacity onPress={handleEditEmail}>
-            <Text style={styles.editText}>Edit</Text>
+            <Text style={styles.editText}>{t('settings.phone_email.edit')}</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.divider} />
-
-        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Data & Privacy</Text>
-        </View>
-        <View style={styles.divider} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/download-data' as never)}
-        >
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Download Your Data</Text>
-            <Text style={styles.settingDescription}>
-              Get a copy of your profile data in PDF or JSON format
-            </Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-        <View style={styles.divider} />
-
-        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Explore safety resources</Text>
-        </View>
-        <View style={styles.divider} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/crisis-hotlines' as never)}
-        >
-          <View style={styles.settingContent}>
-            <View style={styles.settingTitleContainer}>
-              <Ionicons name="call-outline" size={24} color="#000" />
-              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Crisis Hotlines</Text>
-            </View>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-        <View style={styles.divider} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/safety-resources/help-center' as never)}
-        >
-          <View style={styles.settingContent}>
-            <View style={styles.settingTitleContainer}>
-              <Ionicons name="help-circle-outline" size={24} color="#000" />
-              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Help Center</Text>
-            </View>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
         <View style={styles.divider} />
 
         <View style={styles.accountActionsContainer}>
-          <View style={styles.divider} />
-          
           <TouchableOpacity style={styles.accountActionButton} onPress={handleLogout}>
-            <Text style={styles.accountActionText}>Log Out</Text>
+            <Text style={styles.accountActionText}>{t('common.logout')}</Text>
           </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.accountActionButton} onPress={handleChangePassword}>
-            <Text style={styles.accountActionText}>Change Password</Text>
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.accountActionButton} onPress={handleDeleteAccount}>
-            <Text style={styles.accountActionText}>Delete Account</Text>
-          </TouchableOpacity>
-          <View style={styles.divider} />
-         
-        </View>
 
+          <TouchableOpacity 
+            style={styles.accountActionButton} 
+            onPress={handleChangePassword}
+          >
+            <Text style={styles.accountActionText}>{t('settings.account.change_password')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.accountActionButton, styles.deleteButton]} 
+            onPress={handleDeleteAccount}
+          >
+            <Text style={[styles.accountActionText, styles.deleteText]}>
+              {t('settings.account.delete_account')}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       </ScrollView>
-
-      {/* Modals */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.modalOption} onPress={() => { handleImagePicker(); setModalVisible(false); }}>
-              <Text style={styles.modalOptionText}>Change Profile Picture</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalOption} onPress={() => { setIsChangingEmail(true); setModalVisible(false); }}>
-              <Text style={styles.modalOptionText}>Change Email</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalOption} onPress={() => { setIsChangingPassword(true); setModalVisible(false); }}>
-              <Text style={styles.modalOptionText}>Change Password</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalOption} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalOptionText}>Cancel</Text> 
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isChangingEmail}
-        onRequestClose={() => setIsChangingEmail(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Email</Text>
-            {!otpSent ? (
-              <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="New Email"
-                  value={newEmail}
-                  onChangeText={setNewEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirm New Email"
-                  value={confirmNewEmail}
-                  onChangeText={setConfirmNewEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity style={styles.button} onPress={handleChangeEmail}>
-                  <Text style={styles.buttonText}>Send OTP</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                />
-                <TouchableOpacity style={styles.button} onPress={handleChangeEmail}>
-                  <Text style={styles.buttonText}>Verify OTP</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            {emailChangeError ? <Text style={styles.errorText}>{emailChangeError}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={() => {
-              setIsChangingEmail(false);
-              setOtpSent(false);
-              setOtp('');
-              setNewEmail('');
-              setConfirmNewEmail('');
-              setEmailChangeError('');
-            }}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isChangingPassword}
-        onRequestClose={() => setIsChangingPassword(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Current Password"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="New Password"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm New Password"
-              value={confirmNewPassword}
-              onChangeText={setConfirmNewPassword}
-              secureTextEntry
-            />
-            {passwordChangeError ? <Text style={styles.errorText}>{passwordChangeError}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
-              <Text style={styles.buttonText}>Change Password</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => {
-              setIsChangingPassword(false);
-              setCurrentPassword('');
-              setNewPassword('');
-              setConfirmNewPassword('');
-              setPasswordChangeError('');
-            }}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Name change modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isEditingName}
-        onRequestClose={() => setIsEditingName(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Name</Text>
-            <TextInput
-              style={styles.input}
-              value={tempName}
-              onChangeText={setTempName}
-              placeholder="Enter new name"
-            />
-            <TouchableOpacity style={styles.button} onPress={handleSaveNameChange}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setIsEditingName(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isEditingBorder}
-        onRequestClose={() => setIsEditingBorder(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select an Animated Border</Text>
-            <ScrollView horizontal>
-              {Object.keys(gifImages).map((gifFileName) => (
-                <TouchableOpacity key={gifFileName} onPress={() => setSelectedGif(gifFileName)}>
-                  <Image source={gifImages[gifFileName]} style={styles.gifThumbnail} />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleSaveBorderChange}
-            >
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleCancelBorderChange}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Location change modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isEditingLocation}
-        onRequestClose={() => setIsEditingLocation(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Location</Text>
-            <View style={styles.googleAutocompleteContainer}>
-            <GooglePlacesAutocomplete
-                ref={googlePlacesRef}
-                placeholder='Search for a city or town'
-                onPress={(data, details) => {
-                  if (details) {
-                    setTempLocation(details.formatted_address);
-                  }
-                }}
-                query={getGooglePlacesQueryConfig()}
-                styles={{
-                  container: styles.googleAutocompleteContainer,
-                  textInputContainer: styles.googleAutocompleteInputContainer,
-                  textInput: styles.googleAutocompleteInput,
-                  listView: styles.googleAutocompleteListView,
-                }}
-                fetchDetails={true}
-                onFail={(error) => console.error(error)}
-                onNotFound={() => console.log('no results')}
-                filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']}
-                debounce={200}
-              />
-            </View>
-            <TouchableOpacity style={styles.button} onPress={handleSaveLocationChange}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setIsEditingLocation(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <NameChangeModal />
+      <LocationChangeModal />
+      <BorderChangeModal />
+      <LanguageModal />
     </SafeAreaView>
   );
 };
@@ -1273,107 +1476,31 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
   },
   modalContent: {
-    width: 300,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    borderColor: '#fba904',
-    borderWidth: 1,
   },
-  modalOption: {
-    paddingVertical: 15,
-    width: '100%',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalOptionText: {
-    fontSize: 16, // Reduced from 18
-    color: '#e07ab1',
-  },
-  editContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-    marginHorizontal: 20,
-    width: '90%',
-  },
-  editInput: {
-    fontSize: 16, // Reduced from 18
-    borderWidth: 1,
-    borderColor: '#fc6c85',
-    borderRadius: 8,
-    padding: 6,
-    marginRight: 40,
-  },
-  googleAutocompleteContainer: {
-    flex: 0,
-    width: '100%',
-    marginBottom: 20,
-  },
-  googleAutocompleteInputContainer: {
-    backgroundColor: 'transparent',
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
-  },
-  googleAutocompleteInput: {
-    fontSize: 16,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#fc6c85',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  googleAutocompleteListView: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    marginTop: 5,
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#fc6c85',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: '#fc6c85',
+  cancelButton: {
+    backgroundColor: '#ff4444',
     padding: 10,
     borderRadius: 8,
+    width: '100%',
     alignItems: 'center',
     marginTop: 10,
-    width: '100%',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 14, // Reduced from 16
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '600',
   },
   errorText: {
     color: 'red',
     marginBottom: 10,
   },
-  modalTitle: {
-    fontSize: 18, // Reduced from 20
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-
-  gifThumbnail: {
-    width: 100,
-    height: 100,
-    margin: 5,
-  },
-  
   customHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1393,10 +1520,6 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 20, // To balance the back button on the left
   },
-  cancelButton: {
-    backgroundColor: '#ccc',
-    marginTop: 10,
-  },
   overlayGif: {
     position: 'absolute',
     width: '100%',
@@ -1407,6 +1530,73 @@ const styles = StyleSheet.create({
   settingTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  
+  currentLanguageText: {
+    fontSize: 14,
+    color: '#fba904',
+    marginRight: 10,
+  },
+  mainModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    color: '#0e1514',
+    textAlign: 'center',
+  },
+  mainModalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  mainModalOptionText: {
+    fontSize: 16,
+    color: '#0e1514',
+  },
+  gifOption: {
+    width: 100,
+    height: 100,
+    margin: 5,
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedGifOption: {
+    borderColor: '#fba904',
+  },
+  gifThumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  mainModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
+  },
+  mainModalContent: {
+    backgroundColor: '#fff8f0',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  deleteButton: {
+    marginTop: 0,
+  },
+  deleteText: {
+    color: '#ff0000', // matching red color for delete text
+  },
+  button: {
+    backgroundColor: '#fba904',
+    padding: 10,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
   },
 });
 

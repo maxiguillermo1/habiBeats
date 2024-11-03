@@ -6,14 +6,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, Image } from 'react-native';
-import { getAuth, updateEmail, signInWithEmailAndPassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { getAuth, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 // Main component for changing email functionality
 const ChangeEmail = () => {
-  // Store user input values in state variables
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState(''); // Holds the user's current password
   const [newEmail, setNewEmail] = useState(''); // Holds the new email address
   const [message, setMessage] = useState(''); // Stores feedback messages to show to the user
@@ -73,7 +74,7 @@ const ChangeEmail = () => {
 
     // Validate that all fields are filled
     if (!currentPassword || !newEmail) {
-      setMessage('Please fill in all fields.');
+      setMessage(t('alerts.error_required_fields'));
       setShowMessage(true);
       return;
     }
@@ -92,18 +93,20 @@ const ChangeEmail = () => {
       await updateEmail(auth.currentUser, newEmail);
 
       // Show success message and return to previous screen
-      Alert.alert('Success', 'Your email has been changed successfully.');
+      Alert.alert(t('common.success'), t('alerts.success_email'));
       navigation.goBack();
     } catch (error: any) {
       // Handle different types of errors with specific messages
       console.error('Error changing email:', error);
+      let errorMessage = t('alerts.error_generic');
+      
       if (error.code === 'auth/wrong-password') {
-        setMessage('Current password is incorrect. Please try again.');
+        errorMessage = t('alerts.error_wrong_password');
       } else if (error.code === 'auth/invalid-email') {
-        setMessage('The new email address is invalid.');
-      } else {
-        setMessage('Failed to change email. Please try again.');
+        errorMessage = t('alerts.error_invalid_email');
       }
+      
+      setMessage(errorMessage);
       setShowMessage(true);
     }
   };
@@ -148,18 +151,13 @@ const ChangeEmail = () => {
           {/* Back button with animation */}
           <Animated.View style={[styles.backButton, animatedBackButtonStyle]}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.backButtonText}>back</Text>
+              <Text style={styles.backButtonText}>{t('common.back')}</Text>
             </TouchableOpacity>
           </Animated.View>
           
           {/* Title section with animation */}
           <Animated.View style={[styles.titleContainer, animatedTitleStyle]}>
-            <Text style={styles.title}>HabiBeats</Text>
-          </Animated.View>
-          
-          {/* Subtitle section with animation */}
-          <Animated.View style={[styles.subtitleContainer, animatedSubtitleStyle]}>
-            <Text style={[styles.subtitle, styles.boldText]}>Change Email</Text>
+            <Text style={styles.title}>{t('settings.account.change_email')}</Text>
           </Animated.View>
           
           {/* Form section with animations */}
@@ -171,7 +169,7 @@ const ChangeEmail = () => {
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry
-                placeholder="current password"
+                placeholder={t('settings.account.current_password')}
                 placeholderTextColor="#999"
               />
             </View>
@@ -183,14 +181,14 @@ const ChangeEmail = () => {
                 onChangeText={setNewEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholder="new email"
+                placeholder={t('settings.account.new_email')}
                 placeholderTextColor="#999"
               />
             </View>
             {/* Submit button with animation */}
             <Animated.View style={animatedButtonStyle}>
               <TouchableOpacity style={styles.changeButton} onPress={handleChangeEmail}>
-                <Text style={styles.changeButtonText}>Change Email</Text>
+                <Text style={styles.changeButtonText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </Animated.View>
             {/* Error/success message display */}

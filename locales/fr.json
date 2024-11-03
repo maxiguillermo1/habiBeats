@@ -1,0 +1,102 @@
+{
+  "settings": {
+    "title": "Paramètres",
+    "appearance": "Apparence",
+    "theme_mode": "Mode Thème",
+    "theme_mode_description": "Mode Clair ou Sombre",
+    "language": "Langue",
+    "language_description": "Choisissez votre langue préférée",
+    "select_language": "Sélectionner la Langue",
+    "profile": {
+      "title": "Profil",
+      "edit_profile": "Modifier le Profil",
+      "change_profile_picture": "Changer la Photo de Profil",
+      "change_name": "Changer le Nom",
+      "change_location": "Changer l'Emplacement",
+      "change_border": "Changer l'Animation de la Bordure",
+      "location_not_set": "Emplacement non défini"
+    },
+    "account": {
+      "title": "Compte",
+      "change_email": "Changer l'Email",
+      "change_password": "Changer le Mot de Passe",
+      "delete_account": "Supprimer le Compte",
+      "delete_confirmation": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
+      "current_password": "Mot de Passe Actuel",
+      "new_password": "Nouveau Mot de Passe",
+      "confirm_password": "Confirmer le Nouveau Mot de Passe",
+      "password_requirements": "Le mot de passe doit contenir au moins 8 caractères"
+    },
+    "activity": {
+      "last_active": "Afficher le Statut de Dernière Activité",
+      "last_active_description": "Personne ne peut voir votre statut de dernière activité, et vous ne pouvez pas voir quand les autres étaient actifs pour la dernière fois."
+    },
+    "matches": {
+      "title": "Correspondances",
+      "current_interactions": "Liste des Interactions Actuelles"
+    },
+    "visibility": {
+      "title": "Visibilité",
+      "show_last_name": "Afficher le Nom de Famille",
+      "show_location": "Afficher l'Emplacement",
+      "show_events": "Afficher Mes Événements",
+      "show_activity": "Afficher le Statut d'Activité"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "push_notifications": "Notifications Push",
+      "email_notifications": "Notifications par Email",
+      "push_description": "Recevoir des notifications push pour les nouvelles correspondances et messages",
+      "email_description": "Recevoir des notifications par email pour les mises à jour importantes"
+    },
+    "safety": {
+      "title": "Sécurité",
+      "pause_account": "Mettre en Pause le Compte",
+      "pause_account_description": "Masquer temporairement votre profil des nouvelles correspondances",
+      "selfie_verification": "Vérification par Selfie",
+      "not_verified": "Vous n'êtes pas encore vérifié",
+      "block_list": "Liste de Blocage",
+      "block_list_description": "Gérer les utilisateurs bloqués",
+      "hidden_words": "Mots Cachés",
+      "hidden_words_description": "Filtrer le contenu potentiellement offensant"
+    },
+    "phone_email": {
+      "title": "Téléphone et Email",
+      "edit": "Modifier",
+      "verify_phone": "Vérifier le Numéro de Téléphone",
+      "phone_verified": "Numéro de Téléphone Vérifié",
+      "email_verified": "Email Vérifié"
+    },
+    "data_privacy": {
+      "title": "Données et Confidentialité",
+      "download_data": "Télécharger vos Données",
+      "privacy_policy": "Politique de Confidentialité",
+      "terms_of_service": "Conditions d'Utilisation"
+    }
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "back": "Retour",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "success": "Succès",
+    "error": "Erreur",
+    "loading": "Chargement...",
+    "logout": "Déconnexion"
+  },
+  "alerts": {
+    "logout_title": "Déconnexion",
+    "logout_message": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "delete_title": "Supprimer le Compte",
+    "delete_message": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
+    "success_email": "Votre email a été modifié avec succès.",
+    "success_password": "Votre mot de passe a été modifié avec succès.",
+    "error_required_fields": "Veuillez remplir tous les champs requis.",
+    "error_invalid_email": "L'adresse email n'est pas valide.",
+    "error_wrong_password": "Le mot de passe actuel est incorrect.",
+    "error_password_mismatch": "Les nouveaux mots de passe ne correspondent pas.",
+    "error_generic": "Une erreur s'est produite. Veuillez réessayer."
+  }
+}
