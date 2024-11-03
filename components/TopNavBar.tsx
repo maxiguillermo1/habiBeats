@@ -22,14 +22,14 @@ const TopNavBar = () => {
 
   return (
     <View style={styles.topNav}>
-      <TouchableOpacity onPress={() => navigateTo('/events/search')}>
-        <Text style={[getNavItemStyle('/search'), styles.boldText]}>Search</Text>
+      <TouchableOpacity style={styles.sideItem} onPress={() => navigateTo('/events/search')}>
+        <Text style={[getNavItemStyle('/events/search'), styles.boldText]}>Search</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/events/trending')}>
-        <Text style={[getNavItemStyle('/trending'), styles.boldText]}>Trending</Text>
+      <TouchableOpacity style={styles.centerItem} onPress={() => navigateTo('/events/trending')}>
+        <Text style={[getNavItemStyle('/events/trending'), styles.boldText]}>Trending</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/events/myevents')}>
-        <Text style={[getNavItemStyle('/myevents'), styles.boldText]}>My Events</Text>
+      <TouchableOpacity style={styles.sideItem} onPress={() => navigateTo('/events/myevents')}>
+        <Text style={[getNavItemStyle('/events/myevents'), styles.boldText]}>My Events</Text>
       </TouchableOpacity>
     </View>
   );
@@ -43,16 +43,24 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     marginTop: 40,
+    width: '100%',
+    gap: 5,
+  },
+  sideItem: {
+    width: '20%',
+    alignItems: 'center',
+  },
+  centerItem: {
+    width: '20%',
+    alignItems: 'center',
   },
   navItem: {
     fontSize: 14,
     color: 'black',
-    marginHorizontal: 20,
   },
   activeNavItem: {
     fontSize: 14,
     color: '#fc6c85',
-    marginHorizontal: 20,
   },
   boldText: {
     fontWeight: 'bold',

@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     color: '#FF69B4',
   },
   spacer: {
-    height: 20,
+    height: -5,
   },
 });
 

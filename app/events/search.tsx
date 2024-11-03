@@ -18,11 +18,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { debounce } from 'lodash';
 import { getDistance } from 'geolib';
 import axios from 'axios';
+import getBestImage from '../../utils/imageUtils';
 
 const TICKETMASTER_API_KEY = 'dUU6uAGlJCm1uSxAJJFjS8oeh1gPkaSe';
 const GOOGLE_PLACES_API_KEY = 'AIzaSyAa8GhuQxxebW8Dw-2xMyFGnBA3R5IZHOc'; // Replace with your actual API key
 const { width } = Dimensions.get('window');
-const cardWidth = width * 0.38; // Reduced from 42% to 38% of screen width
+const cardWidth = 135; // Keep original card size
 
 // Add this near the top of your file, after other imports and constants
 const genreMapping: { [key: string]: string } = {
@@ -291,43 +292,10 @@ const EditPreferencesModal: React.FC<EditPreferencesModalProps> = ({ visible, on
   );
 };
 
-// Helper function to get the best quality image from an array of images
-const getBestImage = (images: Array<{ url: string; width?: number; height?: number }>) => {
-  // Sort images by resolution (width * height) in descending order, if available
-  const sortedImages = images.sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
-  return sortedImages[0]?.url || '';
+// Add this function before using it
+const hasExtendedPreferences = (preferences: any): boolean => {
+  return !!(preferences.similarGenres || preferences.similarArtists);
 };
-
-// Utility Functions
-/**
- * Converts full city names to their common abbreviations
- * Example: "New York" -> "NYC"
- */
-const getCityAbbreviation = (cityName: string): string => {
-  const cityAbbreviations: { [key: string]: string } = {
-    'New York': 'NYC',
-    'Los Angeles': 'LA',
-    'San Francisco': 'SF',
-    'Las Vegas': 'LV',
-    'Chicago': 'CHI',
-    'Miami': 'MIA',
-    'Dallas': 'DAL',
-    'Houston': 'HOU',
-    'Washington': 'DC',
-    'Boston': 'BOS',
-    // Add more cities and their abbreviations as needed
-  };
-
-  return cityAbbreviations[cityName] || cityName.substring(0, 2).toUpperCase();
-};
-
-/**
- * Type guard to check if a preferences object contains extended preferences
- * Used to safely access similarGenres and similarArtists properties
- */
-function hasExtendedPreferences(prefs: any): prefs is { similarGenres: string[], similarArtists: string[] } {
-  return 'similarGenres' in prefs && 'similarArtists' in prefs;
-}
 
 // Main SearchEvents component
 const SearchEvents = () => {
@@ -397,10 +365,10 @@ const SearchEvents = () => {
           // Combine user's direct preferences with similar/recommended items
           const allGenres = new Set([
             ...(preferences.musicPreference || []),
-            ...(hasExtendedPreferences(preferences) ? preferences.similarGenres : [])
+            ...((preferences as any).similarGenres || [])
           ]);
           const favoriteArtists = preferences.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? [];
-          const similarArtists = hasExtendedPreferences(preferences) ? preferences.similarArtists : [];
+          const similarArtists = (preferences as any).similarArtists ?? [];
           const allArtists = [...favoriteArtists, ...similarArtists];
           
           // Log fetched preferences for debugging
@@ -685,6 +653,7 @@ const SearchEvents = () => {
     const cityName = item._embedded.venues[0]?.city?.name;
     const cityAbbr = cityName ? getCityAbbreviation(cityName) : '';
     const venueAndCity = venueName && cityAbbr ? `${venueName}, ${cityAbbr}` : venueName || 'Venue not specified';
+    const isLongVenue = venueAndCity.length > 25;
 
     // Return the event card component wrapped in a TouchableOpacity for tap handling
     return (
@@ -710,7 +679,12 @@ const SearchEvents = () => {
         {/* Display venue location with icon */}
         <View style={styles.venueContainer}>
           <Ionicons name="location-outline" size={10} color="#000000" />
-          <Text style={styles.venue}>{venueAndCity}</Text>
+          <Text style={[
+            styles.venue, 
+            isLongVenue && styles.smallVenue
+          ]} numberOfLines={1}>
+            {venueAndCity}
+          </Text>
         </View>
         {/* Show distance from user if available */}
         {item.distance && (
@@ -718,7 +692,9 @@ const SearchEvents = () => {
         )}
         {/* Show artist name for favorite artist events */}
         {item.relevanceScore === 2 && item._embedded?.attractions?.[0]?.name && (
-          <Text style={styles.relevance}>{item._embedded.attractions[0].name}</Text>
+          <Text style={styles.artistName} numberOfLines={1} ellipsizeMode="tail">
+            {item._embedded.attractions[0].name}
+          </Text>
         )}
         {/* Show "Similar Artist" label for recommended events */}
         {item.relevanceScore === 1 && (
@@ -820,7 +796,7 @@ const SearchEvents = () => {
             onSubmitEditing={triggerSearch}
           />
           <TouchableOpacity onPress={triggerSearch} style={styles.searchButton}>
-            <Ionicons name="search" size={18} color="#000" />
+            <Ionicons name="search" size={14} color="#000" />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleEditPress} style={styles.editButton}>
             <Ionicons name="create-outline" size={18} color="#000" />
@@ -834,15 +810,12 @@ const SearchEvents = () => {
       ) : (
         <FlatList
           data={events}
+          numColumns={2}
           renderItem={renderEvent}
           keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={styles.eventGrid}
           columnWrapperStyle={styles.row}
-          onEndReached={loadMoreEvents}
-          onEndReachedThreshold={0.1}
-          ListFooterComponent={isLoadingMore ? <ActivityIndicator size="large" color="#79ce54" /> : null}
-          ListEmptyComponent={<View style={styles.emptyBuffer} />}
+          ListFooterComponent={<View style={styles.emptyBuffer} />}
         />
       )}
       <BottomNavBar />
@@ -860,279 +833,300 @@ const SearchEvents = () => {
 
 const styles = StyleSheet.create({
   pageContainer: {
-    flex: 1,
-    backgroundColor: '#fff8f0',
+    flex: 1, // Makes container take up full screen height
+    backgroundColor: '#fff8f0', // Sets cream colored background
   },
   searchWrapper: {
-    alignItems: 'center',
-    marginTop: 13, // Increased top margin
-    marginBottom: 10,
+    alignItems: 'center', // Centers search bar horizontally
+    paddingTop: 30, // Adds space above search bar
+    marginBottom: -5, // Reduces space below search bar
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#000',
-    borderRadius: 20,
-    width: '40%',
-    height: 20,
-    paddingHorizontal: 10,
+    flexDirection: 'row', // Places search elements in a horizontal line
+    alignItems: 'center', // Vertically centers items in search bar
+    backgroundColor: '#fff', // White background for search bar
+    borderWidth: 2, // Adds border around search bar
+    borderColor: '#000', // Black border color
+    borderRadius: 20, // Rounds corners of search bar
+    width: '40%', // Sets search bar width to 40% of screen
+    height: 20, // Fixed height for search bar
+    paddingHorizontal: 10, // Adds horizontal padding inside search bar
   },
   searchInput: {
-    flex: 1,
-    fontSize: 12,
-    paddingVertical: 5,
-    paddingRight: 25,
+    flex: 1, // Makes input take up remaining space
+    fontSize: 8, // Sets text size in search input
+    paddingVertical: 5, // Adds vertical padding inside input
+    paddingRight: 25, // Adds space for search icon
   },
   searchIcon: {
-    position: 'absolute',
-    right: 10,
+    position: 'absolute', // Positions icon relative to container
+    right: 10, // Places icon 10 units from right
   },
   editButton: {
-    position: 'absolute',
-    right: -33,
-    padding: 2,
-    marginTop: 50, // Add some padding for easier tapping
+    position: 'absolute', // Positions button relative to container
+    right: -33, // Places button outside search container
+    padding: 2, // Adds padding around edit icon
+    marginTop: 50, // Moves button down for tapping
   },
   sectionTitle: {
-    marginLeft: 67,
-    marginRight: 30, // Add right margin
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#79ce54',
-    marginBottom: 0,
-    marginTop: 0,
+    fontSize: 15, // Sets size of section title
+    fontWeight: 'bold', // Makes title text bold
+    color: '#79ce54', // Sets green color for title
+    marginBottom: 0, // Removes space below title
+    marginLeft: 85, // Positions title from left edge
+    marginTop: 30, // Adds space above title
   },
   scrollViewContent: {
-    flexGrow: 1,
-    paddingBottom: 100,
+    flexGrow: 1, // Allows content to expand
+    paddingBottom: 100, // Adds padding at bottom of scroll view
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    paddingBottom: 100, // Add extra padding at the bottom
+    flexDirection: 'row', // Arranges items horizontally
+    flexWrap: 'wrap', // Allows items to wrap to next line
+    justifyContent: 'center', // Centers items horizontally
+    paddingVertical: 10, // Adds vertical padding to grid
+    paddingHorizontal: 30, // Adds horizontal padding to grid
+    paddingBottom: 100, // Extra padding at bottom
   },
   container: {
-    width: cardWidth,
-    marginBottom: 15,
-    alignItems: 'center',
+    width: cardWidth, // Sets fixed width for event containers
+    marginBottom: 15, // Adds space between rows
+    alignItems: 'center', // Centers items horizontally
+    marginHorizontal: 0, // Removes horizontal margins
   },
   card: {
-    backgroundColor: '#fff8f0',
-    borderRadius: 0,
-    overflow: 'hidden',
-    aspectRatio: 1,
-    padding: 6, // Reduced padding to make image smaller
-    width: '87%', // Reduced width to make image smaller
+    backgroundColor: '#fff8f0', // Sets cream background for cards
+    borderRadius: 0, // Removes corner rounding
+    overflow: 'hidden', // Clips content to card bounds
+    aspectRatio: 1, // Makes cards square
+    padding: 6, // Adds padding inside cards
+    width: '87%', // Sets card width relative to container
   },
   imageContainer: {
-    flex: 1,
-    overflow: 'hidden',
+    flex: 1, // Takes up available space
+    overflow: 'hidden', // Clips image to container
   },
   image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-    aspectRatio: 16 / 9, // Maintain a 16:9 aspect ratio
+    width: '100%', // Makes image fill container width
+    height: '100%', // Makes image fill container height
+    resizeMode: 'cover', // Scales image to cover container
+    borderRadius: 0, // Removes image corner rounding
   },
   date: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#fc6c85',
-    marginTop: 4,
-    textAlign: 'center',
+    fontSize: 11, // Sets date text size
+    fontWeight: '800', // Makes date text extra bold
+    color: '#FF69B4', // Sets pink color for date
+    marginTop: 4, // Adds space above date
+    textAlign: 'center', // Centers date text
+    width: '100%', // Makes date take full width
   },
   venueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
+    flexDirection: 'row', // Arranges venue elements horizontally
+    alignItems: 'center', // Centers items vertically
+    justifyContent: 'center', // Centers items horizontally
+    marginTop: 2, // Adds space above venue
+    paddingHorizontal: 10, // Adds horizontal padding
+    width: '100%', // Takes full width
   },
   venue: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#37bdd5',
-    marginLeft: 2,
+    fontSize: 10, // Sets venue text size
+    fontWeight: '500', // Makes venue text medium weight
+    color: '#37bdd5', // Sets blue color for venue
+    marginLeft: 2, // Adds space to left of venue
+    textAlign: 'center', // Centers venue text
+    flexShrink: 1, // Allows text to shrink if needed
+  },
+  smallVenue: {
+    fontSize: 8, // Smaller text for long venue names
+  },
+  artistName: {
+    fontSize: 11, // Sets artist name text size
+    color: '#79ce54', // Sets green color for artist name
+    textAlign: 'center', // Centers artist name
+    width: '100%', // Takes full width
+    marginTop: 2, // Adds space above artist name
   },
   loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, // Takes up available space
+    justifyContent: 'center', // Centers spinner vertically
+    alignItems: 'center', // Centers spinner horizontally
   },
   errorText: {
-    fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
+    fontSize: 16, // Sets error text size
+    color: 'red', // Sets red color for errors
+    textAlign: 'center', // Centers error text
+    marginTop: 20, // Adds space above error
   },
   noResultsText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 20,
+    fontSize: 16, // Sets no results text size
+    color: '#666', // Sets gray color for no results
+    textAlign: 'center', // Centers no results text
+    marginTop: 20, // Adds space above no results
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1, // Takes up full screen
+    justifyContent: 'center', // Centers modal vertically
+    alignItems: 'center', // Centers modal horizontally
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    width: '80%',
-    maxHeight: '80%',
+    backgroundColor: '#fff', // White background for modal
+    padding: 15, // Adds padding inside modal
+    borderRadius: 10, // Rounds modal corners
+    width: '80%', // Sets modal width
+    maxHeight: '80%', // Limits modal height
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 18, // Sets modal title size
+    fontWeight: 'bold', // Makes title bold
+    marginBottom: 10, // Adds space below title
+    textAlign: 'center', // Centers title text
   },
   inputContainer: {
-    marginBottom: 10,
+    marginBottom: 10, // Adds space below inputs
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 14, // Sets input label size
+    fontWeight: 'bold', // Makes labels bold
+    marginBottom: 5, // Adds space below labels
   },
   everywhereButton: {
-    backgroundColor: '#79ce54',
-    padding: 8,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 5,
+    backgroundColor: '#79ce54', // Sets green background
+    padding: 8, // Adds padding inside button
+    borderRadius: 5, // Rounds button corners
+    alignItems: 'center', // Centers button content
+    marginBottom: 5, // Adds space below button
   },
   everywhereButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: '#fff', // White text color
+    fontWeight: 'bold', // Makes button text bold
+    fontSize: 12, // Sets button text size
   },
   autocompleteContainer: {
-    flex: 0,
-    position: 'relative',
-    zIndex: 1,
+    flex: 0, // Prevents container from growing
+    position: 'relative', // For positioning dropdown
+    zIndex: 1, // Places dropdown above other content
   },
   locationInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    borderWidth: 1, // Adds border around input
+    borderColor: '#ccc', // Sets light gray border
+    borderRadius: 5, // Rounds input corners
   },
   locationTextInput: {
-    height: 35,
-    fontSize: 14,
-    paddingHorizontal: 8,
+    height: 35, // Sets input height
+    fontSize: 14, // Sets input text size
+    paddingHorizontal: 8, // Adds horizontal padding
   },
   autocompleteListView: {
-    maxHeight: 100,
+    maxHeight: 100, // Limits dropdown height
   },
   genreList: {
-    maxHeight: 150,
+    maxHeight: 150, // Limits genre list height
   },
   genreItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    flexDirection: 'row', // Arranges genre items horizontally
+    justifyContent: 'space-between', // Spaces items evenly
+    alignItems: 'center', // Centers items vertically
+    paddingVertical: 8, // Adds vertical padding
+    borderBottomWidth: 1, // Adds bottom border
+    borderBottomColor: '#eee', // Light gray border
   },
   genreText: {
-    fontSize: 14,
+    fontSize: 14, // Sets genre text size
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    flexDirection: 'row', // Arranges buttons horizontally
+    justifyContent: 'space-between', // Spaces buttons evenly
+    marginTop: 10, // Adds space above buttons
   },
   button: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 8,
-    backgroundColor: '#79ce54',
-    borderRadius: 5,
-    alignItems: 'center',
+    flex: 1, // Makes buttons equal width
+    marginHorizontal: 5, // Adds space between buttons
+    padding: 8, // Adds padding inside buttons
+    backgroundColor: '#79ce54', // Sets green background
+    borderRadius: 5, // Rounds button corners
+    alignItems: 'center', // Centers button content
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: '#fff', // White text color
+    fontWeight: 'bold', // Makes button text bold
+    fontSize: 12, // Sets button text size
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#ccc', // Gray background for disabled
   },
   eventContainer: {
-    flexDirection: 'row',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    flexDirection: 'row', // Arranges event items horizontally
+    padding: 10, // Adds padding around events
+    borderBottomWidth: 1, // Adds bottom border
+    borderBottomColor: '#ccc', // Light gray border
   },
   eventImage: {
-    width: 80,
-    height: 80,
-    marginRight: 10,
-    borderRadius: 5,
+    width: 80, // Sets event image width
+    height: 80, // Sets event image height
+    marginRight: 10, // Adds space right of image
+    borderRadius: 5, // Rounds image corners
   },
   eventDetails: {
-    flex: 1,
-    justifyContent: 'center',
+    flex: 1, // Takes remaining space
+    justifyContent: 'center', // Centers content vertically
   },
   eventName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 16, // Sets event name size
+    fontWeight: 'bold', // Makes name bold
+    marginBottom: 5, // Adds space below name
   },
   eventDate: {
-    fontSize: 14,
-    color: '#37bdd5',
-    marginBottom: 3,
+    fontSize: 14, // Sets date text size
+    color: '#37bdd5', // Sets blue color for date
+    marginBottom: 3, // Adds space below date
   },
   eventVenue: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 14, // Sets venue text size
+    color: '#666', // Sets gray color for venue
   },
   eventList: {
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    paddingHorizontal: 10, // Adds horizontal padding
+    paddingTop: 10, // Adds top padding
   },
   eventRow: {
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    justifyContent: 'space-between', // Spaces events evenly
+    marginBottom: 20, // Adds space below rows
   },
   eventItem: {
-    width: '48%', // Adjust this value as needed to fit your layout
-    marginBottom: 10,
+    width: '48%', // Sets event width to roughly half
+    marginBottom: 10, // Adds space below items
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center', // Centers items horizontally
+    gap: 0, // Removes gap between cards
+    width: '100%', // Takes full width
   },
   listFooter: {
-    height: 100, // Add extra space at the bottom of the list
+    height: 100, // Adds space at list bottom
   },
   distance: {
-    fontSize: 10,
-    color: '#666',
-    marginTop: 2,
+    fontSize: 10, // Sets distance text size
+    color: '#666', // Sets gray color for distance
+    marginTop: 2, // Adds space above distance
   },
   relevance: {
-    fontSize: 10,
-    color: '#79ce54',
-    marginTop: 2,
-    textAlign: 'center',
-    flexWrap: 'wrap',
+    fontSize: 10, // Sets relevance text size
+    color: '#79ce54', // Sets green color for relevance
+    marginTop: 2, // Adds space above relevance
+    textAlign: 'center', // Centers relevance text
+    flexWrap: 'wrap', // Allows text to wrap
   },
   emptyBuffer: {
-    height: 100, // Adjust as needed
+    height: 100, // Adds space at bottom
   },
   searchButton: {
-    padding: 0,
+    padding: 0, // Removes padding from search button
+  },
+  eventGrid: {
+    paddingHorizontal: 20, // Adds horizontal padding
+    marginTop: 25, // Adds space above grid
+    paddingBottom: 100, // Adds padding at bottom
   },
 });
 
@@ -1143,4 +1137,8 @@ export default SearchEvents;
 
 // END of search events page frontend & backend
 // END of Maxwell Guillermo
+
+const getCityAbbreviation = (cityName: string): string => {
+  return cityName.length > 12 ? cityName.substring(0, 12) + '...' : cityName;
+};
 

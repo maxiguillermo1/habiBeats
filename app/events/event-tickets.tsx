@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import TicketMasterAPI, { BASE_URL, TICKETMASTER_API_KEY } from '../../api/ticket-master-api';
@@ -25,35 +25,50 @@ const EventTicketsPage = () => {
     const fetchTicketData = async () => {
       try {
         if (!eventData?.id) {
+          console.log('Missing event ID:', eventData);
           setError('No event ID provided');
           return;
         }
 
+        console.log('Fetching data for event ID:', eventData.id);
         const response = await TicketMasterAPI.getEventById(eventData.id);
-        console.log('Ticketmaster Response:', JSON.stringify(response));
+        console.log('Raw API Response:', response);
 
-        const priceData = await TicketMasterAPI.getEventPrices(eventData.id);
-        console.log('Price Response:', JSON.stringify(priceData));
+        // Extract price ranges from the response
+        let priceRanges = [];
+        
+        if (response.priceRanges && response.priceRanges.length > 0) {
+          priceRanges = response.priceRanges;
+        } else if (response._embedded?.events?.[0]?.priceRanges) {
+          priceRanges = response._embedded.events[0].priceRanges;
+        }
 
-        if (priceData && priceData.priceRanges) {
-          setTicketTypes([{
-            type: 'Standard',
-            min: priceData.priceRanges[0].min,
-            max: priceData.priceRanges[0].max,
-            currency: priceData.priceRanges[0].currency
-          }]);
+        // Get the URL from the response
+        const ticketUrl = response.url || eventData?.url || response._embedded?.events?.[0]?.url;
+
+        if (priceRanges.length > 0) {
+          setTicketTypes(priceRanges.map((price: any) => ({
+            type: price.type || 'Standard',
+            min: price.min || null,
+            max: price.max || null,
+            currency: price.currency || 'USD',
+            url: ticketUrl || ''
+          })));
         } else {
+          // If no price ranges found, try to get price from eventData
+          const defaultPrice = eventData.priceRanges?.[0]?.min || null;
           setTicketTypes([{
             type: 'Standard',
-            min: null,
-            max: null,
+            min: defaultPrice,
+            max: defaultPrice,
             currency: 'USD',
-            url: response.url || ''
+            url: ticketUrl || ''
           }]);
         }
+
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching ticket data:', error);
+        console.error('Detailed error:', error);
         setError('Failed to load ticket information');
         setLoading(false);
       }
@@ -62,11 +77,19 @@ const EventTicketsPage = () => {
     fetchTicketData();
   }, [eventData?.id]);
 
-  const handleBuyTickets = async (url: string) => {
+  const handleBuyTickets = async (ticket: any) => {
     try {
-      const supported = await Linking.canOpenURL(url);
+      // Get the URL from the ticket data or event data
+      const ticketUrl = ticket.url || eventData?.url || eventData?.outlets?.[1]?.url;
+      
+      if (!ticketUrl) {
+        setError('No ticket purchase link available');
+        return;
+      }
+
+      const supported = await Linking.canOpenURL(ticketUrl);
       if (supported) {
-        await Linking.openURL(url);
+        await Linking.openURL(ticketUrl);
       } else {
         setError('Cannot open ticket purchase link');
       }
@@ -77,49 +100,56 @@ const EventTicketsPage = () => {
   };
 
   const formatPrice = (price: number | null, currency: string) => {
-    if (price === null) return 'N/A';
+    if (price === null) return 'See Prices on Ticketmaster';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD'
     }).format(price);
   };
 
+  const getTicketPrice = () => {
+    if (ticketTypes.length > 0) {
+      const lowestPrice = ticketTypes[0].min;
+      if (lowestPrice === null) {
+        return 'See Prices on Ticketmaster';
+      }
+      return formatPrice(lowestPrice, ticketTypes[0].currency);
+    }
+    return 'See Prices on Ticketmaster';
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#007AFF" />
           </TouchableOpacity>
-
-          <Text style={styles.title}>Tickets</Text>
-          <Text style={styles.eventName}>{eventData?.name}</Text>
 
           {loading ? (
             <ActivityIndicator size="large" color="#37bdd5" style={styles.loader} />
           ) : error ? (
             <Text style={styles.errorText}>{error}</Text>
           ) : (
-            <View style={styles.ticketContainer}>
-              {ticketTypes.map((ticket, index) => (
-                <View key={index} style={styles.ticketWrapper}>
-                  <View style={styles.ticketOption}>
-                    <Text style={styles.ticketType}>{ticket.type}</Text>
-                    <Text style={styles.priceRange}>
-                      {formatPrice(ticket.min, ticket.currency)} - {formatPrice(ticket.max, ticket.currency)}
-                    </Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.buyButton}
-                    onPress={() => eventData?.url && handleBuyTickets(eventData.url)}
-                  >
-                    <Text style={styles.buyButtonText}>Buy Now</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {ticketTypes.length === 0 && !error && (
-                <Text style={styles.noTicketsText}>No tickets available at this time</Text>
-              )}
+            <View style={styles.contentContainer}>
+              <View style={styles.headerContent}>
+                <Text style={styles.title}>Tickets</Text>
+                <Text style={styles.eventName}>{eventData?.name}</Text>
+                <Text style={styles.priceText}>Ticketmaster: {getTicketPrice()}</Text>
+              </View>
+
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={require('../../assets/images/events/ticket-master-logo.jpg')}
+                  style={styles.ticketMasterLogo}
+                />
+                <TouchableOpacity 
+                  style={styles.buyButton}
+                  onPress={() => handleBuyTickets(ticketTypes[0])}
+                >
+                  <Text style={styles.buyButtonText}>Buy Tickets</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -136,66 +166,70 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 15,
+    justifyContent: 'center',
+    paddingTop: 0,
+  },
+  contentContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+    marginTop: -50,
+  },
+  headerContent: {
+    alignItems: 'center',
+    marginBottom: 15,
+    width: '100%',
   },
   backButton: {
     padding: 10,
+    marginBottom: 10,
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    zIndex: 1,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
-    marginVertical: 20,
+    marginBottom: 10,
   },
   eventName: {
     fontSize: 18,
     textAlign: 'center',
     color: '#666',
-    marginBottom: 20,
+    marginBottom: 15,
+    fontWeight: '700',
   },
-  ticketContainer: {
-    gap: 20,
-  },
-  ticketWrapper: {
-    alignItems: 'center',
-    gap: 10,
-  },
-  ticketOption: {
-    backgroundColor: 'white',
-    padding: 15,
-    width: 150,
-    height: 150,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ticketType: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  priceRange: {
-    fontSize: 20,
+  priceText: {
+    fontSize: 15,
     color: '#37bdd5',
-    marginVertical: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  ticketMasterLogo: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+    marginBottom: 20,
   },
   buyButton: {
     backgroundColor: '#37bdd5',
-    padding: 15,
+    padding: 12,
     borderRadius: 5,
     alignItems: 'center',
-    width: '80%',
+    width: '60%',
+    marginTop: 10,
   },
   buyButtonText: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontWeight: '400',
+    fontSize: 14,
   },
   loader: {
     marginTop: 50,
@@ -205,12 +239,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
-  },
-  noTicketsText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-    marginTop: 20,
   },
 });
 

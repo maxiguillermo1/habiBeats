@@ -22,23 +22,18 @@ export const getGooglePlacesQueryConfig = (): {
     // Could be expanded to support multiple languages
     language: 'en',
     
-    // Restrict results to cities only
-    // Other options include: 
-    // - '(regions)'
-    // - '(geocode)'
-    // - '(establishment)'
-    types: '(cities)',
+    // Remove the cities restriction since we're searching for venues
+    types: '(establishment)',
   };
 };
 
 // Function to fetch data from Google Places API using a query string
 export const getGooglePlacesAPIRequest = async (query: string) => {
   const config = getGooglePlacesQueryConfig();
-  // Construct the API request URL
-  const response = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&${config.key}&language=${config.language}&types=${config.types}`);
-  // Parse the response as JSON
+  // Fix the URL construction - properly add the key parameter
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${config.key}&language=${config.language}`;
+  const response = await fetch(url);
   const data = await response.json();
-  // Return the parsed data
   return data;
 };
 

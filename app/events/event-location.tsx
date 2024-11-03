@@ -18,6 +18,7 @@ const EventLocationPage = () => {
   });
 
   const [locationDetails, setLocationDetails] = useState({
+    address: '',
     city: '',
     state: '',
   });
@@ -25,54 +26,58 @@ const EventLocationPage = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const searchQuery = `${venue}, ${location}`;
-        console.log('Searching for:', searchQuery);
+        const searchQuery = Array.isArray(venue) ? venue[0] : venue || '';
+        
+        if (!searchQuery) {
+          console.error('No venue provided');
+          return;
+        }
+        
+        console.log('Searching for venue:', searchQuery);
         const response = await getGooglePlacesAPIRequest(searchQuery);
         
         if (response.results && response.results.length > 0) {
           const place = response.results[0];
-          console.log('Found venue location:', place.formatted_address);
+          console.log('Found venue:', place.formatted_address);
           
           const newCoordinates = {
             latitude: place.geometry.location.lat,
             longitude: place.geometry.location.lng,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
           };
           setCoordinates(newCoordinates);
           
-          const formattedAddress = place.formatted_address;
-          const addressParts = formattedAddress.split(',').map((part: string) => part.trim());
-          
+          const addressComponents = place.address_components || [];
           let city = '';
           let state = '';
           
-          if (addressParts.length >= 3) {
-            city = addressParts[addressParts.length - 3];
-            const stateZip = addressParts[addressParts.length - 2].split(' ');
-            state = stateZip[0];
+          for (const component of addressComponents) {
+            if (component.types.includes('locality')) {
+              city = component.long_name;
+            }
+            if (component.types.includes('administrative_area_level_1')) {
+              state = component.short_name;
+            }
           }
           
-          console.log('Extracted location:', { city, state });
-          
           setLocationDetails({
-            city,
-            state,
+            address: place.formatted_address,
+            city: city || '',
+            state: state || '',
           });
+        } else {
+          console.error('No results found for venue');
         }
       } catch (error) {
-        console.error('Error fetching location:', error);
+        console.error('Error fetching venue location:', error);
       }
     };
 
-    if (venue || location) {
+    if (venue) {
       fetchLocation();
     }
-  }, [venue, location]);
-
-  useEffect(() => {
-    console.log('Current locationDetails:', locationDetails);
-  }, [locationDetails]);
+  }, [venue]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -84,20 +89,13 @@ const EventLocationPage = () => {
         </View>
         
         <Text style={styles.title}>Event Location</Text>
-        <Text style={styles.eventName}>{eventName}</Text>
-        <Text style={styles.locationDetails}>
-          {locationDetails.city && locationDetails.state 
-            ? `${locationDetails.city}, ${locationDetails.state}`
-            : location}
-        </Text>
+        {eventName && <Text style={styles.eventName}>{eventName}</Text>}
         
         <View style={styles.venueDetails}>
-          <Text style={styles.venueText}>{venue}</Text>
-          <Text style={styles.locationText}>
-            {locationDetails.city && locationDetails.state 
-              ? `${locationDetails.city}, ${locationDetails.state}`
-              : location}
-          </Text>
+          {venue && <Text style={styles.venueText}>{venue}</Text>}
+          {locationDetails.address && (
+            <Text style={styles.locationText}>{locationDetails.address}</Text>
+          )}
         </View>
 
         <View style={styles.mapContainer}>
@@ -108,15 +106,18 @@ const EventLocationPage = () => {
             showsCompass={true}
             showsScale={true}
             showsBuildings={true}
-            showsTraffic={true}
+            zoomEnabled={true}
+            minZoomLevel={10}
+            maxZoomLevel={20}
+            zoomControlEnabled={true}
           >
             <Marker
               coordinate={{
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude,
               }}
-              title={venue as string}
-              description={`${locationDetails.city}, ${locationDetails.state}`}
+              title={Array.isArray(venue) ? venue[0] : venue || 'Event Location'}
+              description={Array.isArray(eventName) ? eventName[0] : eventName || ''}
               pinColor="#fba904"
             />
           </MapView>

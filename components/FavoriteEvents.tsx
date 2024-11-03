@@ -4,64 +4,74 @@
 // START of FavoriteEvents UI/UX
 // START of Maxwell Guillermo Contribution
 
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { formatDate } from '../utils/dateUtils';
 
 interface Event {
   title: string;
   date: string;
   venue: string;
-  imageUrl: any; // Use a more specific type if possible
+  imageUrl: string; // Change type to string for URL
 }
 
-const favoriteEvents = [
-    {
-        title: "Camp Flog Gnaw Carnival",
-        date: "November 8 - 9",
-        venue: "Dodger Stadium - Los Angeles",
-        imageUrl: require('../assets/images/events/floggnaw.png')
-      },
-      {
-        title: "Chief Keef - 4NEM Tour",
-        date: "November 2",
-        venue: "Hollywood Palladium",
-        imageUrl: require('../assets/images/events/chief.png')
-      },
-      {
-        title: "Kaytranada - Timeless Tour",
-        date: "October 26",
-        venue: "BMO Stadium",
-        imageUrl: require('../assets/images/events/kaytranada.png')
-      },
-      {
-        title: "Don Toliver - Life of a Don Tour",
-        date: "October 19",
-        venue: "Crypto.com Area",
-        imageUrl: require('../assets/images/events/dontoliver.png')
-      },
-      {
-        title: "Kehlani - Blue Water Road Trip",
-        date: "October 30",
-        venue: "The Kia Forum",
-        imageUrl: require('../assets/images/events/kehlani.png')
-      },
-];
-
 const FavoriteEvents = () => {
+  const router = useRouter();
+  const [favoriteEvents, setFavoriteEvents] = useState([]);
+
+  useEffect(() => {
+    const loadFavoriteEvents = async () => {
+      try {
+        const savedEvents = await AsyncStorage.getItem('favoriteEvents');
+        if (savedEvents) {
+          setFavoriteEvents(JSON.parse(savedEvents));
+        }
+      } catch (error) {
+        console.error('Error loading favorite events:', error);
+      }
+    };
+
+    loadFavoriteEvents();
+  }, []);
+
+  const handleEventPress = (event: Event) => {
+    const eventData = {
+      name: event.title,
+      date: event.date,
+      venue: event.venue,
+      imageUrl: event.imageUrl,
+      // Add any other fields needed for event-details
+    };
+    
+    router.push({
+      pathname: '/events/event-details',
+      params: { eventData: JSON.stringify(eventData) }
+    });
+  };
+
   const renderEvent = (event: Event, index: number) => (
-    <View key={index} style={styles.eventCard}>
-      <Image source={event.imageUrl} style={styles.eventImage} />
+    <TouchableOpacity 
+      key={index} 
+      style={styles.eventCard}
+      onPress={() => handleEventPress(event)}
+    >
+      <Image 
+        source={{ uri: event.imageUrl }}
+        style={styles.eventImage}
+      />
       <View style={styles.eventInfo}>
         <Text style={styles.eventName} numberOfLines={3} ellipsizeMode="tail">{event.title}</Text>
-        <Text style={styles.eventDate}>{event.date}</Text>
+        <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
         <View style={styles.eventLocation}>
           <Ionicons name="location-outline" size={10} color="#888" />
           <Text style={styles.eventLocationText} numberOfLines={1} ellipsizeMode="tail">{event.venue}</Text>
         </View>
       </View>
       <Ionicons name="star" size={14} color="#FFD700" style={styles.starIcon} />
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -86,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     width: '80%',
     alignSelf: 'center',
-    height: 280,
+    height: 320,
   },
   header: {
     flexDirection: 'row',

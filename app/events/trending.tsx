@@ -11,15 +11,22 @@ import BottomNavBar from '../../components/BottomNavBar';
 import { Stack } from 'expo-router';
 import TrendingEventCard  from '../../components/TrendingEventCard';
 
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'long',    // "December"
+    day: 'numeric',   // "2"
+    year: 'numeric'   // "2024"
+  });
+};
+
 const Trending = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
       <View style={styles.content}>
-        {/* Content for trending page will go here */}
-
-        <TrendingEventCard/>
+        <TrendingEventCard formatDate={formatDate} />
       </View>
       <BottomNavBar />
     </SafeAreaView>

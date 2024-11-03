@@ -12,6 +12,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router'; // Tools for navi
 import axios from 'axios'; // Tool for making API requests
 import { Ionicons } from '@expo/vector-icons'; // Package for nice-looking icons
 import { Link } from 'expo-router'; // Add this import
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatDate } from '../../utils/dateUtils';
 
 // API key for Google's Gemini AI service that generates event descriptions
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
@@ -30,49 +32,45 @@ const EventDetailsPage = () => {
   const [isAttending, setIsAttending] = useState(false); // Tracks if user marked as attending
   const [isFavorite, setIsFavorite] = useState(false); // Tracks if user favorited the event
 
-  // Helper function to make dates look nice (e.g., "January 1, 2024")
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric',
-      month: 'long', 
-      day: 'numeric' 
+  // Check if event is already saved when component mounts
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      try {
+        const attendingEvents = await AsyncStorage.getItem('attendingEvents');
+        const favoriteEvents = await AsyncStorage.getItem('favoriteEvents');
+        
+        if (attendingEvents) {
+          const attending = JSON.parse(attendingEvents);
+          setIsAttending(attending.some((event: { title: string }) => event.title === eventData.name));
+        }
+        
+        if (favoriteEvents) {
+          const favorites = JSON.parse(favoriteEvents);
+          setIsFavorite(favorites.some((event: { title: string }) => event.title === eventData.name));
+        }
+      } catch (error) {
+        console.error('Error checking saved status:', error);
+      }
     };
-    return date.toLocaleDateString('en-US', options);
-  };
+
+    checkSavedStatus();
+  }, [eventData]);
 
   // This runs when the component loads to generate an AI description of the event
   useEffect(() => {
     const generateAIDescription = async () => {
-      // Don't do anything if we don't have event data or already generated description
       if (!eventData || descriptionGeneratedRef.current) return;
 
-      setIsLoading(true); // Show loading spinner
+      setIsLoading(true);
       try {
-        // Make API request to Gemini AI to generate event description
         const response = await axios.post(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
           {
-            contents: [
-              {
-                parts: [
-                  { text: `Create a concise 5-sentence description for ${eventData.name}'s upcoming performance:
-
-                    1. Introduce the artist and their significance in the music industry.
-                    2. Describe the location and details of the upcoming event.
-                    3. Briefly mention the artist's backstory or journey in music.
-                    4. Highlight the artist's primary genre or style of music.
-                    5. Explain why this artist is worth seeing live.
-
-                    Use the following information:
-                    Artist: ${eventData.name}
-                    Genre: ${eventData.genre || 'Not specified'}
-                    Event Date: ${eventData.date}
-                    Venue: ${eventData.venue}
-                    Location: ${eventData.location}` }
-                ]
-              }
-            ]
+            contents: [{
+              parts: [{
+                text: `Create a concise 5-sentence description for ${eventData.name}'s upcoming performance...`
+              }]
+            }]
           },
           {
             params: { key: GEMINI_API_KEY },
@@ -80,17 +78,18 @@ const EventDetailsPage = () => {
           }
         );
         
-        // Save the generated description
-        const generatedDescription = response.data.candidates[0].content.parts[0].text;
-        setAiDescription(generatedDescription);
+        if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+          setAiDescription(response.data.candidates[0].content.parts[0].text);
+        } else {
+          setAiDescription('Unable to generate description at this time.');
+        }
         descriptionGeneratedRef.current = true;
       } catch (error) {
-        // If something goes wrong, log error and clear description
         console.error('Error generating AI description:', error);
-        setAiDescription('');
+        setAiDescription('Unable to generate description at this time.');
         descriptionGeneratedRef.current = true;
       } finally {
-        setIsLoading(false); // Hide loading spinner
+        setIsLoading(false);
       }
     };
 
@@ -116,14 +115,56 @@ const EventDetailsPage = () => {
     });
   };
 
-  const handleAttending = () => {
-    setIsAttending(!isAttending); // Toggle attending status
-    // Future feature: Save this status to a database
+  const handleAttending = async () => {
+    try {
+      const savedEvents = await AsyncStorage.getItem('attendingEvents');
+      let events = savedEvents ? JSON.parse(savedEvents) : [];
+      
+      if (!isAttending) {
+        // Add to attending
+        const eventToSave = {
+          title: eventData.name,
+          date: eventData.date,
+          venue: eventData.venue,
+          imageUrl: eventData.imageUrl,
+        };
+        events = [...events, eventToSave];
+      } else {
+        // Remove from attending
+        events = events.filter((event: { title: string }) => event.title !== eventData.name);
+      }
+      
+      await AsyncStorage.setItem('attendingEvents', JSON.stringify(events));
+      setIsAttending(!isAttending);
+    } catch (error) {
+      console.error('Error updating attending events:', error);
+    }
   };
 
-  const handleFavorite = () => {
-    setIsFavorite(!isFavorite); // Toggle favorite status
-    // Future feature: Save this status to a database
+  const handleFavorite = async () => {
+    try {
+      const savedEvents = await AsyncStorage.getItem('favoriteEvents');
+      let events = savedEvents ? JSON.parse(savedEvents) : [];
+      
+      if (!isFavorite) {
+        // Add to favorites
+        const eventToSave = {
+          title: eventData.name,
+          date: eventData.date,
+          venue: eventData.venue,
+          imageUrl: eventData.imageUrl,
+        };
+        events = [...events, eventToSave];
+      } else {
+        // Remove from favorites
+        events = events.filter((event: { title: string }) => event.title !== eventData.name);
+      }
+      
+      await AsyncStorage.setItem('favoriteEvents', JSON.stringify(events));
+      setIsFavorite(!isFavorite);
+    } catch (error) {
+      console.error('Error updating favorite events:', error);
+    }
   };
 
   // The actual layout/display of the page
@@ -186,16 +227,16 @@ const EventDetailsPage = () => {
               style={[styles.button, isAttending && styles.activeButton]}
               onPress={handleAttending}
             >
-              <Text style={styles.buttonText}>
-                {isAttending ? "I'm Attending!" : "I'm Attending"}
+              <Text style={[styles.buttonText, isAttending && styles.activeButtonText]}>
+                {isAttending ? "I'm Going!" : "I'm Attending"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, isFavorite && styles.activeButton]}
               onPress={handleFavorite}
             >
-              <Text style={styles.buttonText}>
-                {isFavorite ? "Favorited" : "Favorite"}
+              <Text style={[styles.buttonText, isFavorite && styles.activeButtonText]}>
+                {isFavorite ? "Favorited!" : "Favorite"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -297,7 +338,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeButton: {
-    backgroundColor: 'rgba(76, 217, 100, 0.7)', // Semi-transparent green
+    backgroundColor: '#79ce54', // Changed from '#FF69B4' to '#79ce54'
+  },
+  activeButtonText: {
+    color: '#FFFFFF',
   },
   buttonText: {
     color: 'white',

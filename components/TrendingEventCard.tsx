@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getUserFavoriteArtists } from './getUserFavoriteArtists';
 import { TicketMasterAPI } from '../api/ticket-master-api';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the structure for event data
 interface Event {
@@ -24,14 +25,56 @@ interface Event {
 // Fallback image if no event image is available
 const DEFAULT_IMAGE = 'https://via.placeholder.com/215';
 
+// Add this helper function at the top of the file, after the imports
+const getBestImage = (images: any[]) => {
+  if (!images || images.length === 0) return DEFAULT_IMAGE;
+  
+  // First, try to find a 4:3 ratio image with the highest resolution
+  const squareImages = images.filter(img => 
+    img.ratio === '4_3' || 
+    (img.width && img.height && Math.abs(img.width / img.height - 1.33) < 0.1)
+  );
+
+  if (squareImages.length > 0) {
+    // Sort by resolution and return the highest
+    return squareImages.sort((a, b) => 
+      (b.width * b.height) - (a.width * a.height)
+    )[0].url;
+  }
+
+  // If no 4:3 images, sort all images by resolution and return the highest
+  return images.sort((a, b) => 
+    ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0))
+  )[0].url;
+};
+
 // Sub-component to display event details (title, date, venue)
-const EventInfoContainer = ({ title, date, venue }: { title: string; date: string; venue: string }) => (
+const EventInfoContainer = ({ title, date, venue, formatDate, event, onFavorite, isFavorite }: { 
+  title: string; 
+  date: string; 
+  venue: string;
+  formatDate?: (date: string) => string;
+  event: Event;
+  onFavorite: (event: Event) => void;
+  isFavorite: boolean;
+}) => (
   <View style={styles.eventInfoContainer}>
     <View style={styles.titleContainer}>
-      <Ionicons name="star-outline" size={18} color="#000" style={styles.starIcon} />
-      <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">{title}</Text>
+      <TouchableOpacity 
+        onPress={() => onFavorite(event)}
+        style={styles.starButton}
+      >
+        <Ionicons 
+          name={isFavorite ? "star" : "star-outline"} 
+          size={14}
+          color={isFavorite ? "#FFD700" : "#000"}
+        />
+      </TouchableOpacity>
+      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+        {title}
+      </Text>
     </View>
-    <Text style={styles.date}>{date}</Text>
+    <Text style={styles.date}>{formatDate ? formatDate(date) : date}</Text>
     <View style={styles.venueContainer}>
       <Ionicons name="location-outline" size={14} color="#666" />
       <Text style={styles.venue} numberOfLines={2} ellipsizeMode="tail">{venue}</Text>
@@ -39,12 +82,17 @@ const EventInfoContainer = ({ title, date, venue }: { title: string; date: strin
   </View>
 );
 
-const TrendingEventCard = () => {
+interface TrendingEventCardProps {
+  formatDate?: (date: string) => string;
+}
+
+const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => {
   const router = useRouter();  // Initialize router for navigation between screens
   // State variables to manage component data and UI states
   const [trendingEvents, setTrendingEvents] = useState<Event[]>([]); // Stores list of events
   const [loading, setLoading] = useState(true);                      // Tracks loading state
   const [error, setError] = useState<string | null>(null);          // Stores error messages
+  const [favoriteEvents, setFavoriteEvents] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     // Function to fetch and process event data
@@ -98,7 +146,7 @@ const TrendingEventCard = () => {
                   title: exactMatch.name,
                   date: exactMatch.dates.start.localDate,
                   venue: exactMatch._embedded?.venues?.[0]?.name || 'Venue TBA',
-                  imageUrl: exactMatch.images?.[0]?.url || DEFAULT_IMAGE,
+                  imageUrl: getBestImage(exactMatch.images || []),
                   artist: artist
                 });
               }
@@ -129,6 +177,54 @@ const TrendingEventCard = () => {
 
     fetchEvents(); // Execute the fetch function when component mounts
   }, []); // Empty dependency array means this runs once on mount
+
+  useEffect(() => {
+    const loadFavoriteEvents = async () => {
+      try {
+        const savedEvents = await AsyncStorage.getItem('favoriteEvents');
+        if (savedEvents) {
+          const events = JSON.parse(savedEvents);
+          const favoriteStatus: {[key: string]: boolean} = {};
+          events.forEach((event: any) => {
+            favoriteStatus[event.title] = true;
+          });
+          setFavoriteEvents(favoriteStatus);
+        }
+      } catch (error) {
+        console.error('Error loading favorite events:', error);
+      }
+    };
+    loadFavoriteEvents();
+  }, []);
+
+  const handleFavorite = async (event: Event) => {
+    try {
+      const savedEvents = await AsyncStorage.getItem('favoriteEvents');
+      let events = savedEvents ? JSON.parse(savedEvents) : [];
+      
+      if (!favoriteEvents[event.title]) {
+        // Add to favorites
+        const eventToSave = {
+          title: event.title,
+          date: event.date,
+          venue: event.venue,
+          imageUrl: event.imageUrl,
+        };
+        events = [...events, eventToSave];
+      } else {
+        // Remove from favorites
+        events = events.filter((e: { title: string }) => e.title !== event.title);
+      }
+      
+      await AsyncStorage.setItem('favoriteEvents', JSON.stringify(events));
+      setFavoriteEvents(prev => ({
+        ...prev,
+        [event.title]: !prev[event.title]
+      }));
+    } catch (error) {
+      console.error('Error updating favorite events:', error);
+    }
+  };
 
   // Function to handle when a user taps on an event
   const handleEventPress = (event: Event) => {
@@ -175,17 +271,23 @@ const TrendingEventCard = () => {
     >
       <Text style={styles.sectionTitle}>Trending Events</Text>
       {trendingEvents.map((event, index) => (
-        <TouchableOpacity 
-          key={index} 
-          style={styles.eventContainer}
-          onPress={() => handleEventPress(event)}
-        >
-          <EventInfoContainer title={event.title} date={event.date} venue={event.venue} />
-          <Image 
-            source={typeof event.imageUrl === 'string' ? { uri: event.imageUrl } : event.imageUrl} 
-            style={styles.image} 
+        <View key={index} style={styles.eventContainer}>
+          <EventInfoContainer 
+            title={event.title} 
+            date={event.date} 
+            venue={event.venue}
+            formatDate={formatDate}
+            event={event}
+            onFavorite={handleFavorite}
+            isFavorite={favoriteEvents[event.title] || false}
           />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleEventPress(event)}>
+            <Image 
+              source={typeof event.imageUrl === 'string' ? { uri: event.imageUrl } : event.imageUrl} 
+              style={styles.image} 
+            />
+          </TouchableOpacity>
+        </View>
       ))}
     </ScrollView>
   );
@@ -220,27 +322,25 @@ const styles = StyleSheet.create({
   eventInfoContainer: {
     width: '100%',
     marginBottom: 10,
-    // Remove or adjust marginLeft if it's causing the text to be cut off
     marginLeft: 150,
     paddingRight: '40%',
   },
-  starIcon: {
+  starButton: {
+    padding: 3,
     marginRight: 5,
   },
   titleContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap', // Allow content to wrap
-    width: '100%',    // Ensure it takes up the full width available
-    marginRight: 100,  // Add some margin on the right side to create space between text and image
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 5,
   },
   title: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#000',
     flex: 1,
-    lineHeight: 16,
-    flexWrap: 'wrap', // Allow text to wrap
+    marginRight: 5,
   },
 
   date: {
@@ -264,9 +364,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap', // Allow text to wrap
   },
   image: {
-    width: 215,
-    height: 215,
+    width: 185,
+    height: 185,
     resizeMode: 'cover',
+    backgroundColor: '#f0f0f0', // Placeholder color while loading
   },
   errorText: {
     color: 'red',

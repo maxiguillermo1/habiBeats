@@ -4,9 +4,12 @@
 // START of AttendingEvents UI/UX
 // START of Maxwell Guillermo Contribution
 
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { formatDate } from '../utils/dateUtils';
 
 interface Event {
   title: string;
@@ -15,41 +18,60 @@ interface Event {
   imageUrl: any; // Use a more specific type if possible
 }
 
-const attendingEvents = [
-  {
-    title: "Beabadoobee - This Is How Tomorrow Moves Tour",
-    date: "September 15",
-    venue: "Greek Theatre", // Fixed typo: "Greak" to "Greek"
-    imageUrl: require('../assets/images/events/beabadoobee.png')
-  },
-  {
-    title: "Bladee - Drain Gang World Tour",
-    date:  "October 1",
-    venue: "Shrine Expo Hall",
-    imageUrl: require('../assets/images/events/bladee.png')
-  },
-  {
-    title: "Charli XCX - Sweat Tour",
-    date: "October 16",
-    venue: "The Kia Forum",
-    imageUrl: require('../assets/images/events/charli.png')
-  },
-];
-
 const AttendingEvents = () => {
+  const [attendingEvents, setAttendingEvents] = useState([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadAttendingEvents = async () => {
+      try {
+        const savedEvents = await AsyncStorage.getItem('attendingEvents');
+        if (savedEvents) {
+          setAttendingEvents(JSON.parse(savedEvents));
+        }
+      } catch (error) {
+        console.error('Error loading attending events:', error);
+      }
+    };
+
+    loadAttendingEvents();
+  }, []);
+
+  const handleEventPress = (event: Event) => {
+    const eventData = {
+      name: event.title,
+      date: event.date,
+      venue: event.venue,
+      imageUrl: event.imageUrl,
+      // Add any other fields needed for event-details
+    };
+    
+    router.push({
+      pathname: '/events/event-details',
+      params: { eventData: JSON.stringify(eventData) }
+    });
+  };
+
   const renderEvent = (event: Event, index: number) => (
-    <View key={index} style={styles.eventCard}>
-      <Image source={event.imageUrl} style={styles.eventImage} />
+    <TouchableOpacity 
+      key={index} 
+      style={styles.eventCard}
+      onPress={() => handleEventPress(event)}
+    >
+      <Image 
+        source={{ uri: event.imageUrl }}
+        style={styles.eventImage} 
+      />
       <View style={styles.eventInfo}>
         <Text style={styles.eventName} numberOfLines={3} ellipsizeMode="tail">{event.title}</Text>
-        <Text style={styles.eventDate}>{event.date}</Text>
+        <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
         <View style={styles.eventLocation}>
           <Ionicons name="location-outline" size={10} color="#888" />
           <Text style={styles.eventLocationText} numberOfLines={1} ellipsizeMode="tail">{event.venue}</Text>
         </View>
       </View>
       <Ionicons name="musical-note" size={14} color="#FF69B4" style={styles.musicIcon} />
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -74,7 +96,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     width: '80%',
     alignSelf: 'center',
-    height: 280, // Increased height to fully show 3 events
+    height: 310, // Increased from 280 to 320
   },
   header: {
     flexDirection: 'row',
