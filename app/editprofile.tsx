@@ -10,13 +10,11 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import SearchSong from '../components/search-song';
 import SearchAlbum from '../components/search-album';
-import { Picker } from '@react-native-picker/picker';
 import { PromptSelector } from '../components/PromptSelector';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import SearchArtist from '../components/search-artist';
-import { onSnapshot } from 'firebase/firestore';
 
 // Define interfaces for data structures used in the component
 interface Prompt {
@@ -544,21 +542,20 @@ export default function EditProfile() {
               <View style={styles.favoritePerformanceContainer}>
                 <Text style={styles.inputLabel}>Favorite Performance</Text>
                 <View style={styles.performanceImageContainer}>
-                  {(image || user.favoritePerformance) && (
-                    <View style={styles.disposableContainer}>
+                  {(image || user.favoritePerformance) ? (
+                    <>
+                      <Image 
+                        source={{ uri: image || user.favoritePerformance }} 
+                        style={styles.performanceImage} 
+                      />
                       <TouchableOpacity 
-                        style={styles.deleteButton}
+                        style={styles.deletePerformanceButton}
                         onPress={handleDeleteFavoritePerformance}
                       >
                         <Ionicons name="close-circle" size={24} color="red" />
                       </TouchableOpacity>
-                      <Image 
-                        source={{ uri: image || user.favoritePerformance }} 
-                        style={styles.disposableImage} 
-                      />
-                    </View>
-                  )}
-                  {!image && !user.favoritePerformance && (
+                    </>
+                  ) : (
                     <TouchableOpacity 
                       style={styles.addPerformanceButton}
                       onPress={pickImage}
@@ -736,6 +733,7 @@ const styles = StyleSheet.create({
   },
   disposableContainer: {
     width: '47%',
+    height: '47%',
     aspectRatio: 1,
     borderRadius: 12,
     overflow: 'hidden',
@@ -814,8 +812,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Add extra padding for iOS devices with home indicator
-    elevation: 3,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
   saveButton: {
     backgroundColor: '#79ce54',
@@ -893,7 +890,7 @@ const styles = StyleSheet.create({
   },
   performanceImageContainer: {
     width: '100%',
-    aspectRatio: 1, // Makes container square
+    aspectRatio: 1,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: 'rgba(251, 169, 4, 0.1)',
@@ -902,7 +899,7 @@ const styles = StyleSheet.create({
   performanceImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // This ensures the image covers the entire container
+    resizeMode: 'cover',
   },
   addPerformanceButton: {
     flex: 1,
@@ -912,7 +909,6 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: '#fba904',
     borderRadius: 12,
-    backgroundColor: 'rgba(251, 169, 4, 0.05)',
   },
   addPerformanceText: {
     color: '#fba904',
@@ -924,20 +920,12 @@ const styles = StyleSheet.create({
   },
   deletePerformanceButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 4,
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   performanceOverlay: {
     position: 'absolute',
