@@ -4,7 +4,7 @@
 
 // Import required dependencies
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, Alert, Dimensions, KeyboardAvoidingView, Platform, Keyboard, ScrollView } from "react-native";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, fetchSignInMethodsForEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { app } from "../firebaseConfig.js";
@@ -18,6 +18,8 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import Constants from 'expo-constants'; 
 import MapView, { Marker, Region } from 'react-native-maps';
 import 'react-native-get-random-values';
+import TermsOfService from './legal-pages/terms-of-service';
+import PrivacyPolicy from './legal-pages/privacy-policy';
 
 // Load custom fonts
 async function loadFonts() {
@@ -84,6 +86,8 @@ export default function SignUp() {
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [agePreference, setAgePreference] = useState<number>(0);
   const router = useRouter();
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState<boolean>(false);
 
   // Location related states
   const [currentLocationName, setCurrentLocationName] = useState('');
@@ -400,8 +404,19 @@ export default function SignUp() {
       }
     }
     else if (step === 12) {
-      console.log("Signing up user...");
-      handleFinishSignUp();
+      if (termsAccepted) {
+        setStep(13);
+      } else {
+        setErrorMessage("Please accept the Terms of Service to continue.");
+      }
+    }
+    else if (step === 13) {
+      if (privacyAccepted) {
+        console.log("Signing up user...");
+        handleFinishSignUp();
+      } else {
+        setErrorMessage("Please accept the Privacy Policy to continue.");
+      }
     }
   };
 
@@ -911,11 +926,57 @@ export default function SignUp() {
             )}
             {step === 12 && (
               <>
-                <Text style={styles.landingsubtitle}>Profile Set Up Complete!</Text>
-                <Text style={styles.subtitleDescription}>Click the button below to finish signing up.</Text>
-                {/* Routes to the login page */}
-                <TouchableOpacity style={styles.button} onPress={handleNextStep}>
-                  <Text style={styles.buttonText}>Finish Sign Up</Text>
+                <Text style={styles.subtitle}>Terms of Service</Text>
+                <ScrollView style={styles.termsContainer}>
+                  <TermsOfService />
+                </ScrollView>
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => setTermsAccepted(!termsAccepted)}
+                  >
+                    <Checkbox
+                      status={termsAccepted ? 'checked' : 'unchecked'}
+                      onPress={() => setTermsAccepted(!termsAccepted)}
+                      color="#fba904"
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.checkboxLabel}>I accept the Terms of Service</Text>
+                </View>
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                <TouchableOpacity 
+                  style={styles.button}
+                  onPress={handleNextStep}
+                >
+                  <Text style={styles.buttonText}>Complete Sign Up</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {step === 13 && (
+              <>
+                <Text style={styles.subtitle}>Privacy Policy</Text>
+                <ScrollView style={styles.termsContainer}>
+                  <PrivacyPolicy />
+                </ScrollView>
+                <View style={styles.checkboxContainer}>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => setPrivacyAccepted(!privacyAccepted)}
+                  >
+                    <Checkbox
+                      status={privacyAccepted ? 'checked' : 'unchecked'}
+                      onPress={() => setPrivacyAccepted(!privacyAccepted)}
+                      color="#fba904"
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.checkboxLabel}>I accept the Privacy Policy</Text>
+                </View>
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                <TouchableOpacity 
+                  style={styles.button}
+                  onPress={handleNextStep}
+                >
+                  <Text style={styles.buttonText}>Complete Sign Up</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -1289,6 +1350,15 @@ const styles = StyleSheet.create({
   mapContainer: {
     width: '100%',
     height: 300,
+  },
+  termsContainer: {
+    maxHeight: 400,
+    marginVertical: 20,
+    padding: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
 });
 // END of Style Code

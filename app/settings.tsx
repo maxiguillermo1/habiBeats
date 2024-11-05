@@ -15,7 +15,6 @@ import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
 import { getGooglePlacesQueryConfig } from '../api/google-places-api';
 import { useTranslation } from 'react-i18next';
-import '../i18n';
 
 interface UserMatch {
   uid: string;
@@ -1310,7 +1309,25 @@ const Settings = () => {
         </View>
         <View style={styles.divider} />
 
-        {/* Add Safety Resources Section */}
+        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
+          <Text style={styles.sectionTitle}>Data & Privacy</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => navigation.navigate('settings/download-data' as never)}
+        >
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Download Your Data</Text>
+            <Text style={styles.settingDescription}>
+              Get a copy of your profile data in PDF or JSON format
+            </Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.divider} />
+
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={styles.sectionTitle}>Explore safety resources</Text>
         </View>
