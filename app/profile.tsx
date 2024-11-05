@@ -42,6 +42,11 @@ interface DisposablePhoto {
   url: string;
   timestamp: number;
 }
+
+interface DisposableImage {
+  url: string;
+  timestamp: number;
+}
 // End of imports and type definitions
 
 // Define Profile component and initialize state
@@ -66,7 +71,7 @@ export default function Profile() {
     location: 'Location not set',
     profileImageUrl: '',
     gender: '',
-    myDisposables: '',
+    myDisposables: [] as DisposableImage[],
   });
 
   // State for various user preferences and data
@@ -115,7 +120,7 @@ export default function Profile() {
               location: userData.displayLocation || 'Location not set',
               profileImageUrl: userData.profileImageUrl || '',
               gender: userData.gender || '',
-              myDisposables: userData.myDisposables || '',
+              myDisposables: userData.myDisposables || [],
             });
 
             // Fetch animated border image
@@ -417,10 +422,14 @@ export default function Profile() {
           <View style={styles.inputContainer}>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>My Disposables</Text>
-              {user.myDisposables ? (
-                <Image source={{ uri: user.myDisposables }} style={styles.imageInput} />
+              {user.myDisposables.length > 0 ? (
+                user.myDisposables.map((disposable, index) => (
+                  <View key={index} style={styles.disposableContainer}>
+                    <Image source={{ uri: disposable.url }} style={styles.disposableImage} />
+                  </View>
+                ))
               ) : (
-                <Text style={styles.inputText}>No disposable photo selected</Text>
+                <Text style={styles.inputText}>No disposable photos selected</Text>
               )}
             </View>
           </View>
@@ -639,5 +648,32 @@ const styles = StyleSheet.create({
   discoverButton: {
     padding: 5,
     marginLeft: 10, // Add space between camera and discover buttons
+  },
+  disposableContainer: {
+    backgroundColor: '#fff',
+    padding: 10,
+    paddingBottom: 60,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 20,
+  },
+  disposableImage: {
+    width: 250,
+    height: 250,
+    borderColor: '#ddd',
+    borderWidth: 1,
+  },
+  disposablesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+    justifyContent: 'center',
+    paddingTop: 10,
   },
 });

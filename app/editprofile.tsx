@@ -16,6 +16,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import SearchArtist from '../components/search-artist';
+import { onSnapshot } from 'firebase/firestore';
 
 // Define interfaces for data structures used in the component
 interface Prompt {
@@ -48,6 +49,13 @@ type RouteParams = {
   selectedPhoto?: string;
 }
 
+// Add this interface
+interface DisposableImage {
+  id: string;
+  url: string;
+  caption?: string;
+}
+
 // Main component for editing user profile
 export default function EditProfile() {
   const router = useRouter();
@@ -72,7 +80,10 @@ export default function EditProfile() {
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [musicPreference, setMusicPreference] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [myDisposables, setMyDisposables] = useState<string | null>(null);
+  const [myDisposables, setMyDisposables] = useState<DisposableImage[]>([]);
+  const [selectedDisposable, setSelectedDisposable] = useState<DisposableImage | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [tempCaption, setTempCaption] = useState('');
 
   // Predefined prompt options for user to select from
   const promptOptions = [
@@ -176,7 +187,20 @@ export default function EditProfile() {
           setPrompts(Object.entries(fetchedPrompts).map(([question, answer]) => ({ question, answer: answer as string })));
 
           if (userData.myDisposables) {
-            setMyDisposables(userData.myDisposables);
+            // Check if it's already an array
+            if (Array.isArray(userData.myDisposables)) {
+              setMyDisposables(userData.myDisposables);
+            } else {
+              try {
+                const parsedDisposables = JSON.parse(userData.myDisposables);
+                setMyDisposables(parsedDisposables);
+              } catch (error) {
+                console.error('Error parsing myDisposables:', error);
+                setMyDisposables([]);
+              }
+            }
+          } else {
+            setMyDisposables([]);
           }
         }
       } catch (error) {
@@ -187,17 +211,26 @@ export default function EditProfile() {
     fetchUserData();
   }, []);
 
-  // Add effect to handle navigation params
+  // Update the navigation effect to handle disposable photos
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      // @ts-ignore - Assuming the route params contain selectedPhoto
-      const selectedPhoto = navigation.getState().routes.find(r => r.name === 'editprofile')?.params?.selectedPhoto;
+      // @ts-ignore - Access the route params
+      const params = navigation.getState().routes.find(r => r.name === 'editprofile')?.params;
       
-      if (selectedPhoto) {
-        setMyDisposables(selectedPhoto);
-        setHasChanges(true);
-        // Clear the navigation params
-        navigation.setParams({ selectedPhoto: undefined });
+      // Handle selectedDisposables array
+      if (params?.selectedDisposables && Array.isArray(params.selectedDisposables)) {
+        params.selectedDisposables.forEach((photoUri: string) => {
+          handleAddDisposable(photoUri);
+        });
+        // Clear the params
+        navigation.setParams({ selectedDisposables: undefined });
+      }
+      
+      // Handle single photoUri (for backward compatibility)
+      if (params?.photoUri) {
+        handleAddDisposable(params.photoUri);
+        // Clear the params
+        navigation.setParams({ photoUri: undefined });
       }
     });
 
@@ -317,7 +350,6 @@ export default function EditProfile() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedImageUri = result.assets[0].uri;
       setImage(selectedImageUri);
-      setMyDisposables(selectedImageUri);
       setHasChanges(true);
     }
   };
@@ -367,14 +399,86 @@ export default function EditProfile() {
   };
 
   // Handle disposable photo deletion
-  const handleDeleteDisposable = () => {
-    setMyDisposables(null);
+  const handleDeleteDisposable = (id: string) => {
+    setMyDisposables(prev => prev.filter(photo => photo.id !== id));
     setHasChanges(true);
+  };
+
+  // Update handleAddDisposable to better handle the photo addition
+  const handleAddDisposable = (photoUri: string) => {
+    setMyDisposables(prev => {
+      // Check if we've already reached the limit
+      if (prev.length >= 4) {
+        Alert.alert('Limit Reached', 'You can only select up to 4 photos');
+        return prev;
+      }
+      
+      // Check if this photo is already added
+      if (prev.some(photo => photo.url === photoUri)) {
+        return prev;
+      }
+      
+      // Add the new photo
+      const newPhoto: DisposableImage = {
+        id: Date.now().toString(),
+        url: photoUri
+      };
+      return [...prev, newPhoto];
+    });
+    setHasChanges(true);
+  };
+
+  // Add this at the component level
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // @ts-ignore - Access the route params
+      const params = navigation.getState().routes.find(r => r.name === 'editprofile')?.params;
+      if (params?.photoUri) {
+        handleAddDisposable(params.photoUri);
+        // Clear the params
+        navigation.setParams({ photoUri: undefined });
+      }
+    });
+  
+    return unsubscribe;
+  }, [navigation]);
+
+  // Add this function to handle photo deletion
+  const handleDeleteFavoritePerformance = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      
+      // Update both local state and database
+      setImage(null);
+      setUser(prev => ({ ...prev, favoritePerformance: '' }));
+      setHasChanges(true);
+      
+      // Update the database immediately
+      await updateDoc(userDocRef, {
+        favoritePerformance: deleteField()
+      });
+      
+    } catch (error) {
+      console.error('Error deleting favorite performance:', error);
+      Alert.alert('Error', 'Failed to delete photo');
+    }
   };
 
   // Render the component UI
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackPress}
+        >
+          <Ionicons name="chevron-back-outline" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+      </View>
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -384,16 +488,6 @@ export default function EditProfile() {
           data={[{ key: 'content' }]}
           renderItem={() => (
             <View style={styles.content}>
-              <View style={styles.header}>
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={handleBackPress}
-                >
-                  <Ionicons name="chevron-back-outline" size={24} color="black" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-              </View>
-              
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Music Preference</Text>
                 <View style={styles.genreContainer}>
@@ -439,23 +533,41 @@ export default function EditProfile() {
                 {favoriteAlbum && (
                   <View style={styles.albumContainer}>
                     <Image source={{ uri: favoriteAlbum.albumArt }} style={styles.albumImage} />
-                    <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
-                    <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+                    <View style={styles.albumInfo}>
+                      <Text style={styles.albumName}>{favoriteAlbum.name}</Text>
+                      <Text style={styles.albumArtist}>{favoriteAlbum.artist}</Text>
+                    </View>
                   </View>
                 )}
               </View>
 
-              <View style={styles.inputContainer}>
+              <View style={styles.favoritePerformanceContainer}>
                 <Text style={styles.inputLabel}>Favorite Performance</Text>
-                <TouchableOpacity onPress={pickImage} style={styles.imageInputPlaceholder}>
-                  <Text style={styles.imageInputText}>Choose a Photo</Text>
+                <View style={styles.performanceImageContainer}>
                   {(image || user.favoritePerformance) && (
-                    <Image 
-                      source={{ uri: image || user.favoritePerformance }} 
-                      style={styles.imageInput} 
-                    />
+                    <View style={styles.disposableContainer}>
+                      <TouchableOpacity 
+                        style={styles.deleteButton}
+                        onPress={handleDeleteFavoritePerformance}
+                      >
+                        <Ionicons name="close-circle" size={24} color="red" />
+                      </TouchableOpacity>
+                      <Image 
+                        source={{ uri: image || user.favoritePerformance }} 
+                        style={styles.disposableImage} 
+                      />
+                    </View>
                   )}
-                </TouchableOpacity>
+                  {!image && !user.favoritePerformance && (
+                    <TouchableOpacity 
+                      style={styles.addPerformanceButton}
+                      onPress={pickImage}
+                    >
+                      <Ionicons name="add-circle-outline" size={40} color="#fba904" />
+                      <Text style={styles.addPerformanceText}>Add Photo</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <View style={styles.inputContainer}>
@@ -486,42 +598,56 @@ export default function EditProfile() {
                 )}
               </View>
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>My Disposables</Text>
-                {myDisposables ? (
-                  <View style={styles.disposableContainer}>
+                <Text style={styles.inputLabel}>My Disposables ({myDisposables.length}/4)</Text>
+                <View style={styles.disposablesGrid}>
+                  {myDisposables.map((photo) => (
+                    <View key={photo.id} style={styles.disposableContainer}>
+                      <TouchableOpacity 
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteDisposable(photo.id)}
+                      >
+                        <Ionicons name="close-circle" size={24} color="red" />
+                      </TouchableOpacity>
+                      <Image 
+                        source={{ uri: photo.url }} 
+                        style={styles.disposableImage} 
+                      />
+                    </View>
+                  ))}
+                  {myDisposables.length < 4 && (
                     <TouchableOpacity 
-                      style={styles.deleteButton}
-                      onPress={handleDeleteDisposable}
+                      style={[styles.disposableContainer, styles.addDisposableButton]} 
+                      onPress={() => navigation.navigate('disposable-gallery', { 
+                        selectMode: true,
+                        maxSelections: 4 - myDisposables.length,
+                        currentDisposables: myDisposables.map(d => d.url),
+                        returnRoute: 'editprofile'
+                      })}
                     >
-                      <Ionicons name="close-circle" size={24} color="red" />
+                      <Ionicons name="add-circle-outline" size={40} color="#fba904" />
+                      <Text style={styles.addDisposableText}>Add Photo</Text>
                     </TouchableOpacity>
-                    <Image 
-                      source={{ uri: myDisposables }} 
-                      style={styles.disposableImage} 
-                    />
-                  </View>
-                ) : (
-                  <TouchableOpacity 
-                    style={styles.selectPhotoButton} 
-                    onPress={() => navigation.navigate('disposable-gallery', { selectMode: true })}
-                  >
-                    <Text style={styles.selectPhotoButtonText}>Select Photo</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              {hasChanges && (
-                <View style={styles.saveButtonContainer}>
-                  <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                    <Text style={styles.saveButtonText}>Save Changes</Text>
-                  </TouchableOpacity>
+                  )}
                 </View>
-              )}
+              </View>
             </View>
           )}
           keyExtractor={(item) => item.key}
           contentContainerStyle={styles.scrollContent}
         />
       </KeyboardAvoidingView>
+
+      {hasChanges && (
+        <View style={styles.saveButtonContainer}>
+          <TouchableOpacity 
+            style={styles.saveButton} 
+            onPress={handleSave}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.saveButtonText}>Save Changes</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -534,239 +660,297 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 30,
   },
   content: {
     flex: 1,
-    marginLeft: 30,
-    marginRight: 30,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#fff8f0',
   },
   backButton: {
-    padding: 10,
-    position: 'absolute',
-    marginBottom: 10,
-    zIndex: 1,
+    padding: 8,
+    marginRight: 10,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: '#542f11',
-    textAlign: 'center',
     flex: 1,
+    textAlign: 'center',
+    marginRight: 40,
   },
   inputContainer: {
-    marginBottom: 1,
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
     color: '#542f11',
   },
   genreContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    marginBottom: 10,
+    gap: 8,
   },
   genreButton: {
-    backgroundColor: 'rgba(55,189,213,0.2)',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 15,
-    marginRight: 10,
-    marginBottom: 10,
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 8,
   },
   selectedGenreButton: {
     backgroundColor: '#fba904',
   },
   genreButtonText: {
-    color: '#542f11',
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  selectedGenreButtonText: {
+    color: '#fff',
+  },
+  disposablesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+  },
+  disposableContainer: {
+    width: '47%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  disposableImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    resizeMode: 'cover',
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    zIndex: 1,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  addDisposableButton: {
+    backgroundColor: 'rgba(251, 169, 4, 0.1)',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#fba904',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addDisposableText: {
+    color: '#fba904',
+    marginTop: 8,
     fontSize: 14,
     fontWeight: '600',
   },
-  selectedGenreButtonText: {
-    color: '#FFFFFF',
-  },
-  imageInputPlaceholder: {
-    width: 200,
-    height: 200,
-    backgroundColor: '#f0f0f0',
-    borderColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    alignSelf: 'center',
-    marginVertical: 10,
-  },
-  imageInputText: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    zIndex: 1,
-    textAlign: 'center',
-  },
-  imageInput: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    resizeMode: 'contain',
-    borderRadius: 10,
-  },
   promptContainer: {
-    marginTop: 10,
-    marginBottom: 10,
+    marginBottom: 16,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 12,
   },
   promptInput: {
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: '#e0e0e0',
     borderRadius: 8,
     padding: 12,
     backgroundColor: '#fff',
     color: '#542f11',
     minHeight: 100,
     textAlignVertical: 'top',
+    marginTop: 8,
+    fontSize: 16,
   },
   addPromptButton: {
     backgroundColor: '#fba904',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   addPromptButtonText: {
     color: '#fff',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   saveButtonContainer: {
-    marginTop: 20,
-    alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Add extra padding for iOS devices with home indicator
+    elevation: 3,
   },
   saveButton: {
     backgroundColor: '#79ce54',
-    paddingVertical: 15,
-    borderRadius: 10,
-    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   saveButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   albumContainer: {
-    marginTop: 10,
+    marginTop: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 12,
   },
   albumImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  albumInfo: {
+    marginLeft: 12,
+    flex: 1,
   },
   albumName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#542f11',
-    marginTop: 10,
+    marginBottom: 4,
   },
   albumArtist: {
     fontSize: 14,
     color: '#666',
   },
-  artistContainer: {
-    marginTop: 10,
-  },
-  artistText: {
-    fontSize: 16,
-    color: '#542f11',
-  },
-  artistImage: {
-    width: 50,
-    height: 50,
-  },
   selectedArtistContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  artistImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   artistName: {
     flex: 1,
     fontSize: 16,
     color: '#542f11',
+    marginLeft: 12,
+    fontWeight: '500',
   },
-  promptPicker: {
+  favoritePerformanceContainer: {
+    marginBottom: 24,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  promptSelectorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  removePromptButton: {
-    backgroundColor: '#ff6b6b',
-    padding: 10,
-    borderRadius: 5,
-    marginLeft: 10,
-  },
-  removePromptButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-    color: '#542f11',
-  },
-  selectPhotoButton: {
-    backgroundColor: '#fba904',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  selectPhotoButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  disposableContainer: {
-    position: 'relative',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  disposableImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-  },
-  deleteButton: {
-    position: 'absolute',
-    right: -10,
-    top: -10,
-    zIndex: 1,
-    backgroundColor: 'white',
+  performanceImageContainer: {
+    width: '100%',
+    aspectRatio: 1, // Makes container square
     borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(251, 169, 4, 0.1)',
+    position: 'relative',
+  },
+  performanceImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover', // This ensures the image covers the entire container
+  },
+  addPerformanceButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#fba904',
+    borderRadius: 12,
+    backgroundColor: 'rgba(251, 169, 4, 0.05)',
+  },
+  addPerformanceText: {
+    color: '#fba904',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  deletePerformanceButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  performanceOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    padding: 12,
+  },
+  performanceHint: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });

@@ -170,9 +170,16 @@ export default function Discography() {
   // Authentication check UI
   if (!user || !userData) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Please log in to view recommendations</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Please log in to view recommendations</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 

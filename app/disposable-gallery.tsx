@@ -20,7 +20,7 @@ type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': { selectMode?: boolean };
   'profile': undefined;
-  'editprofile': undefined;
+  'editprofile': { photoUri?: string };
 };
 
 // Define the type for a photo item
@@ -100,10 +100,13 @@ export default function DisposableGallery() {
         }
       }}
     >
-      <Image
-        source={{ uri: item.url }}
-        style={styles.photo}
-      />
+      <View style={styles.polaroidFrame}>
+        <Image
+          source={{ uri: item.url }}
+          style={styles.photo}
+        />
+        <View style={styles.polaroidBottom} />
+      </View>
     </TouchableOpacity>
   );
 
@@ -162,16 +165,22 @@ export default function DisposableGallery() {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       
-      // Navigate back to the edit profile screen with the selected photo
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.navigate('editprofile');
-      }
+      // Navigate back to edit profile with the selected photo URI
+      navigation.navigate('editprofile', { photoUri: photo.url });
     } catch (error) {
       console.error('Error selecting photo:', error);
       Alert.alert('Error', 'Failed to select photo');
     }
+  };
+
+  // Add this helper function before the return statement
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -217,19 +226,26 @@ export default function DisposableGallery() {
           onPress={() => setSelectedPhoto(null)}
         >
           {selectedPhoto && (
-            <>
+            <View style={styles.fullScreenPolaroid}>
               <TouchableOpacity 
                 style={styles.deleteButton}
                 onPress={() => handleDelete(selectedPhoto)}
               >
                 <Ionicons name="trash-outline" size={24} color="#fba904" />
               </TouchableOpacity>
-              <Image
-                source={{ uri: selectedPhoto.url }}
-                style={styles.fullScreenPhoto}
-                resizeMode="contain"
-              />
-            </>
+              <View style={styles.photoWrapper}>
+                <Image
+                  source={{ uri: selectedPhoto.url }}
+                  style={styles.fullScreenPhoto}
+                  resizeMode="cover"
+                />
+              </View>
+              <View style={styles.fullScreenPolaroidBottom}>
+                <Text style={styles.timestampText}>
+                  {formatTimestamp(selectedPhoto.timestamp)}
+                </Text>
+              </View>
+            </View>
           )}
         </TouchableOpacity>
       </Modal>
@@ -270,15 +286,30 @@ const styles = StyleSheet.create({
   },
   photoContainer: {
     width: photoSize,
-    height: photoSize,
+    height: photoSize + 40,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 5,
+  },
+  polaroidFrame: {
+    backgroundColor: '#fff',
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   photo: {
-    width: photoSize,
-    height: photoSize,
-    borderColor: '#37bdd5',
-    borderWidth: 2,
+    width: photoSize - 30,
+    height: photoSize - 30,
+  },
+  polaroidBottom: {
+    height: 30,
+    backgroundColor: '#fff',
   },
   errorText: {
     color: 'red',
@@ -305,18 +336,50 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  fullScreenPolaroid: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+    elevation: 8,
+    width: '90%',
+    aspectRatio: 0.8,
+  },
+  photoWrapper: {
+    width: '100%',
+    aspectRatio: 1,
+    overflow: 'hidden',
   },
   fullScreenPhoto: {
     width: '100%',
     height: '100%',
   },
+  fullScreenPolaroidBottom: {
+    height: 40,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   deleteButton: {
     position: 'absolute',
-    top: 60,
+    top: 20,
     right: 20,
     zIndex: 2,
     padding: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 20,
+  },
+  timestampText: {
+    color: '#666',
+    fontSize: 14,
+    fontFamily: 'System',
   },
 });

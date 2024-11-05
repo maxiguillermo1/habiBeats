@@ -23,8 +23,6 @@ export default function RootLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       {/* Define the profile screen with no header */}
       <Stack.Screen name="profile" options={{ headerShown: false }} />
-      {/* Define the profile settings screen with no header */}
-      <Stack.Screen name="profilesettings" options={{ headerShown: false }} />
       {/* Define the edit profile screen with no header */}
       <Stack.Screen name="editprofile" options={{ headerShown: false }} />
       {/* Define the settings screen with no header */}
@@ -36,7 +34,7 @@ export default function RootLayout() {
       {/* Define the push notifications screen with no header */}
       <Stack.Screen name="settings/push-notifications" options={{ headerShown: false }} />
       {/* Define the change password screen with no header */}
-      <Stack.Screen name="settings/changepassword" options={{ headerShown: false }} />
+      <Stack.Screen name="settings/change-password" options={{ headerShown: false }} />
       {/* Define the block list screen with no header */}
       <Stack.Screen name="settings/block-list" options={{ headerShown: false }} />
       {/* Define the hidden words screen with no header */}

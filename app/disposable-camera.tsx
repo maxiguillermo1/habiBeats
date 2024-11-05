@@ -11,31 +11,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '../firebaseConfig.js';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import * as ImageManipulator from 'expo-image-manipulator';
 
 // Define the types for the navigation stack
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': undefined;
-};
-
-// Function to apply a filter to the photo
-const applyFilter = async (uri: string) => {
-  try {
-    const result = await ImageManipulator.manipulateAsync(
-      uri,
-      // [
-      //   { action: 'saturate', value: 1.5 },
-      //   { action: 'brightness', value: 0.9 },
-      //   { action: 'contrast', value: 1.2 }
-      // ],
-      // { compress: 1 }
-    );
-    return result.uri;
-  } catch (error) {
-    console.error('Error applying filter:', error);
-    return uri;
-  }
 };
 
 export default function DisposableCamera() {
@@ -93,18 +73,14 @@ export default function DisposableCamera() {
         return;
       }
 
-      // Apply filter to the photo
-      const filteredUri = await applyFilter(photo.uri);
-
       const userId = getAuth().currentUser?.uid;
       if (!userId) {
         console.error('User not authenticated');
         return;
       }
 
-      // Convert filtered photo URI to blob
-      const filteredUriString = typeof filteredUri === 'string' ? filteredUri : photo.uri;
-      const response = await fetch(filteredUriString);
+      // Convert photo URI to blob
+      const response = await fetch(photo.uri);
       const blob = await response.blob();
 
       // Create unique filename with timestamp
@@ -117,14 +93,10 @@ export default function DisposableCamera() {
       const downloadURL = await getDownloadURL(storageRef);
 
       // Store in AsyncStorage
-      try {
-        const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
-        const photosList = savedPhotos ? JSON.parse(savedPhotos) : [];
-        photosList.push({ url: downloadURL, timestamp });
-        await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(photosList));
-      } catch (storageError) {
-        console.error('Failed to save to AsyncStorage:', storageError);
-      }
+      const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
+      const photosList = savedPhotos ? JSON.parse(savedPhotos) : [];
+      photosList.push({ url: downloadURL, timestamp });
+      await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(photosList));
 
     } catch (error) {
       console.error('Failed to take and upload picture:', error);
@@ -138,43 +110,47 @@ export default function DisposableCamera() {
 
   return (
     <View style={styles.container}>
-      <CameraView 
-        style={styles.camera} 
-        facing={type}
-        ref={(ref) => setCamera(ref)}
-      >
-        <View style={styles.topButtonsContainer}>
+      <View style={styles.borderTop}>
+        <View style={styles.topButtonContainer}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={30} color="white" />
+            <Ionicons name="arrow-back" size={30} color="#fba904" />
           </TouchableOpacity>
         </View>
-        
+      </View>
+
+      <CameraView 
+        style={styles.camera} 
+        facing={type}
+        ref={(ref) => setCamera(ref)}
+      />
+
+      <View style={styles.borderBottom}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.galleryButton}
             onPress={() => navigation.navigate('disposable-gallery')}
           >
-            <Ionicons name="images" size={30} color="white" />
+            <Ionicons name="images" size={40} color="#37bdd5" />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.button}
             onPress={takePicture}
           >
-            <Ionicons name="camera" size={65} color="white" />
+            <Ionicons name="camera" size={90} color="#79ce54" />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.flipButton}
             onPress={toggleCameraType}
           >
-            <Ionicons name="camera-reverse" size={30} color="white" />
+            <Ionicons name="camera-reverse" size={40} color="#fc6c85" />
           </TouchableOpacity>
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 }
@@ -183,23 +159,20 @@ export default function DisposableCamera() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'black',
   },
   camera: {
-    flex: 1,
+    aspectRatio: 1,
+    width: '100%',
   },
   buttonContainer: {
-    flex: 1,
     flexDirection: 'row',
-    backgroundColor: 'transparent',
-    margin: 50,
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   button: {
     padding: 15,
     borderRadius: 50,
-    backgroundColor: 'rgba(0,0,0,0.3)',
     marginHorizontal: 20,
   },
   text: {
@@ -207,34 +180,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-  topButtonsContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    right: 20,
-    zIndex: 2,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   backButton: {
     padding: 8,
-    borderRadius: 50,
-    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   galleryButton: {
-    padding: 15,
-    borderRadius: 50,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    marginRight: 20,
+    padding: 10,
+    marginRight: 10,
   },
   permissionButtons: {
     gap: 10,
     alignItems: 'center',
   },
   flipButton: {
-    padding: 15,
-    borderRadius: 50,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    marginLeft: 20,
+    padding: 10,
+    marginLeft: 10,
+  },
+  borderTop: {
+    flex: 1,
+    backgroundColor: '#fff8f0',
+    justifyContent: 'center',
+  },
+  topButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  borderBottom: {
+    flex: 1,
+    backgroundColor: '#fff8f0',
+    justifyContent: 'center',
   },
 });

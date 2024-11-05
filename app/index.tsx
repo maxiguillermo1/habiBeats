@@ -30,7 +30,9 @@ export default function Index() {
       items: [
         { name: "Profile", route: "/profile" },
         { name: "Edit Profile", route: "/editprofile" },
-        { name: "Profile Settings", route: "/profilesettings" }
+        { name: "Disposable Camera", route: "/disposable-camera" },
+        { name: "Disposable Gallery", route: "/disposable-gallery" },
+        { name: "Discography", route: "/discography" },
       ]
     },
     {
