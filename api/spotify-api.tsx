@@ -119,7 +119,10 @@ export const searchSpotifyTracks = async (query: string) => {
     return response.data.tracks.items.map((item: any) => ({
       id: item.id,
       name: item.name,
-      artist: item.artists[0].name,
+      artists: item.artists.map((artist: any) => ({
+        id: artist.id,
+        name: artist.name
+      })),
       albumArt: item.album.images[0]?.url || '',
     }));
   } catch (error) {
@@ -204,6 +207,33 @@ export const getSpotifyRelatedArtists = async (artistId: string) => {
       console.error('Error getting related artists:', error.response?.data || error.message);
     } else {
       console.error('Error getting related artists:', error);
+    }
+    throw error;
+  }
+};
+
+// Function to get tracks from a specific album
+export const getAlbumTracks = async (albumId: string) => {
+  try {
+    const token = await getSpotifyAccessToken();
+    const response = await axios.get(
+      `https://api.spotify.com/v1/albums/${albumId}/tracks?limit=10`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.items.map((track: any) => ({
+      id: track.id,
+      name: track.name,
+      artists: track.artists.map((artist: any) => artist.name).join(', ')
+    }));
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error('Error getting album tracks:', error.response?.data || error.message);
+    } else {
+      console.error('Error getting album tracks:', error);
     }
     throw error;
   }

@@ -2,15 +2,58 @@
 // Reyna Aguirre
 
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios'; 
-
+import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getSpotifyRelatedArtists, getAlbumTracks } from '../api/spotify-api';
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
+const GENIUS_CLIENT_ID = 'iwKSJyXYREHteYohvjK1U9MXBjXMEA6WYcqLO04u4cp2Q8sZHa52RcuZDj8BZVm7';
+const GENIUS_CLIENT_SECRET = 'HpmbJXRQ_0jpbdoaiP2Nii8gy9Wp9kSzYxl1mfpl9VPPlqKEh1hke-_hrsYJwWkOX22UbrrlLYQ1PG0xJJ4rRw';
 
+const getGeniusAccessToken = async () => {
+    try {
+        const response = await axios.post('https://api.genius.com/oauth/token', {
+            grant_type: 'client_credentials',
+            client_id: GENIUS_CLIENT_ID,
+            client_secret: GENIUS_CLIENT_SECRET
+        });
+        return response.data.access_token;
+    } catch (error) {
+        console.error('Error getting Genius access token:', error);
+        throw error;
+    }
+};
+
+const fetchLyrics = async (trackName: string, artistName: string) => {
+    try {
+        const accessToken = await getGeniusAccessToken();
+        
+        const searchResponse = await axios.get(
+            `https://api.genius.com/search?q=${encodeURIComponent(`${trackName} ${artistName}`)}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }
+        );
+
+        const hits = searchResponse.data.response.hits;
+        if (hits.length === 0) {
+            return 'Lyrics not found';
+        }
+
+        // Get the first matching result
+        const songUrl = hits[0].result.url;
+        
+        return `You can find the lyrics at: ${songUrl}`;
+    } catch (error) {
+        console.error('Error fetching lyrics:', error);
+        return 'Error fetching lyrics';
+    }
+};
 
 const Chatbot = () => {
 
@@ -57,29 +100,29 @@ const Chatbot = () => {
     const [activeButton, setActiveButton] = React.useState<string | null>(null);
 
     // "what's the weather at event" button
-    const handleWeatherButtonPressed = () => {
-        setActiveButton(activeButton === 'weather' ? null : 'weather');
+    const handleAlbumButtonPressed = () => {
+        setActiveButton(activeButton === 'album' ? null : 'album');
     };
 
     // "plan my day" button
-    const handlePlanMyDayButtonPressed = () => {
-        setActiveButton(activeButton === 'planDay' ? null : 'planDay');
+    const handleSimilarArtistsButtonPressed = () => {
+        setActiveButton(activeButton === 'similarArtists' ? null : 'similarArtists');
     };
 
     // "plan my outfit" button
-    const handlePlanMyOutfitButtonPressed = () => {
-        setActiveButton(activeButton === 'planShirt' ? null : 'planShirt');
+    const handleLyricsButtonPressed = () => {
+        setActiveButton(activeButton === 'lyrics' ? null : 'lyrics');
     };
 
     // placeholder text based on which button is pressed
     const getPlaceholderText = () => {
         switch (activeButton) {
-            case 'weather':
-                return "what's the weather like during my event?";
-            case 'planShirt':
-                return "what should i wear for my event?";
-            case 'planDay':
-                return "help me plan the day for my event!";
+            case 'album':
+                return "tell me about this album...";
+            case 'similarArtists':
+                return "find similar artists to...";
+            case 'lyrics':
+                return "analyze these lyrics...";
             default:
                 return "how can i help you today?";
         }
@@ -99,20 +142,155 @@ const Chatbot = () => {
 
     const generateAIResponse = async (userInput: string) => {
         setIsLoading(true);
+        setResponse('');
         let prompt = '';
 
         // different prompts based on active button
         switch (activeButton) {
-            case 'weather':
-                prompt = `Provide a very brief (2-3 sentences max) response about the weather for this event: ${userInput}. Include only temperature and essential weather tips.`;
+            case 'album':
+                try {
+                    // Parse user input to check for specific requests
+                    const isLatestRequest = userInput.toLowerCase().includes('latest');
+                    const isOldRequest = userInput.toLowerCase().includes('old') || userInput.toLowerCase().includes('first');
+                    
+                    // Clean the search query
+                    const cleanQuery = userInput
+                        .toLowerCase()
+                        .replace(/latest|newest|recent|old|first/g, '')
+                        .trim();
+
+                    // Search for the artist
+                    const artists = await searchSpotifyArtists(cleanQuery);
+                    
+                    if (artists.length === 0) {
+                        setResponse('Sorry, I couldn\'t find that artist. Please try another name.');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    const mainArtist = artists[0];
+                    
+                    // Get albums and related artists
+                    const [albums, relatedArtists] = await Promise.all([
+                        searchSpotifyAlbums(`artist:${mainArtist.name}`),
+                        getSpotifyRelatedArtists(mainArtist.id)
+                    ]);
+
+                    if (albums.length === 0) {
+                        setResponse('No albums found for this artist.');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // Select album and get its tracks
+                    const targetAlbum = isOldRequest ? albums[albums.length - 1] : albums[0];
+                    const albumTracks = await getAlbumTracks(targetAlbum.id);
+
+                    prompt = `Here's the ${isOldRequest ? 'first' : 'latest'} album information for ${mainArtist.name}:
+                             
+                             Album: ${targetAlbum.name}
+                             
+                             Tracks: ${albumTracks.map((track: any) => track.name).join(', ')}
+                             
+                             Please provide a concise summary of this information, mentioning the album name and
+                             a couple of tracks`;
+                } catch (error) {
+                    console.error('Error fetching Spotify data:', error);
+                    setResponse('Sorry, I encountered an error while fetching music information. Please try again.');
+                    setIsLoading(false);
+                    return;
+                }
                 break;
                 
-            case 'planShirt':
-                prompt = `In 2-3 sentences max, suggest 1-2 outfit ideas for this event: ${userInput}. Be specific but concise.`;
+            case 'similarArtists':
+                try {
+                    // Search for the artist
+                    const artists = await searchSpotifyArtists(userInput);
+                    
+                    if (artists.length === 0) {
+                        setResponse('Sorry, I couldn\'t find that artist. Please try another name.');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    const mainArtist = artists[0];
+                    
+                    // Get related artists
+                    const relatedArtists = await getSpotifyRelatedArtists(mainArtist.id);
+
+                    if (relatedArtists.length === 0) {
+                        setResponse('No similar artists found.');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // Get top 3 related artists
+                    const top3Artists = relatedArtists.slice(0, 3);
+                    
+                    // Get top tracks for each artist
+                    const artistsWithTracks = await Promise.all(
+                        top3Artists.map(async (artist: any) => {
+                            const tracks = await searchSpotifyTracks(`artist:${artist.name}`);
+                            return {
+                                name: artist.name,
+                                tracks: tracks.slice(0, 3).map((track: any) => track.name)
+                            };
+                        })
+                    );
+                    
+                    prompt = `Here are 3 similar artists to ${mainArtist.name}:\n\n` +
+                            artistsWithTracks.map((artist, index) => 
+                                `${index + 1}. ${artist.name}\n` +
+                                `   Popular tracks:\n` +
+                                artist.tracks.map((track: any) => `   - ${track}`).join('\n')
+                            ).join('\n\n');
+                } catch (error) {
+                    console.error('Error fetching Spotify data:', error);
+                    setResponse('Sorry, I encountered an error while fetching similar artists. Please try again.');
+                    setIsLoading(false);
+                    return;
+                }
                 break;
                 
-            case 'planDay':
-                prompt = `In 2-3 bullet points max, list the key timing and practical tips for this event: ${userInput}. Focus only on the most important details.`;
+            case 'lyrics':
+                try {
+                    // Check if input contains both song and artist (format: "song by artist" or "song - artist")
+                    const songArtistMatch = userInput.match(/^(.*?)\s+(?:by|-)\s+(.*)$/i);
+                    let trackName, artistName;
+                    
+                    if (songArtistMatch) {
+                        // If input is in "song by artist" format
+                        [, trackName, artistName] = songArtistMatch;
+                        const tracks = await searchSpotifyTracks(`track:${trackName} artist:${artistName}`);
+                        if (!tracks.length) {
+                            setResponse('Song not found. Please try another one.');
+                            setIsLoading(false);
+                            return;
+                        }
+                        const track = tracks[0];
+                        const lyrics = await fetchLyrics(track.name, track.artists[0]?.name);
+                        prompt = `For "${track.name}" by ${track.artists[0]?.name}:\n${lyrics}\n\nProvide a very brief analysis of this song's themes and meaning in exactly three sentences.`;
+                    } else {
+                        // General search
+                        const tracks = await searchSpotifyTracks(userInput);
+                        if (!tracks.length) {
+                            setResponse('Song not found. Please try another one.');
+                            setIsLoading(false);
+                            return;
+                        }
+                        const track = tracks[0];
+                        const lyrics = await fetchLyrics(
+                            track.name,
+                            track.artists[0]?.name || 'Unknown Artist'
+                        );
+                        prompt = `For "${track.name}" by ${track.artists[0]?.name}:\n${lyrics}\n\nProvide a very brief analysis of this song's themes and meaning in exactly three sentences.`;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    setResponse('Error fetching song information. Please try again.');
+                    setIsLoading(false);
+                    return;
+                }
                 break;
                 
             default:
@@ -135,14 +313,19 @@ const Chatbot = () => {
                 }
             );
             
-            const generatedResponse = response.data.candidates[0].content.parts[0].text;
-            setResponse(generatedResponse);
-            // Add buttonType to chat history
-            setChatHistory(prev => [...prev, { 
-                input: userInput, 
-                response: generatedResponse,
-                buttonType: activeButton // This will be null for default prompts
-            }]);
+            if (response.data.candidates && response.data.candidates[0]?.content?.parts?.[0]?.text) {
+                const generatedResponse = response.data.candidates[0].content.parts[0].text
+                    .replace(/\*\*/g, '') // Remove bold markdown
+                    .replace(/\*/g, '');   // Remove any remaining asterisks
+                setResponse(generatedResponse);
+                setChatHistory(prev => [...prev, { 
+                    input: userInput, 
+                    response: generatedResponse,
+                    buttonType: activeButton
+                }]);
+            } else {
+                setResponse('Sorry, I couldn\'t generate a response. Please try again.');
+            }
         } catch (error) {
             console.error('Error generating AI response:', error);
             setResponse('Sorry, I encountered an error. Please try again.');
@@ -164,48 +347,67 @@ const Chatbot = () => {
     // Add ref for ScrollView
     const scrollViewRef = React.useRef<ScrollView>(null);
 
+    const [showHelpModal, setShowHelpModal] = useState(false);
+
+    const exampleQueries = {
+        album: [
+            "show me Taylor Swift's latest album",
+            "what was Rihanna's first album",
+            "tell me about Charli XCX's album"
+        ],
+        similarArtists: [
+            "find similar artists to Olivia Rodrigo",
+            "who sounds like Frank Ocean",
+            "artists similar to Bad Bunny"
+        ],
+        lyrics: [
+            "analyze lyrics for Diva by Beyonce",
+            "Umbrella by Rihanna"
+        ]
+    };
+
     return (
         <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
 
         <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
-            {/* weather button */}
+            {/* album button */}
             <TouchableOpacity 
-                onPress={handleWeatherButtonPressed}
+                onPress={handleAlbumButtonPressed}
                 style={styles.iconButton}
                 activeOpacity={1}
             >
                 <Ionicons 
-                    name="sunny" 
+                    name="musical-notes-outline" 
                     size={30} 
-                    color={activeButton === 'weather' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                    color={activeButton === 'album' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
 
-            {/* plan my outfit button */}
+            {/* similar artists button */}
             <TouchableOpacity 
-                onPress={handlePlanMyOutfitButtonPressed}
+                onPress={handleSimilarArtistsButtonPressed}
                 style={styles.iconButton}
                 activeOpacity={1}
             >
                 <Ionicons 
-                    name="shirt" 
+                    name="heart-outline" 
                     size={27} 
-                    color={activeButton === 'planShirt' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                    color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
 
-            {/* plan my day button */}
+            {/* lyrics button */}
             <TouchableOpacity 
-                onPress={handlePlanMyDayButtonPressed}
+                onPress={handleLyricsButtonPressed}
                 style={styles.iconButton}
                 activeOpacity={1}
             >
                 <Ionicons 
-                    name="information-circle-outline" 
+                    name="volume-medium-outline" 
                     size={30} 
-                    color={activeButton === 'planDay' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                    color={activeButton === 'lyrics' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
                 />
             </TouchableOpacity>
         </Animated.View>
@@ -229,9 +431,9 @@ const Chatbot = () => {
                         {chat.buttonType && (
                             <Ionicons 
                                 name={
-                                    chat.buttonType === 'weather' ? 'sunny' :
-                                    chat.buttonType === 'planShirt' ? 'shirt' :
-                                    chat.buttonType === 'planDay' ? 'information-circle-outline' : 'help-circle'
+                                    chat.buttonType === 'album' ? 'musical-notes-outline' :
+                                    chat.buttonType === 'similarArtists' ? 'heart-outline' :
+                                    chat.buttonType === 'lyrics' ? 'volume-medium-outline' : 'help-circle'
                                 }
                                 size={16}
                                 color="rgba(252,108,133, 0.6)"
@@ -273,6 +475,56 @@ const Chatbot = () => {
         </KeyboardAvoidingView>
 
         <BottomNavBar />
+
+        <TouchableOpacity 
+            style={styles.helpButton}
+            onPress={() => setShowHelpModal(true)}
+        >
+            <Ionicons name="help-circle-outline" size={24} color="rgba(55,189,213,0.6)" />
+        </TouchableOpacity>
+
+        <Modal
+            visible={showHelpModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowHelpModal(false)}
+        >
+            <TouchableOpacity 
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowHelpModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Example Queries</Text>
+                        <TouchableOpacity onPress={() => setShowHelpModal(false)}>
+                            <Ionicons name="close" size={24} color="#0e1514" />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.querySection}>
+                        <View style={styles.queryHeader}>
+                            <Ionicons name="musical-notes-outline" size={20} color="rgba(252,108,133,1)" />
+                            <Text style={styles.querySectionTitle}>Album</Text>
+                        </View>
+                        <Text style={styles.queryText}>{exampleQueries.album.join('\n')}</Text>
+                    </View>
+                    <View style={styles.querySection}>
+                        <View style={styles.queryHeader}>
+                            <Ionicons name="heart-outline" size={20} color="rgba(252,108,133,1)" />
+                            <Text style={styles.querySectionTitle}>Similar Artists</Text>
+                        </View>
+                        <Text style={styles.queryText}>{exampleQueries.similarArtists.join('\n')}</Text>
+                    </View>
+                    <View style={styles.querySection}>
+                        <View style={styles.queryHeader}>
+                            <Ionicons name="volume-medium-outline" size={20} color="rgba(252,108,133,1)" />
+                            <Text style={styles.querySectionTitle}>Lyrics</Text>
+                        </View>
+                        <Text style={styles.queryText}>{exampleQueries.lyrics.join('\n')}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Modal>
         </SafeAreaView>
     );
 };
@@ -354,7 +606,7 @@ sendButton: {
   inputLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#79ce54',
+    color: '#fc6c85',
     marginBottom: 5,
 },
   inputText: {
@@ -368,7 +620,7 @@ sendButton: {
   responseLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#79ce54',
+    color: '#37bdd5',
     marginBottom: 5,
 },
   responseHeader: {
@@ -376,6 +628,57 @@ sendButton: {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 5,
+},
+  helpButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: 'rgba(55,189,213,0.2)',
+},
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+},
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '80%',
+},
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+},
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0e1514',
+},
+  querySection: {
+    marginBottom: 20,
+},
+  queryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+},
+  querySectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0e1514',
+    marginLeft: 10,
+},
+  queryText: {
+    fontSize: 12,
+    color: '#0e1514',
+    lineHeight: 20,
 },
 });
 
