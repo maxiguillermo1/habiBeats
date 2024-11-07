@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios'; 
+import Icon from 'react-native-ico-mingcute-tiny-bold-filled';
 import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getSpotifyRelatedArtists, getAlbumTracks } from '../api/spotify-api';
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
 const GENIUS_CLIENT_ID = 'iwKSJyXYREHteYohvjK1U9MXBjXMEA6WYcqLO04u4cp2Q8sZHa52RcuZDj8BZVm7';
@@ -411,13 +412,13 @@ const Chatbot = () => {
 
         {spotifyUrl && (
             <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
-            <TouchableOpacity 
-                onPress={() => Linking.openURL(spotifyUrl)}
-                style={styles.spotifyButtonContent}
-            >
-                <Text style={styles.spotifyButtonText}>Play on Spotify</Text>
-            </TouchableOpacity>
-        </Animated.View>
+                <TouchableOpacity 
+                    onPress={() => Linking.openURL(spotifyUrl)}
+                    style={styles.spotifyButtonContent}
+                >
+                    <Icon name="spotify" size={24}  />
+                </TouchableOpacity>
+            </Animated.View>
         )}
 
         <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
