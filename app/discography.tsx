@@ -2,14 +2,15 @@
 // Mariann Grace Dizon
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, SafeAreaView, RefreshControl } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getSpotifyRecommendations, getSpotifyRelatedArtists } from '@/api/spotify-api';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 
 // Type definitions for data structures
 interface Artist {
@@ -34,16 +35,83 @@ interface Song {
 }
 
 export default function Discography() {
-  // Authentication and user data hooks
-  const { user, userData } = useAuth();
-  
-  // State management for recommendations and UI states
+  // Group all useState hooks together at the top
   const [similarArtists, setSimilarArtists] = useState<Artist[]>([]);
   const [similarSongs, setSimilarSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Auth hooks
+  const { user, userData } = useAuth();
   const navigation = useNavigation();
 
+  // Define useCallback before useEffect
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const userDocRef = doc(db, 'users', user!.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const userData = userDocSnap.data();
+      
+      let artistId = null;
+      let trackId = null;
+
+      // Get random favorite artist
+      if (userData?.favoriteArtists) {
+        const parsedArtists = typeof userData.favoriteArtists === 'string' 
+          ? JSON.parse(userData.favoriteArtists) 
+          : userData.favoriteArtists;
+        
+        if (Array.isArray(parsedArtists) && parsedArtists.length > 0) {
+          // Randomly select an artist from favorites
+          const randomIndex = Math.floor(Math.random() * parsedArtists.length);
+          artistId = parsedArtists[randomIndex].id;
+        }
+      }
+
+      // Get random tune from saved tunes (if you have multiple)
+      if (userData?.savedTunes && Array.isArray(userData.savedTunes) && userData.savedTunes.length > 0) {
+        const randomTuneIndex = Math.floor(Math.random() * userData.savedTunes.length);
+        const parsedTune = typeof userData.savedTunes[randomTuneIndex] === 'string'
+          ? JSON.parse(userData.savedTunes[randomTuneIndex])
+          : userData.savedTunes[randomTuneIndex];
+        trackId = parsedTune.id;
+      } else if (userData?.tuneOfMonth) {
+        // Fallback to tune of month if no saved tunes
+        const parsedTune = typeof userData.tuneOfMonth === 'string'
+          ? JSON.parse(userData.tuneOfMonth)
+          : userData.tuneOfMonth;
+        trackId = parsedTune.id;
+      }
+
+      if (artistId && trackId) {
+        const [newArtists, newSongs] = await Promise.all([
+          getSpotifyRelatedArtists(artistId),
+          getSpotifyRecommendations([artistId], [trackId],)
+        ]);
+        
+        if (newArtists) {
+          // Shuffle the artists array
+          const shuffledArtists = [...newArtists].sort(() => Math.random() - 0.5);
+          setSimilarArtists(shuffledArtists);
+        }
+        
+        if (newSongs) {
+          // Shuffle the songs array
+          const shuffledSongs = [...newSongs].sort(() => Math.random() - 0.5);
+          setSimilarSongs(shuffledSongs);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing:', error);
+      setError('Failed to refresh recommendations');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  // useEffect comes last
   useEffect(() => {
     // Cleanup flag to prevent state updates after unmount
     let isMounted = true;
@@ -200,16 +268,26 @@ export default function Discography() {
       {/* Header section with back button */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="chevron-back-outline" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.header}>Discography</Text>
       </View>
 
       {/* Main content section */}
       <View style={styles.content}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#37bdd5"
+              colors={['#37bdd5', '#fc6c85', '#fba904']}
+            />
+          }
+        >
           {/* Similar Artists Section */}
-          <Text style={styles.title}>Similar Artists You Might Like</Text>
+          <Text style={styles.title}>Artists You Might Like</Text>
           {similarArtists.length === 0 ? (
             <Text style={styles.noDataText}>No similar artists found</Text>
           ) : (
@@ -228,6 +306,12 @@ export default function Discography() {
                     <Image source={{ uri: artist.imageUrl }} style={styles.image} />
                     <Text style={styles.itemTitle}>{artist.name}</Text>
                     <Text style={styles.itemSubtitle}>Popularity: {artist.popularity}</Text>
+                    <TouchableOpacity 
+                      style={styles.spotifyButton}
+                      onPress={() => openSpotifyArtist(artist.id)}
+                    >
+                      <Text style={styles.spotifyButtonText}>Open in Spotify</Text>
+                    </TouchableOpacity>
                   </View>
                 ))}
               </View>
@@ -252,10 +336,16 @@ export default function Discography() {
                 {row.map((song) => (
                   <View key={song.id} style={styles.item}>
                     <Image source={{ uri: song.albumArt }} style={styles.image} />
-                    <Text style={styles.itemTitle}>{song.name}</Text>
-                    <Text style={styles.itemSubtitle}>
+                    <Text style={styles.songTitle}>{song.name}</Text>
+                    <Text style={styles.songArtist}>
                       by {song.artists.map((artist) => artist.name).join(', ')}
                     </Text>
+                    <TouchableOpacity 
+                      style={styles.spotifyButton}
+                      onPress={() => openSpotifyTrack(song.id)}
+                    >
+                      <Text style={styles.spotifyButtonText}>Play on Spotify</Text>
+                    </TouchableOpacity>
                   </View>
                 ))}
               </View>
@@ -309,6 +399,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 20,
     textAlign: 'center',
+    color: '#333',
   },
   loadingText: {
     marginTop: 10,
@@ -328,14 +419,28 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   itemTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 4,
     textAlign: 'center',
+    color: '#37bdd5',
   },
   itemSubtitle: {
-    fontSize: 11,
-    color: '#666',
+    fontSize: 12,
+    color: '#79ce54', 
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  songTitle: { 
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    textAlign: 'center',
+    color: '#fc6c85',
+  },
+  songArtist: {  
+    fontSize: 12,
+    color: '#fba904',
     marginBottom: 4,
     textAlign: 'center',
   },
@@ -343,18 +448,57 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#0e1514',
+    color: '#333',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    marginVertical: 20,
+    paddingHorizontal: 10,
+    marginVertical: 10,
     position: 'relative',
   },
   backButton: {
     position: 'absolute',
-    left: 10,
+    left: 40,
+  },
+  spotifyButton: {
+    backgroundColor: '#1DB954', // Spotify green
+    padding: 8,
+    marginLeft: 23,
+    marginRight: 23,
+    borderRadius: 15,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  spotifyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
+
+const openSpotifyArtist = (artistId: string) => {
+  // Try to open in Spotify app first, fallback to web
+  Linking.canOpenURL(`spotify:artist:${artistId}`)
+    .then((supported) => {
+      if (supported) {
+        return Linking.openURL(`spotify:artist:${artistId}`);
+      } else {
+        return Linking.openURL(`https://open.spotify.com/artist/${artistId}`);
+      }
+    })
+    .catch((err) => console.error('Error opening Spotify:', err));
+};
+
+const openSpotifyTrack = (trackId: string) => {
+  Linking.canOpenURL(`spotify:track:${trackId}`)
+    .then((supported) => {
+      if (supported) {
+        return Linking.openURL(`spotify:track:${trackId}`);
+      } else {
+        return Linking.openURL(`https://open.spotify.com/track/${trackId}`);
+      }
+    })
+    .catch((err) => console.error('Error opening Spotify:', err));
+};
