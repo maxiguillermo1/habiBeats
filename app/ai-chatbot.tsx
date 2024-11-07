@@ -2,7 +2,7 @@
 // Reyna Aguirre
 
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Modal, Linking } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
@@ -68,6 +68,7 @@ const Chatbot = () => {
     const weatherButtonTranslateY = useSharedValue(100);
     const planMyDayButtonTranslateY = useSharedValue(100);
     const planMyOutfitButtonTranslateY = useSharedValue(100);
+    const spotifyButtonScale = useSharedValue(0);
 
     useEffect(() => {
         titleOpacity.value = withSpring(1);
@@ -82,6 +83,9 @@ const Chatbot = () => {
         planMyOutfitButtonOpacity.value = withSpring(1);
         planMyOutfitButtonTranslateY.value = withSpring(20);
     }, []);
+
+    
+
 
     const animatedTitleStyle = useAnimatedStyle(() => {
         return {
@@ -139,6 +143,11 @@ const Chatbot = () => {
         response: string; 
         buttonType: string | null;
     }[]>([]);
+
+    // Add state for Spotify URL near other state declarations
+    const [spotifyUrl, setSpotifyUrl] = useState<string | null>(null);
+
+    // Add new state near other state declarations
 
     const generateAIResponse = async (userInput: string) => {
         setIsLoading(true);
@@ -254,36 +263,51 @@ const Chatbot = () => {
                 
             case 'lyrics':
                 try {
-                    // Check if input contains both song and artist (format: "song by artist" or "song - artist")
+                    // Clear any existing Spotify URL when starting a new search
+                    setSpotifyUrl(null);
+                    console.log('Starting lyrics search for:', userInput);
+                    
                     const songArtistMatch = userInput.match(/^(.*?)\s+(?:by|-)\s+(.*)$/i);
                     let trackName, artistName;
                     
                     if (songArtistMatch) {
-                        // If input is in "song by artist" format
                         [, trackName, artistName] = songArtistMatch;
+                        console.log('Parsed input - Track:', trackName, 'Artist:', artistName);
+                        
                         const tracks = await searchSpotifyTracks(`track:${trackName} artist:${artistName}`);
-                        if (!tracks.length) {
-                            setResponse('Song not found. Please try another one.');
-                            setIsLoading(false);
-                            return;
+                        console.log('Spotify search results:', tracks);
+                        
+                        if (tracks.length) {
+                            const spotifyTrackUrl = `https://open.spotify.com/track/${tracks[0].id}`;
+                            console.log('Found Spotify track URL:', spotifyTrackUrl);
+                            setSpotifyUrl(spotifyTrackUrl);
+                            
+                            prompt = `Please analyze the song "${tracks[0].name}" by ${tracks[0].artists[0].name}. 
+                                     Consider the following aspects:
+                                     1. The song's overall theme and message
+                                     2. Any notable musical elements
+                                     3. The song's cultural or historical significance (if any)
+                                     
+                                     Please provide a brief, engaging analysis in 2-3 sentences.`;
                         }
-                        const track = tracks[0];
-                        const lyrics = await fetchLyrics(track.name, track.artists[0]?.name);
-                        prompt = `For "${track.name}" by ${track.artists[0]?.name}:\n${lyrics}\n\nProvide a very brief analysis of this song's themes and meaning in exactly three sentences.`;
                     } else {
-                        // General search
+                        console.log('Performing general search for:', userInput);
                         const tracks = await searchSpotifyTracks(userInput);
-                        if (!tracks.length) {
-                            setResponse('Song not found. Please try another one.');
-                            setIsLoading(false);
-                            return;
+                        console.log('Spotify search results:', tracks);
+                        
+                        if (tracks.length) {
+                            const spotifyTrackUrl = `https://open.spotify.com/track/${tracks[0].id}`;
+                            console.log('Found Spotify track URL:', spotifyTrackUrl);
+                            setSpotifyUrl(spotifyTrackUrl);
+                            
+                            prompt = `Please analyze the song "${tracks[0].name}" by ${tracks[0].artists[0].name}. 
+                                     Consider the following aspects:
+                                     1. The song's overall theme and message
+                                     2. Any notable musical elements
+                                     3. The song's cultural or historical significance (if any)
+                                     
+                                     Please provide a brief, engaging analysis in 2-3 sentences.`;
                         }
-                        const track = tracks[0];
-                        const lyrics = await fetchLyrics(
-                            track.name,
-                            track.artists[0]?.name || 'Unknown Artist'
-                        );
-                        prompt = `For "${track.name}" by ${track.artists[0]?.name}:\n${lyrics}\n\nProvide a very brief analysis of this song's themes and meaning in exactly three sentences.`;
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -315,8 +339,8 @@ const Chatbot = () => {
             
             if (response.data.candidates && response.data.candidates[0]?.content?.parts?.[0]?.text) {
                 const generatedResponse = response.data.candidates[0].content.parts[0].text
-                    .replace(/\*\*/g, '') // Remove bold markdown
-                    .replace(/\*/g, '');   // Remove any remaining asterisks
+                    .replace(/\*\*/g, '')
+                    .replace(/\*/g, '');
                 setResponse(generatedResponse);
                 setChatHistory(prev => [...prev, { 
                     input: userInput, 
@@ -366,10 +390,35 @@ const Chatbot = () => {
         ]
     };
 
+    useEffect(() => {
+        if (spotifyUrl) {
+            spotifyButtonScale.value = withSpring(1);
+        } else {
+            spotifyButtonScale.value = withSpring(0);
+        }
+    }, [spotifyUrl]);
+
+    const animatedSpotifyButtonStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: spotifyButtonScale.value }],
+        };
+    });
+
     return (
         <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
+
+        {spotifyUrl && (
+            <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
+            <TouchableOpacity 
+                onPress={() => Linking.openURL(spotifyUrl)}
+                style={styles.spotifyButtonContent}
+            >
+                <Text style={styles.spotifyButtonText}>Play on Spotify</Text>
+            </TouchableOpacity>
+        </Animated.View>
+        )}
 
         <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
             {/* album button */}
@@ -635,7 +684,7 @@ sendButton: {
     right: 20,
     padding: 10,
     borderRadius: 50,
-    backgroundColor: 'rgba(55,189,213,0.2)',
+    backgroundColor: 'rgba(55,189,213,0.1)',
 },
   modalOverlay: {
     flex: 1,
@@ -679,6 +728,32 @@ sendButton: {
     fontSize: 12,
     color: '#0e1514',
     lineHeight: 20,
+},
+  spotifyButton: {
+    alignSelf: 'center',
+    marginTop: 10,
+},
+  spotifyButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1ED760',
+    marginLeft: 5,
+},
+spotifyButtonContent: {
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+        width: 0,
+        height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
 },
 });
 
