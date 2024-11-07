@@ -5,8 +5,9 @@
 // START of Jesus Donate Contribution
 
 import React from 'react';  
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, usePathname, Href } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const BottomNavBar = () => {
   const router = useRouter();
@@ -30,54 +31,120 @@ const BottomNavBar = () => {
 
   // Render the bottom navigation bar
   return (
-    <View style={styles.bottomNav}>
-      <TouchableOpacity onPress={() => navigateTo('/events/search')}>
-        <Text style={[
-          isEventActive() ? styles.activeNavItem : styles.navItem,
-          styles.boldText
-        ]}>Events</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/ai-chatbot')}>
-        <Text style={[getNavItemStyle('/ai-chatbot'), styles.boldText]}>Habibi</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/messages')}>
-        <Text style={[getNavItemStyle('/messages'), styles.boldText]}>Messages</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/match')}>
-        <Text style={[getNavItemStyle('/match'), styles.boldText]}>Match</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateTo('/profile')}>
-        <Text style={[getNavItemStyle('/profile'), styles.boldText]}>Profile</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.bottomNav}>
+        <TouchableOpacity onPress={() => navigateTo('/events/search')}>
+          <Ionicons 
+            name="earth-outline" 
+            size={18}
+            style={[
+              isEventActive() ? styles.activeNavItem : styles.navItem
+            ]}
+          />
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => navigateTo('/ai-chatbot')}>
+          <Ionicons 
+            name="heart-circle-outline" 
+            size={18}
+            style={[getNavItemStyle('/ai-chatbot')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigateTo('/discography')}>
+          <Ionicons 
+            name="disc-outline" 
+            size={18}
+            style={[getNavItemStyle('/discography')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => navigateTo('/disposable-camera')}
+          style={styles.cameraButton}
+        >
+          <Ionicons 
+            name="camera-outline" 
+            size={22}
+            style={[getNavItemStyle('/disposable-camera')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigateTo('/messages')}>
+          <Ionicons 
+            name="chatbubble-ellipses-outline" 
+            size={18}
+            style={[getNavItemStyle('/messages')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigateTo('/match')}>
+          <Ionicons 
+            name="people-circle-outline" 
+            size={18}
+            style={[getNavItemStyle('/match')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigateTo('/profile')}>
+          <Ionicons 
+            name="person-circle-outline" 
+            size={18}
+            style={[getNavItemStyle('/profile')]}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 30,
+    left: 30,
+    right: 30,
+  },
   bottomNav: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingBottom: 70,
-    paddingTop: 10,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
     backgroundColor: '#fff8f0',
+    borderRadius: 25,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
   },
   navItem: {
-    fontSize: 14,
     color: 'black',
-    marginHorizontal: 12,
+    marginHorizontal: 2,
   },
   activeNavItem: {
-    fontSize: 14,
     color: '#37bdd5',
-    marginHorizontal: 12,
+    marginHorizontal: 2,
   },
-  boldText: {
-    fontWeight: 'bold',
-  },
+  cameraButton: {
+    backgroundColor: '#fff8f0',
+    padding: 4,
+    borderRadius: 18,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  }
 });
 
 export default BottomNavBar;

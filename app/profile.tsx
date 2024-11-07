@@ -3,7 +3,7 @@
 
 // Import necessary modules and define types
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard, ImageSourcePropType, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
@@ -84,6 +84,14 @@ export default function Profile() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
   const [selectedDisposable, setSelectedDisposable] = useState<DisposablePhoto | null>(null);
+
+  // Add menu state
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  // Add menu toggle function
+  const toggleMenu = () => {
+    setMenuVisible(!menuVisible);
+  };
 
   // Fetch animated border image based on user data
   const fetchAnimatedBorder = async () => {
@@ -279,28 +287,50 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.leftHeaderButtons}>
-          <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
-            <Ionicons name="camera-outline" size={25} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.discoverButton} onPress={() => router.push('/discography')}>
-            <Ionicons name="disc-outline" size={25} color="#333" />
-          </TouchableOpacity>
-        </View>
-        
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
-            <Ionicons name="create-outline" size={25} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
-            <Ionicons name="settings-outline" size={25} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.notificationButton} onPress={() => router.push('/notification-page')}>
-            <Ionicons name="notifications-outline" size={25} color="#333" />
-            {hasUnread && <View style={styles.notificationDot} />}
+          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
+            <Ionicons name="apps-outline" size={25} color="#333" />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Add Modal for menu */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={menuVisible}
+        onRequestClose={toggleMenu}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={toggleMenu}
+        >
+          <View style={styles.menuContainer}>
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => {
+                handleEditPress();
+                toggleMenu();
+              }}
+            >
+              <Ionicons name="create-outline" size={22} color="#333" />
+              <Text style={styles.menuText}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => {
+                handleSettingsPress();
+                toggleMenu();
+              }}
+            >
+              <Ionicons name="settings-outline" size={22} color="#333" />
+              <Text style={styles.menuText}>Settings</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
       <View style={styles.profileContent}>
         {user.profileImageUrl ? (
           <View style={[
@@ -454,7 +484,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 1,
@@ -462,8 +492,7 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: 120,
+    alignItems: 'center',
   },
   editButton: {
     padding: 5,
@@ -678,4 +707,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 15,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 200,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  menuText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#333',
+  },
+  menuButton: {
+    padding: 5,
+  },
+  menuNotificationDot: {
+    position: 'absolute',
+    right: 15,
+    top: 15,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'red',
+  },
 });
+
