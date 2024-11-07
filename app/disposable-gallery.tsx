@@ -41,52 +41,60 @@ export default function DisposableGallery() {
   const route = useRoute<DisposableGalleryRouteProp>();
   const selectMode = route.params?.selectMode;
 
-  useEffect(() => {
-    const loadPhotos = async () => {
-      try {
-        const userId = getAuth().currentUser?.uid;
-        if (!userId) {
-          throw new Error('User not authenticated');
-        }
-
-        // Load photos from AsyncStorage first
-        const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
-        let photosList: PhotoItem[] = [];
-        
-        if (savedPhotos) {
-          photosList = JSON.parse(savedPhotos);
-        }
-
-        // Then load photos from Firebase Storage
-        const storageRef = ref(storage, `disposableImages/${userId}`);
-        const result = await listAll(storageRef);
-        const firebaseUrls = await Promise.all(
-          result.items.map(async (imageRef) => {
-            const url = await getDownloadURL(imageRef);
-            const timestamp = parseInt(imageRef.name.split('.')[0]);
-            return { url, timestamp };
-          })
-        );
-
-        // Merge and deduplicate photos from both sources
-        const allPhotos = [...photosList, ...firebaseUrls];
-        const uniquePhotos = Array.from(
-          new Map(allPhotos.map(item => [item.timestamp, item])).values()
-        );
-
-        // Sort photos by timestamp, newest first
-        uniquePhotos.sort((a, b) => b.timestamp - a.timestamp);
-        setPhotos(uniquePhotos);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error loading photos:', err);
-      } finally {
-        setLoading(false);
+  const loadPhotos = async () => {
+    try {
+      const userId = getAuth().currentUser?.uid;
+      if (!userId) {
+        throw new Error('User not authenticated');
       }
-    };
 
+      // Load photos from AsyncStorage first
+      const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
+      let photosList: PhotoItem[] = [];
+        
+      if (savedPhotos) {
+        photosList = JSON.parse(savedPhotos);
+      }
+
+      // Then load photos from Firebase Storage
+      const storageRef = ref(storage, `disposableImages/${userId}`);
+      const result = await listAll(storageRef);
+      const firebaseUrls = await Promise.all(
+        result.items.map(async (imageRef) => {
+          const url = await getDownloadURL(imageRef);
+          const timestamp = parseInt(imageRef.name.split('.')[0]);
+          return { url, timestamp };
+        })
+      );
+
+      // Merge and deduplicate photos from both sources
+      const allPhotos = [...photosList, ...firebaseUrls];
+      const uniquePhotos = Array.from(
+        new Map(allPhotos.map(item => [item.timestamp, item])).values()
+      );
+
+      // Sort photos by timestamp, newest first
+      uniquePhotos.sort((a, b) => b.timestamp - a.timestamp);
+      setPhotos(uniquePhotos);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error loading photos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadPhotos();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPhotos();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   // Render each photo item in the FlatList
   const renderPhoto = ({ item }: { item: PhotoItem }) => (
@@ -207,7 +215,7 @@ export default function DisposableGallery() {
         <Text style={styles.noPhotosText}>No photos yet</Text>
       ) : (
         <FlatList
-          data={photos}
+          data={photos.filter(photo => photo && photo.url && photo.timestamp)}
           renderItem={renderPhoto}
           keyExtractor={(item) => item.timestamp.toString()}
           numColumns={3}

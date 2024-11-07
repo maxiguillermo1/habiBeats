@@ -59,7 +59,13 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.artistItem}>
-            <Image source={{ uri: item.picture }} style={styles.artistImage} />
+            {item.picture ? (
+              <Image source={{ uri: item.picture }} style={styles.artistImage} />
+            ) : (
+              <View style={[styles.artistImage, styles.placeholderImage]}>
+                <Ionicons name="person" size={30} color="#999" />
+              </View>
+            )}
             <Text style={styles.artistName}>{item.name}</Text>
             <TouchableOpacity onPress={() => onRemoveArtist(item.id)}>
               <Ionicons name="close-circle" size={24} color="#f00" />
@@ -98,7 +104,13 @@ const SearchArtist: React.FC<SpotifySearchProps> = ({ onSelectArtist, onRemoveAr
                   style={styles.artistItem}
                   onPress={() => handleSelectArtist(item)}
                 >
-                  <Image source={{ uri: item.picture }} style={styles.artistImage} />
+                  {item.picture ? (
+                    <Image source={{ uri: item.picture }} style={styles.artistImage} />
+                  ) : (
+                    <View style={[styles.artistImage, styles.placeholderImage]}>
+                      <Ionicons name="person" size={30} color="#999" />
+                    </View>
+                  )}
                   <Text style={styles.artistName}>{item.name}</Text>
                 </TouchableOpacity>
               )}
@@ -199,6 +211,11 @@ const styles = StyleSheet.create({
     color: '#fff8f0',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  placeholderImage: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

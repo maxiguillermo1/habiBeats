@@ -279,16 +279,14 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
-          <Ionicons name="camera-outline" size={24} color="black" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.discoverButton} 
-          onPress={() => router.push('/discography')}
-        >
-          <Ionicons name="disc-outline" size={24} color="black" />
-        </TouchableOpacity>
+        <View style={styles.leftHeaderButtons}>
+          <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
+            <Ionicons name="camera-outline" size={25} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.discoverButton} onPress={() => router.push('/discography')}>
+            <Ionicons name="disc-outline" size={25} color="#333" />
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
@@ -460,6 +458,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 1,
+    paddingBottom: 10,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -647,7 +646,6 @@ const styles = StyleSheet.create({
   },
   discoverButton: {
     padding: 5,
-    marginLeft: 10, // Add space between camera and discover buttons
   },
   disposableContainer: {
     backgroundColor: '#fff',
@@ -675,5 +673,9 @@ const styles = StyleSheet.create({
     gap: 15,
     justifyContent: 'center',
     paddingTop: 10,
+  },
+  leftHeaderButtons: {
+    flexDirection: 'row',
+    gap: 15,
   },
 });

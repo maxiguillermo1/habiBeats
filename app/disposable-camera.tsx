@@ -23,6 +23,7 @@ export default function DisposableCamera() {
   const [permission, requestPermission] = useCameraPermissions(); // State to manage camera permissions
   const [camera, setCamera] = useState<CameraView | null>(null); // State to manage camera reference
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Navigation hook
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // If permission is not yet determined, show loading text
   if (!permission) {
@@ -58,48 +59,66 @@ export default function DisposableCamera() {
 
   // Function to take a picture
   const takePicture = async () => {
+    if (isProcessing || !camera) return;
+    
+    setIsProcessing(true);
     try {
       if (!camera) {
         console.error('Camera reference is null');
         return;
       }
-      const photo = await camera.takePictureAsync({
-        quality: 1,
-        exif: true,
-      });
 
-      if (!photo) {
-        console.error('Failed to capture photo');
-        return;
+      try {
+        // Take picture with error handling
+        const photo = await camera.takePictureAsync({
+          quality: 0.5, // Further reduced quality for better performance
+          exif: false, // Disable EXIF to reduce memory usage
+        });
+
+        if (!photo) {
+          throw new Error('No photo captured');
+        }
+
+        const userId = getAuth().currentUser?.uid;
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+
+        // Create blob in a way that allows garbage collection
+        let blob: Blob | null = null;
+        try {
+          const response = await fetch(photo.uri);
+          blob = await response.blob();
+          
+          const timestamp = Date.now();
+          const filename = `disposableImages/${userId}/${timestamp}.jpg`;
+          const storageRef = ref(storage, filename);
+
+          await uploadBytes(storageRef, blob);
+          const downloadURL = await getDownloadURL(storageRef);
+
+          // Update AsyncStorage
+          const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
+          const photosList = savedPhotos ? JSON.parse(savedPhotos) : [];
+          photosList.push({ url: downloadURL, timestamp });
+          await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(photosList));
+
+        } finally {
+          // Clean up blob
+          if (blob) {
+            blob = null;
+          }
+          // Revoke the temporary URL to free memory
+          if (photo.uri) {
+            URL.revokeObjectURL(photo.uri);
+          }
+        }
+
+      } catch (error) {
+        console.error('Camera operation failed:', error);
       }
-
-      const userId = getAuth().currentUser?.uid;
-      if (!userId) {
-        console.error('User not authenticated');
-        return;
-      }
-
-      // Convert photo URI to blob
-      const response = await fetch(photo.uri);
-      const blob = await response.blob();
-
-      // Create unique filename with timestamp
-      const timestamp = Date.now();
-      const filename = `disposableImages/${userId}/${timestamp}.jpg`;
-      const storageRef = ref(storage, filename);
-
-      // Upload to Firebase Storage
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-
-      // Store in AsyncStorage
-      const savedPhotos = await AsyncStorage.getItem(`photos_${userId}`);
-      const photosList = savedPhotos ? JSON.parse(savedPhotos) : [];
-      photosList.push({ url: downloadURL, timestamp });
-      await AsyncStorage.setItem(`photos_${userId}`, JSON.stringify(photosList));
-
-    } catch (error) {
-      console.error('Failed to take and upload picture:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 

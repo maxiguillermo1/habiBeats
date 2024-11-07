@@ -65,7 +65,13 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
           <>
             {/* Display selected song details */}
             <View style={styles.songContent}>
-              <Image source={{ uri: selectedSong.albumArt }} style={styles.albumArt} />
+              {selectedSong?.albumArt ? (
+                <Image source={{ uri: selectedSong.albumArt }} style={styles.albumArt} />
+              ) : (
+                <View style={[styles.albumArt, styles.placeholderImage]}>
+                  <Ionicons name="musical-note" size={30} color="#999" />
+                </View>
+              )}
               <View style={styles.songInfo}>
                 <Text style={styles.songName} numberOfLines={2} ellipsizeMode="tail">{selectedSong.name}</Text>
                 <Text style={styles.artistName} numberOfLines={1} ellipsizeMode="tail">{selectedSong.artist}</Text>
@@ -104,11 +110,14 @@ export default function SearchSong({ onSelectSong, initialSong }: SearchSongProp
               data={searchResults}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.songItem}
-                  onPress={() => handleSelectSong(item)}
-                >
-                  <Image source={{ uri: item.albumArt }} style={styles.resultAlbumArt} />
+                <TouchableOpacity style={styles.songItem} onPress={() => handleSelectSong(item)}>
+                  {item.albumArt ? (
+                    <Image source={{ uri: item.albumArt }} style={styles.resultAlbumArt} />
+                  ) : (
+                    <View style={[styles.resultAlbumArt, styles.placeholderImage]}>
+                      <Ionicons name="musical-note" size={30} color="#999" />
+                    </View>
+                  )}
                   <View style={styles.resultTextContainer}>
                     <Text style={styles.resultSongName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
                     <Text style={styles.resultArtistName} numberOfLines={1} ellipsizeMode="tail">{item.artist}</Text>
@@ -246,5 +255,15 @@ const styles = StyleSheet.create({
     color: '#fff8f0',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  placeholderImage: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#999',
+    borderRadius: 10,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

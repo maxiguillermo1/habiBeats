@@ -82,7 +82,13 @@ const SearchAlbum: React.FC<SearchAlbumProps> = ({ onSelectAlbum }) => {
                   style={styles.albumItem}
                   onPress={() => handleSelectAlbum(item)}
                 >
-                  <Image source={{ uri: item.albumArt }} style={styles.albumImage} />
+                  {item.albumArt ? (
+                    <Image source={{ uri: item.albumArt }} style={styles.albumImage} />
+                  ) : (
+                    <View style={[styles.albumImage, styles.placeholderImage]}>
+                      <Ionicons name="disc" size={30} color="#999" />
+                    </View>
+                  )}
                   <View style={styles.albumInfo}>
                     <Text style={styles.albumName}>{item.name}</Text>
                     <Text style={styles.albumArtist}>{item.artist}</Text>
@@ -193,6 +199,11 @@ const styles = StyleSheet.create({
     color: '#fff8f0',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  placeholderImage: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
