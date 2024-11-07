@@ -15,6 +15,7 @@ import ChangePassword from './settings/change-password';
 import { useRouter } from 'expo-router';
 import { getGooglePlacesQueryConfig } from '../api/google-places-api';
 import { useTranslation } from 'react-i18next';
+import '../i18n';
 
 interface UserMatch {
   uid: string;
