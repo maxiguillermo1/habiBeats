@@ -324,6 +324,28 @@ export default function Profile() {
             <TouchableOpacity 
               style={styles.menuItem} 
               onPress={() => {
+                router.push('/ai-chatbot');
+                toggleMenu();
+              }}
+            >
+              <Ionicons name="heart-circle-outline" size={22} color="#333" />
+              <Text style={styles.menuText}>HabiBI AI</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => {
+                router.push('/discography');
+                toggleMenu();
+              }}
+            >
+              <Ionicons name="compass-outline" size={22} color="#333" />
+              <Text style={styles.menuText}>Discography</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => {
                 router.push('/notification-page');
                 toggleMenu();
               }}

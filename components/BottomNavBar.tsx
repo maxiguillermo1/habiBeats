@@ -29,7 +29,7 @@ const BottomNavBar = () => {
     return ['/myevents', '/search', '/trending'].includes(currentPath);
   };
 
-  // Render the bottom navigation bar
+  // Render the bottom navigation bar with fewer icons
   return (
     <View style={styles.container}>
       <View style={styles.bottomNav}>
@@ -43,38 +43,19 @@ const BottomNavBar = () => {
           />
         </TouchableOpacity>
         
-        <TouchableOpacity onPress={() => navigateTo('/ai-chatbot')}>
-          <Ionicons 
-            name="heart-circle-outline" 
-            size={18}
-            style={[getNavItemStyle('/ai-chatbot')]}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigateTo('/discography')}>
-          <Ionicons 
-            name="compass-outline" 
-            size={18}
-            style={[getNavItemStyle('/discography')]}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          onPress={() => navigateTo('/disposable-camera')}
-          style={styles.cameraButton}
-        >
-          <Ionicons 
-            name="camera-outline" 
-            size={22}
-            style={[getNavItemStyle('/disposable-camera')]}
-          />
-        </TouchableOpacity>
-
         <TouchableOpacity onPress={() => navigateTo('/messages')}>
           <Ionicons 
             name="chatbubble-ellipses-outline" 
             size={18}
             style={[getNavItemStyle('/messages')]}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigateTo('/disposable-camera')}>
+          <Ionicons 
+            name="camera-outline" 
+            size={18}
+            style={[getNavItemStyle('/disposable-camera')]}
           />
         </TouchableOpacity>
 
@@ -132,19 +113,6 @@ const styles = StyleSheet.create({
     color: '#37bdd5',
     marginHorizontal: 2,
   },
-  cameraButton: {
-    backgroundColor: '#fff8f0',
-    padding: 4,
-    borderRadius: 18,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  }
 });
 
 export default BottomNavBar;
