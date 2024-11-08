@@ -345,121 +345,131 @@ const Messages = () => {
     <Provider>
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        {/* This is the scrollview that displays the conversations and new matches */}
         <ScrollView style={styles.scrollView}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Messages</Text>
-            <Menu
-              visible={groupMenuVisible}
-              onDismiss={() => setGroupMenuVisible(false)}
-              anchor={
-                <TouchableOpacity 
-                  onPress={() => setGroupMenuVisible(true)}
-                >
-                  <Ionicons name="people" size={24} color="#fba904" />
-                </TouchableOpacity>
-              }
-              contentStyle={styles.menuContent}
-            >
-              <Menu.Item 
-                onPress={() => {
-                  setGroupMenuVisible(false);
-                  router.push('/create-group');
-                }} 
-                title="Create Group" 
-                leadingIcon="account-group-outline"
-              />
-              <Menu.Item 
-                onPress={() => {
-                  setGroupMenuVisible(false);
-                  router.push('/view-groups');
-                }} 
-                title="View Groups" 
-                leadingIcon="format-list-bulleted"
-              />
-            </Menu>
-          </View>
-
-          {/* Displays the new matches */}
-          <Text style={styles.title}>Send your first message!</Text>
-          {isLoadingMatches ? (
-            <ActivityIndicator size="large" color="#fba904" />
-          ) : newMatches.length > 0 ? (
-            newMatches.map((match) => (
-              <TouchableOpacity 
-                key={match.userId} 
-                style={styles.newMatchItem}
-                onPress={() => navigateToDirectMessage(match.userId, match.name)}
-              >
-                <Image source={{ uri: match.profileImageUrl }} style={styles.avatar} />
-                <Text style={styles.name}>{match.name}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.noMatchesText}>No new matches</Text>
-          )}
-
-          <Text style={styles.title}>Recent Messages</Text>
-          {/* Displays the conversations */}
-          {isLoadingConversations ? (
-            <ActivityIndicator size="large" color="#fba904" />
-          ) : (
-            <>
-              {[...conversations, ...groupConversations]
-                .filter((conv: any) => {
-                  // For direct messages
-                  if (conv.recipientId) {
-                    return conv.lastMessage && conv.lastMessage.trim() !== '';
+          <View style={styles.contentContainer}>
+            <View style={styles.contentContainer}>
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>Recent Messages</Text>
+                <Menu
+                  visible={groupMenuVisible}
+                  onDismiss={() => setGroupMenuVisible(false)}
+                  anchor={
+                    <TouchableOpacity 
+                      onPress={() => setGroupMenuVisible(true)}
+                      style={styles.menuButton}
+                    >
+                      <Ionicons name="people" size={24} color="#fba904" />
+                    </TouchableOpacity>
                   }
-                  // For group messages
-                  return conv.lastMessage && conv.lastMessage !== 'No messages yet';
-                })
-                .sort((a: any, b: any) => {
-                  const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
-                  const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
-                  return timeB.getTime() - timeA.getTime();
-                })
-                .map((conv: any) => (
-                  <TouchableOpacity 
-                    key={conv.groupId || conv.recipientId} 
-                    style={styles.messageItem}
+                  contentStyle={styles.menuContent}
+                >
+                  <Menu.Item 
                     onPress={() => {
-                      if (conv.groupId) {
-                        router.push({
-                          pathname: '/group-message',
-                          params: {
-                            groupId: conv.groupId,
-                            groupName: conv.groupName
-                          }
-                        });
-                      } else {
-                        navigateToDirectMessage(conv.recipientId, conv.friendName);
+                      setGroupMenuVisible(false);
+                      router.push('/create-group');
+                    }} 
+                    title="Create Group"
+                    titleStyle={styles.menuItemText}
+                  />
+                  <Menu.Item 
+                    onPress={() => {
+                      setGroupMenuVisible(false);
+                      router.push('/view-groups');
+                    }} 
+                    title="View Groups"
+                    titleStyle={styles.menuItemText}
+                  />
+                </Menu>
+              </View>
+              {isLoadingConversations ? (
+                <ActivityIndicator size="large" color="#fba904" />
+              ) : (
+                <>
+                  {[...conversations, ...groupConversations]
+                    .filter((conv: any) => {
+                      // For direct messages
+                      if (conv.recipientId) {
+                        return conv.lastMessage && conv.lastMessage.trim() !== '';
                       }
-                    }}
-                    onLongPress={() => handleLongPress(conv)}
-                    delayLongPress={500}
-                  >
-                    <Image 
-                      source={{ 
-                        uri: conv.groupId ? conv.groupImage : conv.profileImageUrl || 'https://via.placeholder.com/50'
-                      }} 
-                      style={styles.avatar} 
-                    />
-                    <View style={styles.messageContent}>
-                      <Text style={styles.name}>{conv.groupId ? conv.groupName : conv.friendName}</Text>
-                      <Text style={styles.lastMessage} numberOfLines={1}>
-                        {conv.senderId === auth.currentUser?.uid 
-                          ? conv.lastMessage 
-                          : censorMessage(conv.lastMessage, userHiddenWords)}
-                      </Text>
-                    </View>
-                    <Text style={styles.timeText}>
-                      {getTimeAgo(conv.timestamp)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-            </>
-          )}
+                      // For group messages
+                      return conv.lastMessage && conv.lastMessage !== 'No messages yet';
+                    })
+                    .sort((a: any, b: any) => {
+                      const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
+                      const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
+                      return timeB.getTime() - timeA.getTime();
+                    })
+                    .map((conv: any) => (
+                      <TouchableOpacity 
+                        key={conv.groupId || conv.recipientId} 
+                        style={[styles.messageItem, styles.messageBox]}
+                        onPress={() => {
+                          if (conv.groupId) {
+                            router.push({
+                              pathname: '/group-message',
+                              params: {
+                                groupId: conv.groupId,
+                                groupName: conv.groupName
+                              }
+                            });
+                          } else {
+                            navigateToDirectMessage(conv.recipientId, conv.friendName);
+                          }
+                        }}
+                        onLongPress={() => handleLongPress(conv)}
+                        delayLongPress={500}
+                      >
+                        <Image 
+                          source={{ 
+                            uri: conv.groupId ? conv.groupImage : conv.profileImageUrl || 'https://via.placeholder.com/50'
+                          }} 
+                          style={styles.avatar} 
+                        />
+                        <View style={styles.messageContent}>
+                          <Text style={styles.name}>{conv.groupId ? conv.groupName : conv.friendName}</Text>
+                          <Text style={styles.lastMessage} numberOfLines={1}>
+                            {conv.senderId === auth.currentUser?.uid 
+                              ? conv.lastMessage 
+                              : censorMessage(conv.lastMessage, userHiddenWords)}
+                          </Text>
+                        </View>
+                        <Text style={styles.timeText}>
+                          {getTimeAgo(conv.timestamp)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                </>
+              )}
+            </View>
+
+           
+            
+            <View style={styles.largeSpacer} />
+
+            <View style={styles.contentContainer}>
+              <Text style={styles.title}>Send your first message!</Text>
+              {isLoadingMatches ? (
+                <ActivityIndicator size="large" color="#fba904" />
+              ) : newMatches.length > 0 ? (
+                <View style={styles.newMatchesContainer}>
+                  {newMatches.map((match) => (
+                    <TouchableOpacity 
+                      key={match.userId} 
+                      style={styles.newMatchItem}
+                      onPress={() => navigateToDirectMessage(match.userId, match.name)}
+                    >
+                      <View style={styles.matchContent}>
+                        <Image source={{ uri: match.profileImageUrl }} style={styles.matchAvatar} />
+                        <Text style={styles.matchName}>{match.name}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.noMatchesText}>No new matches</Text>
+              )}
+            </View>
+          </View>
         </ScrollView>
         <BottomNavBar />
         <Modal
@@ -507,42 +517,54 @@ const styles = StyleSheet.create({
     marginBottom: 100,
   },
   title: {
-    fontSize: 18,
+    fontSize: 12.5,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#fba904',
+    color: '#fc6c85',
+    marginLeft: 0,
   },
   messageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
+  messageBox: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 169, 4, 0.1)',
+    padding: 15,
+    marginHorizontal: 0,
+    marginBottom: 20,
+    position: 'relative',
+  },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 55,
+    height: 55,
+    borderRadius: 30,
     marginRight: 15,
   },
   messageContent: {
     flex: 1,
   },
   name: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 5,
   },
   messageText: {
-    fontSize: 14,
+    fontSize: 8,
     color: '#666',
   },
   timeText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#999',
+    position: 'absolute',
+    top: 15,
+    right: 15,
   },
   newMatchItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+    alignItems: 'flex-start',
+    width: 120,
   },
   noMessagesText: {
     textAlign: 'center',
@@ -607,18 +629,65 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 15,
+    marginBottom: 40,
+    marginTop: 35,
   },
   menuContent: {
-    backgroundColor: '#666',
+    backgroundColor: '#fff8f0',
+    borderRadius: 8,
     marginTop: 35,
-    marginRight: 10,
+  },
+  menuItemText: {
+    fontSize: 12,
+    color: '#666',
   },
   lastMessage: {
     fontSize: 14,
     color: '#666',
+  },
+  newMatchesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 15,
+  },
+  matchContent: {
+    alignItems: 'center',
+  },
+  matchAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 8,
+  },
+  matchName: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  spacer: {
+    height: 30,
+  },
+  largeSpacer: {
+    height: 100,
+  },
+  contentContainer: {
+    marginHorizontal: 15,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
+    marginTop: 35,
   },
 });
 
