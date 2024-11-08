@@ -53,7 +53,7 @@ const BottomNavBar = () => {
 
         <TouchableOpacity onPress={() => navigateTo('/discography')}>
           <Ionicons 
-            name="disc-outline" 
+            name="compass-outline" 
             size={18}
             style={[getNavItemStyle('/discography')]}
           />

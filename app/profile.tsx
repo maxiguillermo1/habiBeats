@@ -289,7 +289,11 @@ export default function Profile() {
       <View style={styles.header}>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Ionicons name="apps-outline" size={25} color="#333" />
+            <Ionicons 
+              name="apps-outline" 
+              size={25} 
+              color={menuVisible ? '#37bdd5' : '#333'} 
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -315,6 +319,18 @@ export default function Profile() {
             >
               <Ionicons name="create-outline" size={22} color="#333" />
               <Text style={styles.menuText}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => {
+                router.push('/notification-page');
+                toggleMenu();
+              }}
+            >
+              <Ionicons name="notifications-outline" size={22} color="#333" />
+              <Text style={styles.menuText}>Notifications</Text>
+              {hasUnread && <View style={styles.menuNotificationDot} />}
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -713,7 +729,7 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     position: 'absolute',
-    top: 60,
+    top: 90,
     right: 20,
     backgroundColor: '#fff',
     borderRadius: 10,
