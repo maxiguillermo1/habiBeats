@@ -16,6 +16,7 @@ import { getAuth } from 'firebase/auth';
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': undefined;
+  'profile': undefined;
 };
 
 export default function DisposableCamera() {
@@ -133,7 +134,7 @@ export default function DisposableCamera() {
         <View style={styles.topButtonContainer}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('profile')}
           >
             <Ionicons name="arrow-back" size={30} color="#fba904" />
           </TouchableOpacity>

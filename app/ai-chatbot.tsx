@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios'; 
 import Icon from 'react-native-ico-mingcute-tiny-bold-filled';
 import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getSpotifyRelatedArtists, getAlbumTracks } from '../api/spotify-api';
+import { useRouter } from 'expo-router';
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
 const GENIUS_CLIENT_ID = 'iwKSJyXYREHteYohvjK1U9MXBjXMEA6WYcqLO04u4cp2Q8sZHa52RcuZDj8BZVm7';
 const GENIUS_CLIENT_SECRET = 'HpmbJXRQ_0jpbdoaiP2Nii8gy9Wp9kSzYxl1mfpl9VPPlqKEh1hke-_hrsYJwWkOX22UbrrlLYQ1PG0xJJ4rRw';
@@ -57,6 +58,7 @@ const fetchLyrics = async (trackName: string, artistName: string) => {
 };
 
 const Chatbot = () => {
+    const router = useRouter();
 
     // title animation
     const titleOpacity = useSharedValue(0);
@@ -409,6 +411,13 @@ const Chatbot = () => {
         <SafeAreaView style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
             <View style={styles.innerContainer}>
+                <TouchableOpacity 
+                    style={styles.backButton}
+                    onPress={() => router.push('/profile')}
+                >
+                    <Ionicons name="chevron-back-outline" size={24} color="rgba(55,189,213,0.6)" />
+                </TouchableOpacity>
+
                 <View style={styles.titleContainer}>
                     <View style={styles.titleWrapper}>
                         <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
@@ -509,7 +518,7 @@ const Chatbot = () => {
                 {/* user input container */}
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
                     style={styles.keyboardAvoidingView}
                 >
                     <View style={styles.inputContainer}>
@@ -534,8 +543,6 @@ const Chatbot = () => {
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
-
-                <BottomNavBar />
 
                 <Modal
                     visible={showHelpModal}
@@ -588,11 +595,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff8f0',
-        
+    },
+    backButton: {
+        position: 'absolute',
+        left: 35,
+        top: 30,
+        zIndex: 1,
     },
     innerContainer: {
         flex: 1,
-        paddingTop: 40,
+        paddingTop: 80,
         paddingHorizontal: 20,
         
     },
@@ -616,7 +628,7 @@ const styles = StyleSheet.create({
     },
     helpButton: {
         position: 'absolute',
-        right:  80,
+        right:  50,
         padding: 10,
     },
     iconButtonContainer: {
@@ -680,7 +692,7 @@ const styles = StyleSheet.create({
     },
     keyboardAvoidingView: {
         position: 'absolute',
-        bottom: 110,
+        bottom: 0,
         left: 0,
         right: 0,
     },
