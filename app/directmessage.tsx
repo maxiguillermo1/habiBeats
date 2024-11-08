@@ -238,62 +238,86 @@ const DirectMessageScreen = () => {
     // START of rendering the DirectMessageScreen component
     // START of Mariann Grace Dizon Contribution and Jesus Donate
     return (
-        <View style={{ flex: 1, backgroundColor: '#fff8f0' }}>
-            <SafeAreaView style={styles.container}>
-                <Stack.Screen options={{ headerShown: false }} />
-                {/* This view is for the navbar which contains the back button, profile image, and name of the recipient */}
-                <View style={styles.navbar}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="black" />
+        <View style={styles.container}>
+            <SafeAreaView style={styles.safeArea}>
+                <Stack.Screen 
+                    options={{ 
+                        headerShown: false,
+                        contentStyle: { backgroundColor: '#FFF8F0' }
+                    }} 
+                />
+                
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity 
+                        onPress={() => navigation.goBack()} 
+                        style={styles.backButton}
+                    >
+                        <Ionicons name="chevron-back" size={18} color="black" />
                     </TouchableOpacity>
-                    <View style={styles.navbarNameContainer}>
-                        <Image
-                            source={{ uri: profileImageUrl || 'placeholder.png' }}
-                            style={styles.profileImage}
+                    
+                    <View style={styles.profileHeader}>
+                        <Image 
+                            source={{ uri: profileImageUrl || 'https://via.placeholder.com/80' }} 
+                            style={styles.headerProfileImage} 
                         />
-                        <Text style={styles.navbarName}>{recipientName}</Text>
+                        <Text style={styles.headerName}>{recipientName}</Text>
                     </View>
                 </View>
 
-                {/* This is the flatlist that displays the messages */}
+                {/* Messages */}
                 <FlatList
                     ref={flatListRef}
                     data={messages}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        // When the user long presses on a message, the delete modal is shown
-                        <TouchableOpacity
-                            onLongPress={() => handleLongPress(item)}
-                            delayLongPress={500}
-                        >
-                            <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
-                                <Text style={styles.messageText}>
-                                    {/* If the message is sent by the current user, show the message as is. Otherwise, censor the message */}
-                                    {item.senderId === auth.currentUser?.uid 
-                                        ? item.message 
-                                        : censorMessage(item.message, userHiddenWords)}
-                                </Text>
+                        <TouchableOpacity onLongPress={() => handleLongPress(item)}>
+                            <View style={[
+                                styles.messageRow,
+                                item.senderId === auth.currentUser?.uid ? styles.sentMessageRow : styles.receivedMessageRow
+                            ]}>
+                                {item.senderId !== auth.currentUser?.uid && (
+                                    <Image
+                                        source={{ uri: profileImageUrl }}
+                                        style={styles.messageAvatar}
+                                    />
+                                )}
+                                <View style={[
+                                    styles.messageBubble,
+                                    item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage
+                                ]}>
+                                    <Text style={styles.messageText}>
+                                        {item.senderId === auth.currentUser?.uid 
+                                            ? item.message 
+                                            : censorMessage(item.message, userHiddenWords)}
+                                    </Text>
+                                </View>
                             </View>
                         </TouchableOpacity>
                     )}
                     contentContainerStyle={styles.messageList}
                 />
-                {/* This is the input container for the message input and send button */}
+
+                {/* Input */}
                 <KeyboardAvoidingView
-                    style={styles.inputContainer}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={90}
                 >
-                    <TextInput
-                        style={styles.input}
-                        value={newMessage}
-                        onChangeText={setNewMessage}
-                        placeholder="Type a message..."
-                    />
-                    <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                        <Text style={styles.sendButtonText}>Send</Text>
-                    </TouchableOpacity>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={newMessage}
+                            onChangeText={setNewMessage}
+                            placeholder="Send a message"
+                            placeholderTextColor="#666"
+                            onSubmitEditing={sendMessage}
+                            returnKeyType="send"
+                            multiline={false}
+                        />
+                    </View>
                 </KeyboardAvoidingView>
-                {/* This is the delete modal that is shown when the user long presses on a message */}
+
+                {/* Delete Modal */}
                 <Modal
                     transparent={true}
                     visible={isDeleteModalVisible}
@@ -332,27 +356,101 @@ const DirectMessageScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff8f0',
-        marginLeft: 10,  // Keep the left margin
-        marginRight: 10, // Keep the right margin
+        backgroundColor: '#FFF8F0',
+    },
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#FFF8F0',
+    },
+    header: {
+        width: '100%',
+        paddingTop: 60,
+        paddingBottom: 20,
+        backgroundColor: '#FFF8F0',
+    },
+    backButton: {
+        position: 'absolute',
+        left: 10,
+        top: 0,
+        padding: 10,
+        zIndex: 1,
+    },
+    profileHeader: {
+        alignItems: 'center',
+        marginTop: -35,
+    },
+    headerProfileImage: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        marginBottom: 10,
+    },
+    headerName: {
+        fontSize: 10,
+        paddingTop: 5,
+        fontWeight: '600',
+        color: '#000000',
+    },
+    messageRow: {
+        flexDirection: 'row',
+        marginVertical: 5,
+        paddingHorizontal: 15,
+    },
+    sentMessageRow: {
+        justifyContent: 'flex-end',
+    },
+    receivedMessageRow: {
+        justifyContent: 'flex-start',
+    },
+    messageAvatar: {
+        width: 35,
+        height: 35,
+        borderRadius: 17.5,
+        marginRight: 10,
+    },
+    messageBubble: {
+        maxWidth: '70%',
+        padding: 12,
+        borderRadius: 20,
+        marginVertical: 2,
+    },
+    sentMessage: {
+        backgroundColor: '#F0F0F0',
+        alignSelf: 'flex-end',
+        marginLeft: 60,
+    },
+    receivedMessage: {
+        backgroundColor: '#F0F0F0',
+        alignSelf: 'flex-start',
+        marginRight: 60,
+    },
+    messageText: {
+        fontSize: 16,
+        color: '#000000',
+    },
+    messageList: {
+        flexGrow: 1,
     },
     inputContainer: {
         flexDirection: 'row',
-        padding: 20,
-        paddingBottom: 40,
-        backgroundColor: '#fff8f0',
-        marginLeft: -10,  // Compensate for container margin
-        marginRight: -10, // Compensate for container margin
+        padding: 10,
+        paddingBottom: 20,
+        backgroundColor: '#FFF8F0',
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5E5',
     },
     input: {
         flex: 1,
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 20,
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-        marginRight: 10,
-        fontSize: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginRight: 8,
+        fontSize: 14,
+        backgroundColor: '#FFFFFF',
+        minHeight: 36,
     },
     sendButton: {
         backgroundColor: '#37bdd5',
@@ -366,56 +464,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    sentMessage: {
-        alignSelf: 'flex-end',
-        backgroundColor: '#fba904',
-        borderRadius: 20,
-        padding: 10,
-        margin: 5,
-        maxWidth: '70%',
-    },
-    receivedMessage: {
-        alignSelf: 'flex-start',
-        backgroundColor: '#facb6e',
-        borderRadius: 20,
-        padding: 10,
-        margin: 5,
-        maxWidth: '70%',
-    },
-    messageText: {
-        color: '#FFFFFF',
-        fontSize: 17,
-    },
-    navbar: {
-        height: 80,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        backgroundColor: '#fff8f0',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
-    },
-    backButton: {
-        padding: 10,
-    },
-    navbarNameContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 15,
-    },
-    profileImage: {
-        width: 55,
-        height: 55,
-        borderRadius: 30,
-        marginRight: 15,
-    },
-    navbarName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        marginTop: 10,
-    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -425,10 +473,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
         fontSize: 16,
         color: '#333',
-    },
-    messageList: {
-        flexGrow: 1,
-        justifyContent: 'flex-end',
     },
     modalContainer: {
         flex: 1,
@@ -477,6 +521,49 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
     },
+    navbar: {
+        height: 80,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        backgroundColor: '#fff8f0',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+    },
+    navbarNameContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 15,
+    },
+    profileImage: {
+        width: 55,
+        height: 55,
+        borderRadius: 30,
+        marginRight: 15,
+    },
+    navbarName: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 10,
+    },
+    messageInput: {
+        backgroundColor: '#FFFFFF',  // White background for input
+        padding: 15,
+        borderRadius: 25,
+        marginHorizontal: 15,
+        marginBottom: 20,
+        marginTop: 'auto',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    }
 });
 
 export default DirectMessageScreen; // Export the DirectMessageScreen component
