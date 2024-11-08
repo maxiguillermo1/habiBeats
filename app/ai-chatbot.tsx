@@ -407,355 +407,378 @@ const Chatbot = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ headerShown: false }} />
-        <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
-
-        {spotifyUrl && (
-            <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
-                <TouchableOpacity 
-                    onPress={() => Linking.openURL(spotifyUrl)}
-                    style={styles.spotifyButtonContent}
-                >
-                    <Icon name="spotify" size={24}  />
-                </TouchableOpacity>
-            </Animated.View>
-        )}
-
-        <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
-            {/* album button */}
-            <TouchableOpacity 
-                onPress={handleAlbumButtonPressed}
-                style={styles.iconButton}
-                activeOpacity={1}
-            >
-                <Ionicons 
-                    name="musical-notes-outline" 
-                    size={30} 
-                    color={activeButton === 'album' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
-                />
-            </TouchableOpacity>
-
-            {/* similar artists button */}
-            <TouchableOpacity 
-                onPress={handleSimilarArtistsButtonPressed}
-                style={styles.iconButton}
-                activeOpacity={1}
-            >
-                <Ionicons 
-                    name="heart-outline" 
-                    size={27} 
-                    color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
-                />
-            </TouchableOpacity>
-
-            {/* lyrics button */}
-            <TouchableOpacity 
-                onPress={handleLyricsButtonPressed}
-                style={styles.iconButton}
-                activeOpacity={1}
-            >
-                <Ionicons 
-                    name="volume-medium-outline" 
-                    size={30} 
-                    color={activeButton === 'lyrics' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
-                />
-            </TouchableOpacity>
-        </Animated.View>
-
-        {/* response container */}
-        <ScrollView 
-            ref={scrollViewRef}
-            style={styles.responseContainer}
-            onContentSizeChange={() => {
-                scrollViewRef.current?.scrollToEnd({ animated: true });
-            }}
-        >
-            {chatHistory.map((chat, index) => (
-                <View key={index} style={styles.responseBox}>
-                    <View style={styles.responseHeader}>
-                        <View>
-                            <Text style={styles.inputLabel}>Input:</Text>
-                            <Text style={styles.inputText}>{chat.input}</Text>
-                            <Text style={styles.responseLabel}>Response:</Text>
-                        </View>
-                        {chat.buttonType && (
-                            <Ionicons 
-                                name={
-                                    chat.buttonType === 'album' ? 'musical-notes-outline' :
-                                    chat.buttonType === 'similarArtists' ? 'heart-outline' :
-                                    chat.buttonType === 'lyrics' ? 'volume-medium-outline' : 'help-circle'
-                                }
-                                size={16}
-                                color="rgba(252,108,133, 0.6)"
-                            />
-                        )}
+            <Stack.Screen options={{ headerShown: false }} />
+            <View style={styles.innerContainer}>
+                <View style={styles.titleContainer}>
+                    <View style={styles.titleWrapper}>
+                        <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
                     </View>
-                    <Text style={styles.responseText}>{chat.response}</Text>
+                    <TouchableOpacity 
+                        style={styles.helpButton}
+                        onPress={() => setShowHelpModal(true)}
+                    >
+                        <Ionicons name="help-circle-outline" size={24} color="rgba(55,189,213,0.6)" />
+                    </TouchableOpacity>
                 </View>
-            ))}
-        </ScrollView>
 
-        {/* user input container */}
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-            style={styles.keyboardAvoidingView}
-        >
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={getPlaceholderText()}
-                    placeholderTextColor="#999"
-                    value={userInput}
-                    onChangeText={setUserInput}
-                    onSubmitEditing={handleSend}
-                />
-                <TouchableOpacity 
-                    style={styles.sendButton}
-                    onPress={handleSend}
-                    disabled={isLoading}
+                {spotifyUrl && (
+                    <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
+                        <TouchableOpacity 
+                            onPress={() => Linking.openURL(spotifyUrl)}
+                            style={styles.spotifyButtonContent}
+                        >
+                            <Icon name="spotify" size={24}  />
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
+
+                <Animated.View style={[styles.iconButtonContainer, animatedButtonStyle]}>
+                    {/* album button */}
+                    <TouchableOpacity 
+                        onPress={handleAlbumButtonPressed}
+                        style={styles.iconButton}
+                        activeOpacity={1}
+                    >
+                        <Ionicons 
+                            name="musical-notes-outline" 
+                            size={30} 
+                            color={activeButton === 'album' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                        />
+                    </TouchableOpacity>
+
+                    {/* similar artists button */}
+                    <TouchableOpacity 
+                        onPress={handleSimilarArtistsButtonPressed}
+                        style={styles.iconButton}
+                        activeOpacity={1}
+                    >
+                        <Ionicons 
+                            name="heart-outline" 
+                            size={27} 
+                            color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                        />
+                    </TouchableOpacity>
+
+                    {/* lyrics button */}
+                    <TouchableOpacity 
+                        onPress={handleLyricsButtonPressed}
+                        style={styles.iconButton}
+                        activeOpacity={1}
+                    >
+                        <Ionicons 
+                            name="volume-medium-outline" 
+                            size={30} 
+                            color={activeButton === 'lyrics' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                        />
+                    </TouchableOpacity>
+                </Animated.View>
+
+                {/* response container */}
+                <ScrollView 
+                    ref={scrollViewRef}
+                    style={styles.responseContainer}
+                    onContentSizeChange={() => {
+                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }}
                 >
-                    {isLoading ? (
-                        <ActivityIndicator size="small" color="#0e1514" />
-                    ) : (
-                        <Ionicons name="arrow-up" size={24} color="#0e1514" />
-                    )}
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
+                    {chatHistory.map((chat, index) => (
+                        <View key={index} style={styles.responseBox}>
+                            <View style={styles.responseHeader}>
+                                <View>
+                                    <Text style={styles.inputLabel}>Input:</Text>
+                                    <Text style={styles.inputText}>{chat.input}</Text>
+                                    <Text style={styles.responseLabel}>Response:</Text>
+                                </View>
+                                {chat.buttonType && (
+                                    <Ionicons 
+                                        name={
+                                            chat.buttonType === 'album' ? 'musical-notes-outline' :
+                                            chat.buttonType === 'similarArtists' ? 'heart-outline' :
+                                            chat.buttonType === 'lyrics' ? 'volume-medium-outline' : 'help-circle'
+                                        }
+                                        size={16}
+                                        color="rgba(252,108,133, 0.6)"
+                                    />
+                                )}
+                            </View>
+                            <Text style={styles.responseText}>{chat.response}</Text>
+                        </View>
+                    ))}
+                </ScrollView>
 
-        <BottomNavBar />
-
-        <TouchableOpacity 
-            style={styles.helpButton}
-            onPress={() => setShowHelpModal(true)}
-        >
-            <Ionicons name="help-circle-outline" size={24} color="rgba(55,189,213,0.6)" />
-        </TouchableOpacity>
-
-        <Modal
-            visible={showHelpModal}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowHelpModal(false)}
-        >
-            <TouchableOpacity 
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowHelpModal(false)}
-            >
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Example Queries</Text>
-                        <TouchableOpacity onPress={() => setShowHelpModal(false)}>
-                            <Ionicons name="close" size={24} color="#0e1514" />
+                {/* user input container */}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                    style={styles.keyboardAvoidingView}
+                >
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder={getPlaceholderText()}
+                            placeholderTextColor="#999"
+                            value={userInput}
+                            onChangeText={setUserInput}
+                            onSubmitEditing={handleSend}
+                        />
+                        <TouchableOpacity 
+                            style={styles.sendButton}
+                            onPress={handleSend}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator size="small" color="#0e1514" />
+                            ) : (
+                                <Ionicons name="arrow-up" size={24} color="#0e1514" />
+                            )}
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.querySection}>
-                        <View style={styles.queryHeader}>
-                            <Ionicons name="musical-notes-outline" size={20} color="rgba(252,108,133,1)" />
-                            <Text style={styles.querySectionTitle}>Album</Text>
+                </KeyboardAvoidingView>
+
+                <BottomNavBar />
+
+                <Modal
+                    visible={showHelpModal}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setShowHelpModal(false)}
+                >
+                    <TouchableOpacity 
+                        style={styles.modalOverlay}
+                        activeOpacity={1}
+                        onPress={() => setShowHelpModal(false)}
+                    >
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Example Queries</Text>
+                                <TouchableOpacity onPress={() => setShowHelpModal(false)}>
+                                    <Ionicons name="close" size={24} color="#0e1514" />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.querySection}>
+                                <View style={styles.queryHeader}>
+                                    <Ionicons name="musical-notes-outline" size={20} color="rgba(252,108,133,1)" />
+                                    <Text style={styles.querySectionTitle}>Album</Text>
+                                </View>
+                                <Text style={styles.queryText}>{exampleQueries.album.join('\n')}</Text>
+                            </View>
+                            <View style={styles.querySection}>
+                                <View style={styles.queryHeader}>
+                                    <Ionicons name="heart-outline" size={20} color="rgba(252,108,133,1)" />
+                                    <Text style={styles.querySectionTitle}>Similar Artists</Text>
+                                </View>
+                                <Text style={styles.queryText}>{exampleQueries.similarArtists.join('\n')}</Text>
+                            </View>
+                            <View style={styles.querySection}>
+                                <View style={styles.queryHeader}>
+                                    <Ionicons name="volume-medium-outline" size={20} color="rgba(252,108,133,1)" />
+                                    <Text style={styles.querySectionTitle}>Lyrics</Text>
+                                </View>
+                                <Text style={styles.queryText}>{exampleQueries.lyrics.join('\n')}</Text>
+                            </View>
                         </View>
-                        <Text style={styles.queryText}>{exampleQueries.album.join('\n')}</Text>
-                    </View>
-                    <View style={styles.querySection}>
-                        <View style={styles.queryHeader}>
-                            <Ionicons name="heart-outline" size={20} color="rgba(252,108,133,1)" />
-                            <Text style={styles.querySectionTitle}>Similar Artists</Text>
-                        </View>
-                        <Text style={styles.queryText}>{exampleQueries.similarArtists.join('\n')}</Text>
-                    </View>
-                    <View style={styles.querySection}>
-                        <View style={styles.queryHeader}>
-                            <Ionicons name="volume-medium-outline" size={20} color="rgba(252,108,133,1)" />
-                            <Text style={styles.querySectionTitle}>Lyrics</Text>
-                        </View>
-                        <Text style={styles.queryText}>{exampleQueries.lyrics.join('\n')}</Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        </Modal>
+                    </TouchableOpacity>
+                </Modal>
+            </View>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff8f0',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    margin: 20,
-    color: '#0e1514',
-    textAlign: 'center',
-  },
-  iconButtonContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  iconButton: {
-    marginHorizontal: 40,
-  },
-  responseContainer: {
-    flex: 1,
-    paddingHorizontal: 15,
-    marginBottom: 140,
-    marginTop: 50,
-},
-responseBox: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-        width: 0,
-        height: 1,
+    container: {
+        flex: 1,
+        backgroundColor: '#fff8f0',
+        
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-},
-responseText: {
-    fontSize: 12,
-    color: '#0e1514',
-    lineHeight: 20,
-    fontWeight: 'bold',
-},
-  inputContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: '#fff8f0',
-    borderTopWidth: 1,
-    borderTopColor: '#fff8f0',
-},
-input: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    marginRight: 10,
-    fontSize: 11,
-},
-sendButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 40,
-},
-  keyboardAvoidingView: {
-    position: 'absolute',
-    bottom: 110,
-    left: 0,
-    right: 0,
-},
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fc6c85',
-    marginBottom: 5,
-},
-  inputText: {
-    fontSize: 12,
-    color: '#0e1514',
-    marginBottom: 20,
-    marginHorizontal: 10,
-    lineHeight: 18,
-    fontStyle: 'italic',
-},
-  responseLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#37bdd5',
-    marginBottom: 5,
-},
-  responseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 5,
-},
-  helpButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: 'rgba(55,189,213,0.1)',
-},
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-},
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    maxHeight: '80%',
-},
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-},
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0e1514',
-},
-  querySection: {
-    marginBottom: 20,
-},
-  queryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-},
-  querySectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0e1514',
-    marginLeft: 10,
-},
-  queryText: {
-    fontSize: 12,
-    color: '#0e1514',
-    lineHeight: 20,
-},
-  spotifyButton: {
-    alignSelf: 'center',
-    marginTop: 10,
-},
-  spotifyButtonText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1ED760',
-    marginLeft: 5,
-},
-spotifyButtonContent: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-        width: 0,
-        height: 1,
+    innerContainer: {
+        flex: 1,
+        paddingTop: 40,
+        paddingHorizontal: 20,
+        
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-},
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        marginVertical: 20,
+        position: 'relative',
+    },
+    titleWrapper: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#0e1514',
+        textAlign: 'center',
+    },
+    helpButton: {
+        position: 'absolute',
+        right:  80,
+        padding: 10,
+    },
+    iconButtonContainer: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 0,
+    },
+    iconButton: {
+        marginHorizontal: 40,
+    },
+    responseContainer: {
+        flex: 1,
+        paddingHorizontal: 15,
+        marginBottom: 140,
+        marginTop: 50,
+    },
+    responseBox: {
+        backgroundColor: '#fff',
+        borderRadius: 15,
+        padding: 15,
+        marginVertical: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    responseText: {
+        fontSize: 12,
+        color: '#0e1514',
+        lineHeight: 20,
+        fontWeight: 'bold',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 25,
+        paddingVertical: 8,
+        backgroundColor: '#fff8f0',
+        borderTopWidth: 1,
+        borderTopColor: '#fff8f0',
+    },
+    input: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        marginRight: 10,
+        fontSize: 11,
+        height: 36,
+        textAlignVertical: 'center',
+    },
+    sendButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 40,
+    },
+    keyboardAvoidingView: {
+        position: 'absolute',
+        bottom: 110,
+        left: 0,
+        right: 0,
+    },
+    inputLabel: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#fc6c85',
+        marginBottom: 5,
+    },
+    inputText: {
+        fontSize: 12,
+        color: '#0e1514',
+        marginBottom: 20,
+        marginHorizontal: 10,
+        lineHeight: 18,
+        fontStyle: 'italic',
+    },
+    responseLabel: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#37bdd5',
+        marginBottom: 5,
+    },
+    responseHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 5,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#0e1514',
+    },
+    querySection: {
+        marginBottom: 20,
+    },
+    queryHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 5,
+    },
+    querySectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#0e1514',
+        marginLeft: 10,
+    },
+    queryText: {
+        fontSize: 12,
+        color: '#0e1514',
+        lineHeight: 20,
+    },
+    spotifyButton: {
+        alignSelf: 'center',
+        marginTop: 10,
+    },
+    spotifyButtonText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1ED760',
+        marginLeft: 5,
+    },
+    spotifyButtonContent: {
+        padding: 10,
+        borderRadius: 50,
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
 });
 
 export default Chatbot;
