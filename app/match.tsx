@@ -2,7 +2,7 @@
 // Mariann Grace Dizon, Reyna Aguirre and Maxwell Guillermo
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType, FlatList } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,6 +52,7 @@ const Match = () => {
   const [likedContent, setLikedContent] = useState<Set<string>>(new Set());
   const [showWaitingModal, setShowWaitingModal] = useState(false); // New state for waiting modal
   const [showDislikeModal, setShowDislikeModal] = useState(false); // New state for dislike modal
+  const [disposablePhotos, setDisposablePhotos] = useState<Array<{imageUrl: string}>>([]);
 
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
@@ -429,6 +430,30 @@ const Match = () => {
   // END of content like handler
   // END of Maxwell Guillermo Contribution  
 
+  // Add near other useEffect hooks
+  useEffect(() => {
+    const fetchDisposablePhotos = async () => {
+      if (user2?.myDisposables && user2.myDisposables.length > 0) {
+        try {
+          const photos = user2.myDisposables.map(photo => ({
+            imageUrl: photo.url // Removed timestamp
+          }));
+          
+          setDisposablePhotos(photos);
+        } catch (error) {
+          console.error('Error processing disposable photos:', error);
+          setDisposablePhotos([]);
+        }
+      } else {
+        setDisposablePhotos([]);
+      }
+    };
+
+    if (user2) {
+      fetchDisposablePhotos();
+    }
+  }, [user2]);
+
   // UI rendering
   // Mariann Grace Dizon
   return (
@@ -673,7 +698,7 @@ const Match = () => {
 
                 <View style={styles.inputContainer}>
                   <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Written Prompts</Text>
+                    <Text style={styles.inputLabel}>Learn More About Me</Text>
                     {user2.prompts && typeof user2.prompts === 'object' ? (
                       Object.entries(user2.prompts).map(([promptTitle, response], index) => (
                         <View key={index} style={styles.promptContainer}>
@@ -697,7 +722,43 @@ const Match = () => {
                   </TouchableOpacity>
                 </View>
 
-                
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputContent}>
+                    <Text style={styles.inputLabel}>Disposable Photos</Text>
+                    {disposablePhotos.length > 0 ? (
+                      <FlatList
+                        data={disposablePhotos}
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item, index) => index.toString()}
+                        renderItem={({ item }) => (
+                          <View style={styles.disposablePhotoContainer}>
+                            <Image
+                              source={{ uri: item.imageUrl }}
+                              style={styles.disposablePhoto}
+                            />
+                          </View>
+                        )}
+                        ItemSeparatorComponent={() => <View style={styles.separator} />}
+                        contentContainerStyle={styles.flatListContentContainer}
+                      />
+                    ) : (
+                      <Text style={styles.inputText}>No disposable photos yet</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    style={styles.contentLikeButton}
+                    onPress={() => handleContentLike('myDisposables')}
+                  >
+                    <Ionicons
+                      name={likedContent.has('myDisposables') ? "heart" : "heart-outline"}
+                      size={18}
+                      color="#fc6c85"
+                    />
+                  </TouchableOpacity>
+                </View>
+
               </View>
             ) : noMoreUsers ? (
               <View style={styles.messageContainer}>
@@ -879,7 +940,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingLeft: 55,
     paddingRight: 55,
-    paddingBottom: 23,
+    paddingBottom: 10,
   },
   inputContainer: {
     marginBottom: 20,
@@ -924,7 +985,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 32,
     position: 'absolute',
-    bottom: 80,
+    bottom: 60,
     left: 0,
     right: 0,
   },
@@ -1168,6 +1229,37 @@ const styles = StyleSheet.create({
   },
   pauseIconContainer: {
     marginBottom: 30,
+  },
+  disposableGallery: {
+    marginTop: 10,
+  },
+  disposablePhotoContainer: {
+    backgroundColor: '#fafafa',
+    padding: 2,
+    paddingBottom: 35,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
+    marginBottom: 20,
+  },
+  disposablePhoto: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    borderWidth: 10,
+    borderColor: '#fafafa',
+    backgroundColor: '#fff',
+  },
+  separator: {
+    width: 95,
+  },
+  flatListContentContainer: {
+    paddingHorizontal: 50,
   },
 });
 

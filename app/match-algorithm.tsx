@@ -28,8 +28,11 @@ export interface User {
     };
     favoriteAlbum?: string; // JSON string containing album details
     favoriteArtists?: string; // JSON string containing an array of artist objects
-    prompts?: string[]; // Add this line to include the prompts property
+    prompts?: { [key: string]: string }; // Update prompts to be an object with key-value pairs
     paused?: boolean;  // for pausing account
+    myDisposables?: {
+      url: string;
+    }[];
   }
   // function structure for compatibility
   // 1. gender compatibility
