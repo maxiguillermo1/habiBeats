@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Text, TouchableOpacity, StyleSheet, SafeAreaView, View, ScrollView, Image } from "react-native";
+import { ThemeProvider } from '../context/ThemeContext';
 import { useRouter } from "expo-router"; // Importing useRouter from expo-router for navigation
 
 // Function to navigate to a specific route using the router instance
@@ -65,31 +66,33 @@ export default function Index() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/images/transparent_long_logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {menuItems.map((category, categoryIndex) => (
-          <View key={categoryIndex} style={styles.categoryContainer}>
-            <Text style={[styles.categoryTitle, { color: category.color }]}>{category.category}</Text>
-            {category.items.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.menuItem}
-                onPress={() => navigateTo(item.route)}
-              >
-                <Text style={styles.menuText}>{item.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+    <ThemeProvider>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/images/transparent_long_logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {menuItems.map((category, categoryIndex) => (
+            <View key={categoryIndex} style={styles.categoryContainer}>
+              <Text style={[styles.categoryTitle, { color: category.color }]}>{category.category}</Text>
+              {category.items.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.menuItem}
+                  onPress={() => navigateTo(item.route)}
+                >
+                  <Text style={styles.menuText}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
 

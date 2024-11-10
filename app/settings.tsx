@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal, Platform, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut, verifyBeforeUpdateEmail, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
@@ -78,6 +78,9 @@ const Settings = () => {
   // Add these state variables if not already present
   const [isNameModalVisible, setIsNameModalVisible] = useState(false);
   const [nameInput, setNameInput] = useState('');
+
+  // Add local state for theme
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -587,7 +590,8 @@ const Settings = () => {
   
   // START of Theme Toggle Function
   const handleThemeToggle = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    console.log('handleThemeToggle called'); // Debug log
+    setIsDarkMode(prev => !prev);
   };
   // END of Theme Toggle Function
 
@@ -1049,7 +1053,9 @@ const Settings = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { 
+      backgroundColor: isDarkMode ? '#151718' : '#fff8f0' 
+    }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.customHeader}>
           <TouchableOpacity onPress={handleBackPress}>
@@ -1117,23 +1123,36 @@ const Settings = () => {
 
         {/* Theme and Language Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.appearance')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: isDarkMode ? '#ECEDEE' : '#888' 
+          }]}>
+            {t('settings.appearance')}
+          </Text>
         </View>
         <View style={styles.divider} />
 
         {/* Theme Toggle */}
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.theme_mode')}</Text>
-            <Text style={styles.settingDescription}>
-              {t('settings.theme_mode_description')}
-            </Text>
+            <View style={styles.settingTitleContainer}>
+              <Ionicons 
+                name={isDarkMode ? 'moon-outline' : 'sunny-outline'} 
+                size={24} 
+                color={isDarkMode ? '#fff' : '#000'} 
+              />
+              <Text style={[
+                styles.settingTitle, 
+                { marginLeft: 10, color: isDarkMode ? '#fff' : '#000' }
+              ]}>
+                {t('settings.theme_mode')}
+              </Text>
+            </View>
           </View>
           <Switch
-            value={theme === 'dark'}
+            value={isDarkMode}
             onValueChange={handleThemeToggle}
             trackColor={{ false: '#767577', true: '#fba904' }}
-            thumbColor={theme === 'dark' ? '#f4f3f4' : '#f4f3f4'}
+            thumbColor={isDarkMode ? '#f4f3f4' : '#f4f3f4'}
           />
         </View>
         <View style={styles.divider} />
