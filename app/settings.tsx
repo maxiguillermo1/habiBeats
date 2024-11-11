@@ -82,6 +82,14 @@ const Settings = () => {
   // Add local state for theme
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Add these style variables at the top of your component
+  const getThemeColors = (isDark: boolean) => ({
+    background: isDark ? '#151718' : '#fff8f0',
+    text: isDark ? '#ECEDEE' : '#0e1514',
+    subText: isDark ? '#9BA1A6' : '#888',
+    divider: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+  });
+
   useEffect(() => {
     if (auth.currentUser) {
       fetchUserData();
@@ -104,7 +112,8 @@ const Settings = () => {
         setUserGender(userData.gender || 'other');
         setLastNameVisible(userData.lastNameVisible !== false); // Default to true if not set
         setLocationVisible(userData.locationVisible !== false); // Default to true if not set
-        console.log('Fetched user gender:', userData.gender);
+        const savedTheme = userData.themePreference || 'light';
+        setIsDarkMode(savedTheme === 'dark');
       }
     }
   };
@@ -589,9 +598,24 @@ const Settings = () => {
   };
   
   // START of Theme Toggle Function
-  const handleThemeToggle = () => {
-    console.log('handleThemeToggle called'); // Debug log
-    setIsDarkMode(prev => !prev);
+  const handleThemeToggle = async () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          themePreference: newTheme ? 'dark' : 'light'
+        });
+        
+        console.log('Theme preference saved:', newTheme ? 'dark' : 'light');
+      } catch (error) {
+        console.error('Error saving theme preference:', error);
+        setIsDarkMode(!newTheme);
+        Alert.alert('Error', 'Failed to save theme preference');
+      }
+    }
   };
   // END of Theme Toggle Function
 

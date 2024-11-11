@@ -1,14 +1,18 @@
 // index.tsx
 // Reyna Aguirre, Mariann Grace Dizon, Maxwell Guillermo, Jesus Donate
 
-import React from "react";
+import React, { useContext } from "react";
 import { Text, TouchableOpacity, StyleSheet, SafeAreaView, View, ScrollView, Image } from "react-native";
-import { ThemeProvider } from '../context/ThemeContext';
+import { ThemeProvider, ThemeContext } from '../context/ThemeContext';
 import { useRouter } from "expo-router"; // Importing useRouter from expo-router for navigation
 
 // Function to navigate to a specific route using the router instance
 export default function Index() {
   const router = useRouter(); // Using useRouter hook to get the router instance
+  // Add theme context
+  const { theme, currentTheme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
+
   const navigateTo = (route: string) => {
     router.push(route as never);
   };
@@ -67,7 +71,7 @@ export default function Index() {
 
   return (
     <ThemeProvider>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/images/transparent_long_logo.png')}
@@ -85,7 +89,7 @@ export default function Index() {
                   style={styles.menuItem}
                   onPress={() => navigateTo(item.route)}
                 >
-                  <Text style={styles.menuText}>{item.name}</Text>
+                  <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>{item.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
