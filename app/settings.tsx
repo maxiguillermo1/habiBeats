@@ -88,6 +88,8 @@ const Settings = () => {
     text: isDark ? '#ECEDEE' : '#0e1514',
     subText: isDark ? '#9BA1A6' : '#888',
     divider: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    cardBackground: isDark ? '#1a1d1e' : '#FFFFFF',
+    border: isDark ? '#2d3235' : '#E0E0E0',
   });
 
   useEffect(() => {
@@ -184,9 +186,6 @@ const Settings = () => {
     );
   };
   // END of Reyna Aguirre Contribution
-  
-  // New functions from profilesettings.tsx
-
 
   // START of Jesus Donate Contribution
   const uploadImageToFirebase = async (uri: string) => {
@@ -212,9 +211,16 @@ const Settings = () => {
   };
   // END of Jesus Donate Contribution
 
-
+  // START of Mariann Grace Dizon
   const handleImagePicker = async () => {
     try {
+      // Request permission first
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to change your profile picture.');
+        return;
+      }
+
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -222,34 +228,32 @@ const Settings = () => {
         quality: 1,
       });
 
-      console.log("Image picker result:", result);
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedAsset = result.assets[0];
-        console.log("Selected asset:", selectedAsset);
+        
+        // Show loading indicator
+        Alert.alert('Uploading...', 'Please wait while we update your profile picture.');
 
         const downloadURL = await uploadImageToFirebase(selectedAsset.uri);
-        console.log("Download URL:", downloadURL);
-
+        
+        // Update state and Firestore
         setProfileImage(downloadURL);
-
+        
         if (auth.currentUser) {
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           await updateDoc(userDocRef, {
             profileImageUrl: downloadURL
           });
-          console.log("Firestore updated successfully");
-        } else {
-          console.log("No authenticated user found");
+          
+          Alert.alert('Success', 'Profile picture updated successfully!');
         }
-      } else {
-        console.log("Image picker cancelled or no asset selected");
       }
     } catch (error) {
       console.error("Error in handleImagePicker:", error);
       Alert.alert("Error", "Failed to update profile picture. Please try again.");
     }
   };
+  // END of Mariann Grace Dizon
 
 
   // START of Maxwell Guillermo Contribution
@@ -1078,15 +1082,19 @@ const Settings = () => {
 
   return (
     <SafeAreaView style={[styles.container, { 
-      backgroundColor: isDarkMode ? '#151718' : '#fff8f0' 
+      backgroundColor: getThemeColors(isDarkMode).background 
     }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.customHeader}>
+        <View style={[styles.customHeader, {
+          borderBottomColor: getThemeColors(isDarkMode).divider
+        }]}>
           <TouchableOpacity onPress={handleBackPress}>
-            <Text style={styles.backButton}>‹</Text>
+            <Text style={[styles.backButton, { color: getThemeColors(isDarkMode).text }]}>‹</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('settings.title')}</Text>
-          <View style={styles.placeholder}></View>
+          <Text style={[styles.headerTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.title')}
+          </Text>
+          <View style={styles.placeholder} />
         </View>
 
         {/* Profile Picture and Location Display */}
@@ -1108,52 +1116,65 @@ const Settings = () => {
               />
             )}
           </View>
-          <Text style={styles.nameInput}>{name}</Text>
-          <Text style={styles.locationInput}>{location}</Text>
+          <Text style={[styles.nameInput, { color: getThemeColors(isDarkMode).text }]}>{name}</Text>
+          <Text style={[styles.locationInput, { color: getThemeColors(isDarkMode).subText }]}>{location}</Text>
         </View>
 
         {/* Edit Profile Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.profile.edit_profile')}</Text>
+          <Text style={[styles.sectionTitle, { color: getThemeColors(isDarkMode).subText }]}>
+            {t('settings.profile.edit_profile')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
-        <TouchableOpacity style={styles.settingItem} onPress={handleImagePicker}>
-          <Text style={styles.settingTitle}>{t('settings.profile.change_profile_picture')}</Text>
-          <Text style={styles.chevron}>›</Text>
+        <TouchableOpacity 
+          style={styles.settingItem} 
+          onPress={handleImagePicker}
+        >
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.profile.change_profile_picture')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem} 
           onPress={handleEditName}
         >
-          <Text style={styles.settingTitle}>{t('settings.profile.change_name')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.profile.change_name')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingLocation(true)}>
-          <Text style={styles.settingTitle}>{t('settings.profile.change_location')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.profile.change_location')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setIsEditingBorder(true)}>
-          <Text style={styles.settingTitle}>{t('settings.profile.change_border')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.profile.change_border')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Theme and Language Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={[styles.sectionTitle, { 
-            color: isDarkMode ? '#ECEDEE' : '#888' 
+            color: getThemeColors(isDarkMode).subText 
           }]}>
             {t('settings.appearance')}
           </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Theme Toggle */}
         <View style={styles.settingItem}>
@@ -1162,11 +1183,11 @@ const Settings = () => {
               <Ionicons 
                 name={isDarkMode ? 'moon-outline' : 'sunny-outline'} 
                 size={24} 
-                color={isDarkMode ? '#fff' : '#000'} 
+                color={getThemeColors(isDarkMode).text} 
               />
               <Text style={[
                 styles.settingTitle, 
-                { marginLeft: 10, color: isDarkMode ? '#fff' : '#000' }
+                { marginLeft: 10, color: getThemeColors(isDarkMode).text }
               ]}>
                 {t('settings.theme_mode')}
               </Text>
@@ -1175,11 +1196,11 @@ const Settings = () => {
           <Switch
             value={isDarkMode}
             onValueChange={handleThemeToggle}
-            trackColor={{ false: '#767577', true: '#fba904' }}
+            trackColor={{ false: '#767577', true: '#79ce54' }}
             thumbColor={isDarkMode ? '#f4f3f4' : '#f4f3f4'}
           />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Language Selector */}
         <TouchableOpacity 
@@ -1187,195 +1208,257 @@ const Settings = () => {
           onPress={() => setShowLanguageModal(true)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.language')}</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.language')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               {languageNames[currentLanguage as keyof typeof languageNames]}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Profile Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.profile.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.profile.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.activity.last_active')}</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.activity.last_active')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               {t('settings.activity.last_active_description')}
             </Text>
           </View>
           <Switch />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Matches Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.matches.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.matches.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('settings/current-liked-list' as never)}>
-          <Text style={styles.settingTitle}>{t('settings.matches.current_interactions')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.matches.current_interactions')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Visibility Section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.visibility.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.visibility.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>{t('settings.visibility.show_last_name')}</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.visibility.show_last_name')}
+          </Text>
           <Switch value={lastNameVisible} onValueChange={handlelastNameToggle} />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>{t('settings.visibility.show_location')}</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.visibility.show_location')}
+          </Text>
           <Switch value={locationVisible} onValueChange={handleShowLocationToggle} />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.settingItem}>
-          <Text style={styles.settingTitle}>{t('settings.visibility.show_events')}</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.visibility.show_events')}
+          </Text>
           <Switch value={myEventsVisible} onValueChange={setMyEventsVisible} />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.notifications.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.notifications.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/push-notifications' as never)}
         >
-          <Text style={styles.settingTitle}>{t('settings.notifications.push_notifications')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.notifications.push_notifications')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/email-notifications' as never)}
         >
-          <Text style={styles.settingTitle}>{t('settings.notifications.email_notifications')}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+            {t('settings.notifications.email_notifications')}
+          </Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.safety.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.safety.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
         
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/pause-new-interaction' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.safety.pause_account')}</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.safety.pause_account')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               {t('settings.safety.pause_account_description')}
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/selfie-verification' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.safety.selfie_verification')}</Text>
-            <Text style={styles.settingDescription}>{t('settings.safety.not_verified')}</Text>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.safety.selfie_verification')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
+              {t('settings.safety.not_verified')}
+            </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/block-list' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.safety.block_list')}</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.safety.block_list')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               {t('settings.safety.block_list_description')}
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/hidden-words' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.safety.hidden_words')}</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.safety.hidden_words')}
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               {t('settings.safety.hidden_words_description')}
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>{t('settings.phone_email.title')}</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            {t('settings.phone_email.title')}
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.contactItem}>
-          <Text style={styles.contactInfo}>+1 XXX XXX XXX</Text>
-          <Ionicons name="alert-circle-outline" size={14} color="red" />
+          <Text style={[styles.contactInfo, { color: getThemeColors(isDarkMode).text }]}>+1 XXX XXX XXX</Text>
+          <Ionicons name="alert-circle-outline" size={14} color={isDarkMode ? '#9BA1A6' : 'red'} />
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.contactItem}>
           <View style={styles.contactInfoContainer}>
-            <Text style={styles.contactInfo}>{email}</Text>
+            <Text style={[styles.contactInfo, { color: getThemeColors(isDarkMode).text }]}>{email}</Text>
             <Ionicons name="checkmark-circle" size={14} color="green" />
           </View>
           <TouchableOpacity onPress={handleEditEmail}>
-            <Text style={styles.editText}>{t('settings.phone_email.edit')}</Text>
+            <Text style={[styles.editText, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.phone_email.edit')}
+            </Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Data & Privacy</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            Data & Privacy
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => navigation.navigate('settings/download-data' as never)}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>Download Your Data</Text>
-            <Text style={styles.settingDescription}>
+            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
+              Download Your Data
+            </Text>
+            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
               Get a copy of your profile data in PDF or JSON format
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={styles.sectionTitle}>Explore safety resources</Text>
+          <Text style={[styles.sectionTitle, { 
+            color: getThemeColors(isDarkMode).subText 
+          }]}>
+            Explore safety resources
+          </Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -1383,13 +1466,15 @@ const Settings = () => {
         >
           <View style={styles.settingContent}>
             <View style={styles.settingTitleContainer}>
-              <Ionicons name="call-outline" size={24} color="#000" />
-              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Crisis Hotlines</Text>
+              <Ionicons name="call-outline" size={24} color={getThemeColors(isDarkMode).text} />
+              <Text style={[styles.settingTitle, { marginLeft: 10, color: getThemeColors(isDarkMode).text }]}>
+                Crisis Hotlines
+              </Text>
             </View>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -1397,31 +1482,37 @@ const Settings = () => {
         >
           <View style={styles.settingContent}>
             <View style={styles.settingTitleContainer}>
-              <Ionicons name="help-circle-outline" size={24} color="#000" />
-              <Text style={[styles.settingTitle, { marginLeft: 10 }]}>Help Center</Text>
+              <Ionicons name="help-circle-outline" size={24} color={getThemeColors(isDarkMode).text} />
+              <Text style={[styles.settingTitle, { marginLeft: 10, color: getThemeColors(isDarkMode).text }]}>
+                Help Center
+              </Text>
             </View>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
         </TouchableOpacity>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <View style={styles.accountActionsContainer}>
           <TouchableOpacity style={styles.accountActionButton} onPress={handleLogout}>
-            <Text style={styles.accountActionText}>{t('common.logout')}</Text>
+            <Text style={[styles.accountActionText, { color: getThemeColors(isDarkMode).text }]}>
+              {t('common.logout')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.accountActionButton} 
             onPress={handleChangePassword}
           >
-            <Text style={styles.accountActionText}>{t('settings.account.change_password')}</Text>
+            <Text style={[styles.accountActionText, { color: getThemeColors(isDarkMode).text }]}>
+              {t('settings.account.change_password')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.accountActionButton, styles.deleteButton]} 
             onPress={handleDeleteAccount}
           >
-            <Text style={[styles.accountActionText, styles.deleteText]}>
+            <Text style={[styles.accountActionText, styles.deleteText, { color: getThemeColors(isDarkMode).text }]}>
               {t('settings.account.delete_account')}
             </Text>
           </TouchableOpacity>
@@ -1439,7 +1530,6 @@ const Settings = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff8f0', // Updated background color
   },
   scrollContent: {
     paddingBottom: 20,
@@ -1544,16 +1634,17 @@ const styles = StyleSheet.create({
 
   },
   profileImageContainer: {
-    borderWidth: 3,
-    borderRadius: 75, // Half of the width and height
-    overflow: 'hidden',
     width: 125,
     height: 125,
-    position: 'relative', // Ensure the container is positioned relative
+    borderRadius: 75,
+    overflow: 'hidden',
+    borderWidth: 3,
+    position: 'relative',
   },
   profilePicture: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   nameInput: {
     fontSize: 22, // Reduced from 24

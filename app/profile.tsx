@@ -2,7 +2,7 @@
 // Mariann Grace Dizon
 
 // Import necessary modules and define types
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Keyboard, ImageSourcePropType, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,8 @@ import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
 import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
 import { useNavigation } from '@react-navigation/native';
+import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
+import { Colors } from '../constants/Colors';
 
 // Define interfaces for data structures
 interface Song {
@@ -88,6 +90,38 @@ export default function Profile() {
   // Add menu state
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // Update theme context usage
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
+  const themeColors = isDarkMode ? Colors.dark : Colors.light;
+
+  // Update the useEffect for theme synchronization
+  useEffect(() => {
+    const fetchAndSyncTheme = async () => {
+      if (auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        
+        // Set up real-time listener for theme changes
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const userTheme = userData.themePreference || 'light';
+            
+            // Only toggle if the themes don't match
+            if (userTheme !== theme) {
+              toggleTheme();
+            }
+          }
+        });
+
+        // Cleanup listener on unmount
+        return () => unsubscribe();
+      }
+    };
+
+    fetchAndSyncTheme();
+  }, []); // Run only once on component mount
+
   // Add menu toggle function
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -123,6 +157,8 @@ export default function Profile() {
         const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
           if (docSnapshot.exists()) {
             const userData = docSnapshot.data();
+            
+            // Set other user data
             setUser({
               name: userData.displayName || `${userData.firstName} ${userData.lastName}`,
               location: userData.displayLocation || 'Location not set',
@@ -285,227 +321,243 @@ export default function Profile() {
 
 // Render Profile component
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Ionicons 
-              name="apps-outline" 
-              size={25} 
-              color={menuVisible ? '#37bdd5' : '#333'} 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Add Modal for menu */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={menuVisible}
-        onRequestClose={toggleMenu}
-      >
-        <Pressable 
-          style={styles.modalOverlay} 
-          onPress={toggleMenu}
-        >
-          <View style={styles.menuContainer}>
+    <ThemeProvider>
+      <SafeAreaView style={[styles.container, { 
+        backgroundColor: isDarkMode ? '#151718' : '#fff8f0' 
+      }]}>
+        <View style={styles.header}>
+          <View style={styles.headerButtons}>
             <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => {
-                handleEditPress();
-                toggleMenu();
-              }}
+              style={styles.menuButton} 
+              onPress={toggleMenu}
             >
-              <Ionicons name="create-outline" size={22} color="#333" />
-              <Text style={styles.menuText}>Edit Profile</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => {
-                router.push('/ai-chatbot');
-                toggleMenu();
-              }}
-            >
-              <Ionicons name="heart-circle-outline" size={22} color="#333" />
-              <Text style={styles.menuText}>HabiBI AI</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => {
-                router.push('/discography');
-                toggleMenu();
-              }}
-            >
-              <Ionicons name="compass-outline" size={22} color="#333" />
-              <Text style={styles.menuText}>Discography</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => {
-                router.push('/notification-page');
-                toggleMenu();
-              }}
-            >
-              <Ionicons name="notifications-outline" size={22} color="#333" />
-              <Text style={styles.menuText}>Notifications</Text>
-              {hasUnread && <View style={styles.menuNotificationDot} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.menuItem} 
-              onPress={() => {
-                handleSettingsPress();
-                toggleMenu();
-              }}
-            >
-              <Ionicons name="settings-outline" size={22} color="#333" />
-              <Text style={styles.menuText}>Settings</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
-
-      <View style={styles.profileContent}>
-        {user.profileImageUrl ? (
-          <View style={[
-            styles.profileImageContainer,
-            { borderColor: getBorderColor(user.gender) }
-          ]}>
-            {animatedBorder && (
-              <Image
-                source={animatedBorder}
-                style={styles.animatedBorder}
+              <Ionicons 
+                name="apps-outline" 
+                size={25} 
+                color={menuVisible ? '#37bdd5' : isDarkMode ? '#fff' : '#333'} 
               />
-            )}
-            <Image
-              source={{ uri: user.profileImageUrl }}
-              style={styles.profilePicture}
-            />
-          </View>
-        ) : (
-          <View style={[
-            styles.profileImageContainer,
-            styles.placeholderImage,
-            { borderColor: getBorderColor(user.gender) }
-          ]} />
-        )}
-        <View style={styles.userInfo}>
-          <Text style={styles.name}>{user.name}</Text>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={12} color={getTextColor(user.gender)} />
-            <Text style={[styles.location, { color: getTextColor(user.gender) }]}>{user.location}</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Music Preference</Text>
-              {musicPreference.length > 0 ? (
-                <Text style={styles.inputText}>{musicPreference.join(', ')}</Text>
-              ) : (
-                <Text style={styles.inputText}>No music preferences set</Text>
+        {/* Add Modal for menu */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={menuVisible}
+          onRequestClose={toggleMenu}
+        >
+          <Pressable 
+            style={styles.modalOverlay} 
+            onPress={toggleMenu}
+          >
+            <View style={[styles.menuContainer, {
+              backgroundColor: isDarkMode ? '#1a1d1e' : '#fff'
+            }]}>
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => {
+                  handleEditPress();
+                  toggleMenu();
+                }}
+              >
+                <Ionicons name="create-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>Edit Profile</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => {
+                  router.push('/ai-chatbot');
+                  toggleMenu();
+                }}
+              >
+                <Ionicons name="heart-circle-outline" size={22} color="#333" />
+                <Text style={styles.menuText}>HabiBI AI</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => {
+                  router.push('/discography');
+                  toggleMenu();
+                }}
+              >
+                <Ionicons name="compass-outline" size={22} color="#333" />
+                <Text style={styles.menuText}>Discography</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => {
+                  router.push('/notification-page');
+                  toggleMenu();
+                }}
+              >
+                <Ionicons name="notifications-outline" size={22} color="#333" />
+                <Text style={styles.menuText}>Notifications</Text>
+                {hasUnread && <View style={styles.menuNotificationDot} />}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem} 
+                onPress={() => {
+                  handleSettingsPress();
+                  toggleMenu();
+                }}
+              >
+                <Ionicons name="settings-outline" size={22} color="#333" />
+                <Text style={styles.menuText}>Settings</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+
+        <View style={styles.profileContent}>
+          {user.profileImageUrl ? (
+            <View style={[
+              styles.profileImageContainer,
+              { borderColor: getBorderColor(user.gender) }
+            ]}>
+              {animatedBorder && (
+                <Image
+                  source={animatedBorder}
+                  style={styles.animatedBorder}
+                />
               )}
+              <Image
+                source={{ uri: user.profileImageUrl }}
+                style={styles.profilePicture}
+              />
+            </View>
+          ) : (
+            <View style={[
+              styles.profileImageContainer,
+              styles.placeholderImage,
+              { borderColor: getBorderColor(user.gender) }
+            ]} />
+          )}
+          <View style={styles.userInfo}>
+            <Text style={[styles.name, { color: isDarkMode ? '#fff' : '#333' }]}>{user.name}</Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location-outline" size={12} color={getTextColor(user.gender)} />
+              <Text style={[styles.location, { color: getTextColor(user.gender) }]}>{user.location}</Text>
             </View>
           </View>
+        </View>
 
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Tune of the Month</Text>
-              {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
-                <View style={styles.songContainer}>
-                  <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
-                  <View style={styles.songInfo}>
-                    <Text style={styles.songTitle}>{tuneOfMonth.name}</Text>
-                    <Text style={styles.songArtist}>{tuneOfMonth.artist}</Text>
-                  </View>
-                </View>
-              ) : (
-                <Text style={styles.inputText}>No tune of the month set</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Favorite Artists</Text>
-              {favoriteArtists.length > 0 ? (
-                favoriteArtists.map((artist) => (
-                  <View key={artist.id} style={styles.artistContainer}>
-                    <Image source={{ uri: artist.picture }} style={styles.artistImage} />
-                    <Text style={styles.artistName}>{artist.name}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.inputText}>No favorite artists set</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>Favorite Album</Text>
-              {favoriteAlbumData ? (
-                <View style={styles.albumContainer}>
-                  <Image source={{ uri: favoriteAlbumData.albumArt }} style={styles.albumArt} />
-                  <View style={styles.albumInfo}>
-                    <Text style={styles.albumName}>{favoriteAlbumData.name}</Text>
-                    <Text style={styles.albumArtist}>{favoriteAlbumData.artist}</Text>
-                  </View>
-                </View>
-              ) : (
-                <Text style={styles.inputText}>No favorite album set</Text>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>My Favorite Performance</Text>
-              {favoritePerformance ? (
-                <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
-              ) : (
-                <Text style={styles.inputText}>No favorite performance set</Text>
-              )}
-            </View>
-          </View>
-
-          {prompts.map((prompt, index) => (
-            <View key={index} style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>{prompt.question}</Text>
-                <Text style={styles.inputText}>{prompt.answer}</Text>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <View style={styles.inputContainer}>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#1a1d1e' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Music Preference</Text>
+                {musicPreference.length > 0 ? (
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#fff' : '#333' }]}>
+                    {musicPreference.join(', ')}
+                  </Text>
+                ) : (
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>
+                    No music preferences set
+                  </Text>
+                )}
               </View>
             </View>
-          ))}
 
-          <View style={styles.inputContainer}>
-            <View style={styles.inputContent}>
-              <Text style={styles.inputLabel}>My Disposables</Text>
-              {user.myDisposables.length > 0 ? (
-                user.myDisposables.map((disposable, index) => (
-                  <View key={index} style={styles.disposableContainer}>
-                    <Image source={{ uri: disposable.url }} style={styles.disposableImage} />
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Tune of the Month</Text>
+                {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
+                  <View style={styles.songContainer}>
+                    <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
+                    <View style={styles.songInfo}>
+                      <Text style={styles.songTitle}>{tuneOfMonth.name}</Text>
+                      <Text style={styles.songArtist}>{tuneOfMonth.artist}</Text>
+                    </View>
                   </View>
-                ))
-              ) : (
-                <Text style={styles.inputText}>No disposable photos selected</Text>
-              )}
+                ) : (
+                  <Text style={styles.inputText}>No tune of the month set</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Artists</Text>
+                {favoriteArtists.length > 0 ? (
+                  favoriteArtists.map((artist) => (
+                    <View key={artist.id} style={styles.artistContainer}>
+                      <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                      <Text style={styles.artistName}>{artist.name}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.inputText}>No favorite artists set</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>Favorite Album</Text>
+                {favoriteAlbumData ? (
+                  <View style={styles.albumContainer}>
+                    <Image source={{ uri: favoriteAlbumData.albumArt }} style={styles.albumArt} />
+                    <View style={styles.albumInfo}>
+                      <Text style={styles.albumName}>{favoriteAlbumData.name}</Text>
+                      <Text style={styles.albumArtist}>{favoriteAlbumData.artist}</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.inputText}>No favorite album set</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>My Favorite Performance</Text>
+                {favoritePerformance ? (
+                  <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
+                ) : (
+                  <Text style={styles.inputText}>No favorite performance set</Text>
+                )}
+              </View>
+            </View>
+
+            {prompts.map((prompt, index) => (
+              <View key={index} style={styles.inputContainer}>
+                <View style={styles.inputContent}>
+                  <Text style={styles.inputLabel}>{prompt.question}</Text>
+                  <Text style={styles.inputText}>{prompt.answer}</Text>
+                </View>
+              </View>
+            ))}
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputContent}>
+                <Text style={styles.inputLabel}>My Disposables</Text>
+                {user.myDisposables.length > 0 ? (
+                  user.myDisposables.map((disposable, index) => (
+                    <View key={index} style={styles.disposableContainer}>
+                      <Image source={{ uri: disposable.url }} style={styles.disposableImage} />
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.inputText}>No disposable photos selected</Text>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
 
-      <View style={styles.bottomNavBarContainer}>
-        <BottomNavBar />
-      </View>
-    </SafeAreaView>
+        <View style={styles.bottomNavBarContainer}>
+          <BottomNavBar />
+        </View>
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
 // End of Profile component render
