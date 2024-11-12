@@ -3,50 +3,52 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } fr
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 const SafetyAndPrivacy = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
 
   const safetyItems = [
     {
-      title: "Profile Privacy",
-      description: "Control who sees your profile information and activity status. You can hide your last name, location, and online status.",
+      title: t('safety.profile_privacy.title'),
+      description: t('safety.profile_privacy.description'),
       icon: "eye-off-outline",
       color: "#fba904"
     },
     {
-      title: "Blocking & Reporting",
-      description: "Block users or report inappropriate behavior. Blocked users cannot see your profile or send you messages.",
+      title: t('safety.blocking.title'),
+      description: t('safety.blocking.description'),
       icon: "shield-outline",
       color: "#82327E"
     },
     {
-      title: "Hidden Words",
-      description: "Filter out messages containing specific words or phrases you don't want to see. Customize your list in settings.",
+      title: t('safety.hidden_words.title'),
+      description: t('safety.hidden_words.description'),
       icon: "text-outline",
       color: "#fba904"
     },
     {
-      title: "Location Sharing",
-      description: "Choose when and with whom to share your location. Your exact location is never shared without your consent.",
+      title: t('safety.location.title'),
+      description: t('safety.location.description'),
       icon: "location-outline",
       color: "#82327E"
     },
     {
-      title: "Safe Meeting Tips",
-      description: "Always meet in public places, tell friends about your plans, and trust your instincts. Use our in-app safety features.",
+      title: t('safety.meeting.title'),
+      description: t('safety.meeting.description'),
       icon: "people-outline",
       color: "#fba904"
     },
     {
-      title: "Data Protection",
-      description: "Your personal information and messages are encrypted. We never share your data with third parties.",
+      title: t('safety.data.title'),
+      description: t('safety.data.description'),
       icon: "lock-closed-outline",
       color: "#82327E"
     },
     {
-      title: "Account Verification",
-      description: "Verify your profile to show others you're a real person and build trust in the community.",
+      title: t('safety.verification.title'),
+      description: t('safety.verification.description'),
       icon: "checkmark-circle-outline",
       color: "#fba904"
     }
@@ -59,13 +61,13 @@ const SafetyAndPrivacy = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Safety & Privacy</Text>
+        <Text style={styles.headerTitle}>{t('safety.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
         <Text style={styles.description}>
-          Your safety and privacy are our top priorities. Learn about our safety features and guidelines below.
+          {t('safety.description')}
         </Text>
 
         {safetyItems.map((item, index) => (

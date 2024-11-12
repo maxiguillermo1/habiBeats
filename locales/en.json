@@ -1,4 +1,3 @@
-
 {
   "settings": {
     "title": "Settings",
@@ -51,15 +50,40 @@
       "email_description": "Receive email notifications for important updates"
     },
     "safety": {
-      "title": "Safety",
+      "title": "Safety & Privacy",
+      "description": "Your safety and privacy are our top priorities. Learn about our safety features and guidelines below.",
       "pause_account": "Pause Account",
       "pause_account_description": "Temporarily hide your profile from new matches",
       "selfie_verification": "Selfie Verification",
-      "not_verified": "You're not verified yet",
+      "not_verified": "You are not verified yet",
       "block_list": "Block List",
       "block_list_description": "Manage blocked users",
       "hidden_words": "Hidden Words",
-      "hidden_words_description": "Filter potentially offensive content"
+      "hidden_words_description": "Filter potentially offensive content",
+      "profile_privacy": {
+        "title": "Profile Privacy",
+        "description": "Control who sees your profile information and activity status"
+      },
+      "blocking": {
+        "title": "Blocking & Reporting",
+        "description": "Block users or report inappropriate behavior"
+      },
+      "location": {
+        "title": "Location Sharing",
+        "description": "Choose when and with whom to share your location"
+      },
+      "meeting": {
+        "title": "Safe Meeting Tips",
+        "description": "Always meet in public places and inform friends of your plans"
+      },
+      "data": {
+        "title": "Data Protection",
+        "description": "Your personal information and messages are encrypted"
+      },
+      "verification": {
+        "title": "Account Verification",
+        "description": "Verify your profile to show others you're a real person"
+      }
     },
     "phone_email": {
       "title": "Phone & Email",
@@ -71,8 +95,11 @@
     "data_privacy": {
       "title": "Data & Privacy",
       "download_data": "Download Your Data",
-      "privacy_policy": "Privacy Policy",
-      "terms_of_service": "Terms of Service"
+      "download_description": "Get a copy of your profile data in PDF or JSON format",
+      "explore_safety": "Explore Safety Resources",
+      "explore_safety_description": "Learn about our safety features and privacy guidelines",
+      "crisis_hotlines": "Crisis Hotlines",
+      "help_center": "Help Center"
     }
   },
   "common": {

@@ -1430,7 +1430,7 @@ const Settings = () => {
           <Text style={[styles.sectionTitle, { 
             color: getThemeColors(isDarkMode).subText 
           }]}>
-            Data & Privacy
+            {t('settings.data_privacy.title')}
           </Text>
         </View>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
@@ -1441,10 +1441,10 @@ const Settings = () => {
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
-              Download Your Data
+              {t('settings.data_privacy.download_data')}
             </Text>
             <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
-              Get a copy of your profile data in PDF or JSON format
+              {t('settings.data_privacy.download_description')}
             </Text>
           </View>
           <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
@@ -1455,7 +1455,7 @@ const Settings = () => {
           <Text style={[styles.sectionTitle, { 
             color: getThemeColors(isDarkMode).subText 
           }]}>
-            Explore safety resources
+            {t('settings.data_privacy.explore_safety')}
           </Text>
         </View>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
@@ -1468,7 +1468,7 @@ const Settings = () => {
             <View style={styles.settingTitleContainer}>
               <Ionicons name="call-outline" size={24} color={getThemeColors(isDarkMode).text} />
               <Text style={[styles.settingTitle, { marginLeft: 10, color: getThemeColors(isDarkMode).text }]}>
-                Crisis Hotlines
+                {t('settings.data_privacy.crisis_hotlines')}
               </Text>
             </View>
           </View>
@@ -1484,7 +1484,7 @@ const Settings = () => {
             <View style={styles.settingTitleContainer}>
               <Ionicons name="help-circle-outline" size={24} color={getThemeColors(isDarkMode).text} />
               <Text style={[styles.settingTitle, { marginLeft: 10, color: getThemeColors(isDarkMode).text }]}>
-                Help Center
+                {t('settings.data_privacy.help_center')}
               </Text>
             </View>
           </View>

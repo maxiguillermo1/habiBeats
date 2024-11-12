@@ -50,7 +50,8 @@
       "email_description": "Recevoir des notifications par email pour les mises à jour importantes"
     },
     "safety": {
-      "title": "Sécurité",
+      "title": "Sécurité et Confidentialité",
+      "description": "Votre sécurité et votre confidentialité sont nos principales priorités. Découvrez nos fonctionnalités de sécurité et nos directives ci-dessous.",
       "pause_account": "Mettre en Pause le Compte",
       "pause_account_description": "Masquer temporairement votre profil des nouvelles correspondances",
       "selfie_verification": "Vérification par Selfie",
@@ -58,7 +59,31 @@
       "block_list": "Liste de Blocage",
       "block_list_description": "Gérer les utilisateurs bloqués",
       "hidden_words": "Mots Cachés",
-      "hidden_words_description": "Filtrer le contenu potentiellement offensant"
+      "hidden_words_description": "Filtrer le contenu potentiellement offensant",
+      "profile_privacy": {
+        "title": "Confidentialité du Profil",
+        "description": "Contrôlez qui voit vos informations de profil et votre statut d'activité"
+      },
+      "blocking": {
+        "title": "Blocage et Signalement",
+        "description": "Bloquez les utilisateurs ou signalez un comportement inapproprié"
+      },
+      "location": {
+        "title": "Partage de Localisation",
+        "description": "Choisissez quand et avec qui partager votre localisation"
+      },
+      "meeting": {
+        "title": "Conseils de Rencontre Sûre",
+        "description": "Rencontrez-vous toujours dans des lieux publics et informez vos amis"
+      },
+      "data": {
+        "title": "Protection des Données",
+        "description": "Vos informations personnelles et messages sont cryptés"
+      },
+      "verification": {
+        "title": "Vérification du Compte",
+        "description": "Vérifiez votre profil pour montrer que vous êtes une personne réelle"
+      }
     },
     "phone_email": {
       "title": "Téléphone et Email",
@@ -70,8 +95,11 @@
     "data_privacy": {
       "title": "Données et Confidentialité",
       "download_data": "Télécharger vos Données",
-      "privacy_policy": "Politique de Confidentialité",
-      "terms_of_service": "Conditions d'Utilisation"
+      "download_description": "Obtenez une copie de vos données de profil au format PDF ou JSON",
+      "explore_safety": "Explorer les Ressources de Sécurité",
+      "explore_safety_description": "Découvrez nos fonctionnalités de sécurité et nos directives de confidentialité",
+      "crisis_hotlines": "Lignes d'Assistance de Crise",
+      "help_center": "Centre d'Aide"
     }
   },
   "common": {

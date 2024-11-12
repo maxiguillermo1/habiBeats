@@ -50,28 +50,52 @@
       "email_description": "Recibir notificaciones por correo para actualizaciones importantes"
     },
     "safety": {
-      "title": "Seguridad",
+      "title": "Seguridad y Privacidad",
+      "description": "Tu seguridad y privacidad son nuestras principales prioridades. Conoce nuestras funciones de seguridad y pautas a continuación.",
       "pause_account": "Pausar Cuenta",
-      "pause_account_description": "Ocultar temporalmente tu perfil de nuevas coincidencias",
+      "pause_account_description": "Ocultar temporalmente tu perfil de nuevas interacciones",
       "selfie_verification": "Verificación por Selfie",
-      "not_verified": "Aún no estás verificado",
-      "block_list": "Lista de Bloqueos",
-      "block_list_description": "Administrar usuarios bloqueados",
+      "not_verified": "No estás verificado",
+      "block_list": "Lista de Bloqueo",
+      "block_list_description": "Gestionar usuarios bloqueados",
       "hidden_words": "Palabras Ocultas",
-      "hidden_words_description": "Filtrar contenido potencialmente ofensivo"
+      "hidden_words_description": "Filtrar contenido potencialmente ofensivo",
+      "profile_privacy": {
+        "title": "Privacidad del Perfil",
+        "description": "Controla quién ve tu información de perfil y estado de actividad"
+      },
+      "blocking": {
+        "title": "Bloqueo y Reportes",
+        "description": "Bloquea usuarios o reporta comportamiento inapropiado"
+      },
+      "location": {
+        "title": "Compartir Ubicación",
+        "description": "Elige cuándo y con quién compartir tu ubicación"
+      },
+      "meeting": {
+        "title": "Consejos para Encuentros Seguros",
+        "description": "Siempre reúnete en lugares públicos e informa a tus amigos"
+      },
+      "data": {
+        "title": "Protección de Datos",
+        "description": "Tu información personal y mensajes están encriptados"
+      },
+      "verification": {
+        "title": "Verificación de Cuenta",
+        "description": "Verifica tu perfil para mostrar que eres una persona real"
+      }
     },
     "phone_email": {
-      "title": "Teléfono y Correo",
-      "edit": "Editar",
-      "verify_phone": "Verificar Número de Teléfono",
-      "phone_verified": "Número de Teléfono Verificado",
-      "email_verified": "Correo Verificado"
+      "title": "Teléfono y Correo"
     },
     "data_privacy": {
       "title": "Datos y Privacidad",
       "download_data": "Descargar tus Datos",
-      "privacy_policy": "Política de Privacidad",
-      "terms_of_service": "Términos de Servicio"
+      "download_description": "Obtén una copia de tus datos de perfil en formato PDF o JSON",
+      "explore_safety": "Explorar Recursos de Seguridad",
+      "explore_safety_description": "Aprende sobre nuestras funciones de seguridad y pautas de privacidad",
+      "crisis_hotlines": "Líneas de Crisis",
+      "help_center": "Centro de Ayuda"
     }
   },
   "common": {

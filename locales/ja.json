@@ -50,15 +50,40 @@
       "email_description": "重要な更新のメール通知を受け取る"
     },
     "safety": {
-      "title": "セキュリティ",
+      "title": "セキュリティとプライバシー",
+      "description": "あなたの安全とプライバシーは私たちの最優先事項です。以下のセキュリティ機能とガイドラインをご確認ください。",
       "pause_account": "アカウントを一時停止",
       "pause_account_description": "新しいマッチングから一時的にプロフィールを非表示にする",
       "selfie_verification": "自撮り認証",
-      "not_verified": "まだ認証されていません",
+      "not_verified": "未認証です",
       "block_list": "ブロックリスト",
       "block_list_description": "ブロックしたユーザーを管理",
-      "hidden_words": "非表示の単語",
-      "hidden_words_description": "不適切な可能性のあるコンテンツをフィルタリング"
+      "hidden_words": "非表示ワード",
+      "hidden_words_description": "不適切なコンテンツをフィルタリング",
+      "profile_privacy": {
+        "title": "プロフィールのプライバシー",
+        "description": "プロフィール情報とアクティビティ状態の表示を管理"
+      },
+      "blocking": {
+        "title": "ブロックと報告",
+        "description": "不適切なユーザーをブロックまたは報告"
+      },
+      "location": {
+        "title": "位置情報の共有",
+        "description": "位置情報を共有するタイミングと相手を選択"
+      },
+      "meeting": {
+        "title": "安全な出会いのヒント",
+        "description": "公共の場所で会い、友人に予定を伝える"
+      },
+      "data": {
+        "title": "データ保護",
+        "description": "個人情報とメッセージは暗号化されています"
+      },
+      "verification": {
+        "title": "アカウント認証",
+        "description": "実在する人物であることを示すためにプロフィールを認証"
+      }
     },
     "phone_email": {
       "title": "電話番号とメール",
@@ -69,7 +94,12 @@
     },
     "data_privacy": {
       "title": "データとプライバシー",
-      "download_data": "データをダウンロード"
+      "download_data": "データをダウンロード",
+      "download_description": "プロフィールデータのコピーをPDFまたはJSON形式で取得",
+      "explore_safety": "セキュリティリソースを探る",
+      "explore_safety_description": "セキュリティ機能とプライバシーガイドラインについて学ぶ",
+      "crisis_hotlines": "緊急ホットライン",
+      "help_center": "ヘルプセンター"
     }
   },
   "auth": {
