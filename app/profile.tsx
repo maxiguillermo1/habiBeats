@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 100,
+    paddingBottom: 50,
   },
   header: {
     flexDirection: 'row',
