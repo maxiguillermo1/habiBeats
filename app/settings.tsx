@@ -138,13 +138,12 @@ const Settings = () => {
       }
     }
   };
-  // END of Fetching Animated Border
-  // END of Mariann Grace Dizon Contribution
-
 
   useEffect(() => {
     fetchAnimatedBorder();
   }, []);
+  // END of Fetching Animated Border
+  // END of Mariann Grace Dizon Contribution
 
   // START of Reyna Aguirre Contribution
   const handleLogout = () => {

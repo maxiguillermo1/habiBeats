@@ -4,15 +4,66 @@
 // START of Bottom Navigation Bar UI/UX
 // START of Jesus Donate Contribution
 
-import React from 'react';  
+import React, { useContext, useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, usePathname, Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
+import { auth, db } from '../firebaseConfig';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const BottomNavBar = () => {
   const router = useRouter();
   const currentPath = usePathname();
+  // END of Jesus Donate Contribution
 
+  // START of Mariann Grace Dizon Contribution
+  // Get theme context and initialize dark mode state
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+  // Effect hook to sync theme with user preferences in Firestore
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get current authenticated user
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('User not authenticated');
+        
+        // Get reference to user document
+        const userDocRef = doc(db, 'users', currentUser.uid);
+
+        // Set up real-time listener for theme preference changes
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            // Get user's theme preference, default to light if not set
+            const userTheme = userData.themePreference || 'light';
+
+            // Toggle theme if current state doesn't match user preference
+            if ((userTheme === 'dark' && !isDarkMode) || 
+                (userTheme === 'light' && isDarkMode)) {
+              toggleTheme();
+            }
+
+            // Update dark mode state
+            setIsDarkMode(userTheme === 'dark');
+          }
+        });
+
+        // Clean up listener on unmount
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    // Call fetch function
+    fetchUserData();
+  }, [isDarkMode, toggleTheme]);
+  // END of Mariann Grace Dizon
+
+  // START of Jesus Donate
   // Navigate to a specific route
   const navigateTo = (route: Href<string>) => {
     router.back(); // Gets rid of previous page
@@ -30,15 +81,17 @@ const BottomNavBar = () => {
   };
 
   // Render the bottom navigation bar with fewer icons
+  // START of Mariann Grace Dizon Contribution (Dark Mode)
   return (
     <View style={styles.container}>
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, isDarkMode && { backgroundColor: '#1a1a1a', borderColor: 'rgba(255,255,255,0.1)' }]}>
         <TouchableOpacity onPress={() => navigateTo('/events/search')}>
           <Ionicons 
             name="earth-outline" 
             size={18}
             style={[
-              isEventActive() ? styles.activeNavItem : styles.navItem
+              isEventActive() ? styles.activeNavItem : styles.navItem,
+              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
             ]}
           />
         </TouchableOpacity>
@@ -47,7 +100,10 @@ const BottomNavBar = () => {
           <Ionicons 
             name="chatbubble-ellipses-outline" 
             size={18}
-            style={[getNavItemStyle('/messages')]}
+            style={[
+              getNavItemStyle('/messages'),
+              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
+            ]}
           />
         </TouchableOpacity>
 
@@ -55,7 +111,10 @@ const BottomNavBar = () => {
           <Ionicons 
             name="camera-outline" 
             size={18}
-            style={[getNavItemStyle('/disposable-camera')]}
+            style={[
+              getNavItemStyle('/disposable-camera'),
+              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
+            ]}
           />
         </TouchableOpacity>
 
@@ -63,7 +122,10 @@ const BottomNavBar = () => {
           <Ionicons 
             name="people-circle-outline" 
             size={18}
-            style={[getNavItemStyle('/match')]}
+            style={[
+              getNavItemStyle('/match'),
+              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
+            ]}
           />
         </TouchableOpacity>
 
@@ -71,14 +133,19 @@ const BottomNavBar = () => {
           <Ionicons 
             name="person-circle-outline" 
             size={18}
-            style={[getNavItemStyle('/profile')]}
+            style={[
+              getNavItemStyle('/profile'),
+              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
+            ]}
           />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+// END of Mariann Grace Dizon Contribution (Dark Mode)
 
+// START of Jesus Donate Contribution
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -116,6 +183,5 @@ const styles = StyleSheet.create({
 });
 
 export default BottomNavBar;
-
 // END of Bottom Navigation Bar UI/UX
 // END of Jesus Donate Contribution
