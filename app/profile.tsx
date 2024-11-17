@@ -92,58 +92,7 @@ export default function Profile() {
 
   // Update theme context usage
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const isDarkMode = theme === 'dark';
-  const themeColors = isDarkMode ? Colors.dark : Colors.light;
-
-  // Update the useEffect for theme synchronization
-  useEffect(() => {
-    const fetchAndSyncTheme = async () => {
-      if (auth.currentUser) {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        
-        // Set up real-time listener for theme changes
-        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
-          if (docSnapshot.exists()) {
-            const userData = docSnapshot.data();
-            const userTheme = userData.themePreference || 'light';
-            
-            // Only toggle if the themes don't match
-            if (userTheme !== theme) {
-              toggleTheme();
-            }
-          }
-        });
-
-        // Cleanup listener on unmount
-        return () => unsubscribe();
-      }
-    };
-
-    fetchAndSyncTheme();
-  }, []); // Run only once on component mount
-
-  // Add menu toggle function
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
-
-  // Fetch animated border image based on user data
-  const fetchAnimatedBorder = async () => {
-    if (auth.currentUser) {
-      try {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.AnimatedBorder && gifImages[userData.AnimatedBorder]) {
-            setAnimatedBorder(gifImages[userData.AnimatedBorder] as ImageSourcePropType);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching animated border:', error);
-      }
-    }
-  };
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
 
   // Fetch user data and register push notifications
   useEffect(() => {
@@ -158,6 +107,10 @@ export default function Profile() {
           if (docSnapshot.exists()) {
             const userData = docSnapshot.data();
             
+            // Set theme based on user preference
+            const userTheme = userData.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+
             // Set other user data
             setUser({
               name: userData.displayName || `${userData.firstName} ${userData.lastName}`,
@@ -253,7 +206,6 @@ export default function Profile() {
       }
     });
   }, []);
-// End of fetching user data and registering push notifications
 
   // Checks if there are any unread notifications
   const checkUnreadNotifications = useCallback(async () => {
@@ -264,26 +216,18 @@ export default function Profile() {
   }, []);
 
   useEffect(() => { 
-    // Add sample notifications
-    // addNotification(auth.currentUser!.uid, 'You have a new match!')
-    // addNotification(auth.currentUser!.uid, 'Someone liked your profile!')
-    // addNotification(auth.currentUser!.uid, 'New message from John!')
-
-    // Initial check for unread notifications
     checkUnreadNotifications();
 
-    // Checks for unread notifications every 3 seconds
     const intervalId = setInterval(() => {
       checkUnreadNotifications();
     }, 3000);
 
-    // Clean up function
     return () => {
       clearInterval(intervalId);
     };
   }, [checkUnreadNotifications]);
 
-// Define helper functions for navigation and styling
+  // Define helper functions for navigation and styling
   const handleSettingsPress = () => {
     router.push('/settings');
   };
@@ -317,9 +261,30 @@ export default function Profile() {
   const handleCameraPress = () => {
     router.push('/disposable-camera');
   };
-// End of helper functions for navigation and styling
 
-// Render Profile component
+  // Add menu toggle function
+  const toggleMenu = () => {
+    setMenuVisible(!menuVisible);
+  };
+
+  // Fetch animated border image based on user data
+  const fetchAnimatedBorder = async () => {
+    if (auth.currentUser) {
+      try {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.AnimatedBorder && gifImages[userData.AnimatedBorder]) {
+            setAnimatedBorder(gifImages[userData.AnimatedBorder] as ImageSourcePropType);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching animated border:', error);
+      }
+    }
+  };
+
   return (
     <ThemeProvider>
       <SafeAreaView style={[styles.container, { 
@@ -352,7 +317,7 @@ export default function Profile() {
             onPress={toggleMenu}
           >
             <View style={[styles.menuContainer, {
-              backgroundColor: isDarkMode ? '#1a1d1e' : '#fff'
+              backgroundColor: isDarkMode ? '#2d3235' : '#fff'
             }]}>
               <TouchableOpacity 
                 style={styles.menuItem} 
@@ -372,8 +337,8 @@ export default function Profile() {
                   toggleMenu();
                 }}
               >
-                <Ionicons name="heart-circle-outline" size={22} color="#333" />
-                <Text style={styles.menuText}>HabiBI AI</Text>
+                <Ionicons name="heart-circle-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>HabiBI AI</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -383,8 +348,8 @@ export default function Profile() {
                   toggleMenu();
                 }}
               >
-                <Ionicons name="compass-outline" size={22} color="#333" />
-                <Text style={styles.menuText}>Discography</Text>
+                <Ionicons name="compass-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>Discography</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -394,8 +359,8 @@ export default function Profile() {
                   toggleMenu();
                 }}
               >
-                <Ionicons name="notifications-outline" size={22} color="#333" />
-                <Text style={styles.menuText}>Notifications</Text>
+                <Ionicons name="notifications-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>Notifications</Text>
                 {hasUnread && <View style={styles.menuNotificationDot} />}
               </TouchableOpacity>
 
@@ -406,8 +371,8 @@ export default function Profile() {
                   toggleMenu();
                 }}
               >
-                <Ionicons name="settings-outline" size={22} color="#333" />
-                <Text style={styles.menuText}>Settings</Text>
+                <Ionicons name="settings-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>Settings</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -451,7 +416,7 @@ export default function Profile() {
             <View style={styles.inputContainer}>
               <View style={[styles.inputContent, {
                 borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
-                backgroundColor: isDarkMode ? '#1a1d1e' : '#FFFFFF'
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
               }]}>
                 <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Music Preference</Text>
                 {musicPreference.length > 0 ? (
@@ -467,78 +432,96 @@ export default function Profile() {
             </View>
 
             <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Tune of the Month</Text>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Tune of the Month</Text>
                 {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
                   <View style={styles.songContainer}>
                     <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
                     <View style={styles.songInfo}>
-                      <Text style={styles.songTitle}>{tuneOfMonth.name}</Text>
-                      <Text style={styles.songArtist}>{tuneOfMonth.artist}</Text>
+                      <Text style={[styles.songTitle, { color: isDarkMode ? '#fff' : '#333' }]}>{tuneOfMonth.name}</Text>
+                      <Text style={[styles.songArtist, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>{tuneOfMonth.artist}</Text>
                     </View>
                   </View>
                 ) : (
-                  <Text style={styles.inputText}>No tune of the month set</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No tune of the month set</Text>
                 )}
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Artists</Text>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Favorite Artists</Text>
                 {favoriteArtists.length > 0 ? (
                   favoriteArtists.map((artist) => (
                     <View key={artist.id} style={styles.artistContainer}>
                       <Image source={{ uri: artist.picture }} style={styles.artistImage} />
-                      <Text style={styles.artistName}>{artist.name}</Text>
+                      <Text style={[styles.artistName, { color: isDarkMode ? '#fff' : '#333' }]}>{artist.name}</Text>
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.inputText}>No favorite artists set</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite artists set</Text>
                 )}
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>Favorite Album</Text>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Favorite Album</Text>
                 {favoriteAlbumData ? (
                   <View style={styles.albumContainer}>
                     <Image source={{ uri: favoriteAlbumData.albumArt }} style={styles.albumArt} />
                     <View style={styles.albumInfo}>
-                      <Text style={styles.albumName}>{favoriteAlbumData.name}</Text>
-                      <Text style={styles.albumArtist}>{favoriteAlbumData.artist}</Text>
+                      <Text style={[styles.albumName, { color: isDarkMode ? '#fff' : '#333' }]}>{favoriteAlbumData.name}</Text>
+                      <Text style={[styles.albumArtist, { color: isDarkMode ? '#9BA1A6' : '#666' }]}>{favoriteAlbumData.artist}</Text>
                     </View>
                   </View>
                 ) : (
-                  <Text style={styles.inputText}>No favorite album set</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite album set</Text>
                 )}
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>My Favorite Performance</Text>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>My Favorite Performance</Text>
                 {favoritePerformance ? (
                   <Image source={{ uri: favoritePerformance }} style={styles.imageInput} />
                 ) : (
-                  <Text style={styles.inputText}>No favorite performance set</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite performance set</Text>
                 )}
               </View>
             </View>
 
             {prompts.map((prompt, index) => (
               <View key={index} style={styles.inputContainer}>
-                <View style={styles.inputContent}>
-                  <Text style={styles.inputLabel}>{prompt.question}</Text>
-                  <Text style={styles.inputText}>{prompt.answer}</Text>
+                <View style={[styles.inputContent, {
+                  borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                  backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+                }]}>
+                  <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>{prompt.question}</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#fff' : '#333' }]}>{prompt.answer}</Text>
                 </View>
               </View>
             ))}
 
             <View style={styles.inputContainer}>
-              <View style={styles.inputContent}>
-                <Text style={styles.inputLabel}>My Disposables</Text>
+              <View style={[styles.inputContent, {
+                borderColor: isDarkMode ? '#2d3235' : '#FFFFFF',
+                backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
+              }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>My Disposables</Text>
                 {user.myDisposables.length > 0 ? (
                   user.myDisposables.map((disposable, index) => (
                     <View key={index} style={styles.disposableContainer}>
@@ -546,7 +529,7 @@ export default function Profile() {
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.inputText}>No disposable photos selected</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No disposable photos selected</Text>
                 )}
               </View>
             </View>
