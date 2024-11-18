@@ -1241,7 +1241,7 @@ const Match = () => {
                 dynamicStyles.waitingModalContainer,
                 {
                   transform: [{ scale: waitingModalScale }],
-                  backgroundColor: '#fff8f0',
+                  backgroundColor: isDarkTheme ? '#1E1E1E' : '#fff8f0',
                 }
               ]}
             >
@@ -1262,7 +1262,7 @@ const Match = () => {
                 dynamicStyles.dislikeModalContainer,
                 {
                   transform: [{ scale: dislikeModalScale }],
-                  backgroundColor: '#fff8f0',
+                  backgroundColor: isDarkTheme ? '#1E1E1E' : '#fff8f0',
                 }
               ]}
             >

@@ -72,7 +72,10 @@ const BottomNavBar = () => {
 
   // Get the navigation item style based on the current path
   const getNavItemStyle = (path: string) => {
-    return currentPath === path ? styles.activeNavItem : styles.navItem;
+    return {
+      ...styles.navItem,
+      color: currentPath === path ? '#37bdd5' : isDarkMode ? '#fff' : '#000',
+    };
   };
 
   // Check if the current path is an event page
@@ -89,10 +92,7 @@ const BottomNavBar = () => {
           <Ionicons 
             name="earth-outline" 
             size={18}
-            style={[
-              isEventActive() ? styles.activeNavItem : styles.navItem,
-              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
-            ]}
+            style={getNavItemStyle('/events/search')}
           />
         </TouchableOpacity>
         
@@ -100,10 +100,7 @@ const BottomNavBar = () => {
           <Ionicons 
             name="chatbubble-ellipses-outline" 
             size={18}
-            style={[
-              getNavItemStyle('/messages'),
-              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
-            ]}
+            style={getNavItemStyle('/messages')}
           />
         </TouchableOpacity>
 
@@ -111,10 +108,7 @@ const BottomNavBar = () => {
           <Ionicons 
             name="camera-outline" 
             size={18}
-            style={[
-              getNavItemStyle('/disposable-camera'),
-              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
-            ]}
+            style={getNavItemStyle('/disposable-camera')}
           />
         </TouchableOpacity>
 
@@ -122,10 +116,7 @@ const BottomNavBar = () => {
           <Ionicons 
             name="people-circle-outline" 
             size={18}
-            style={[
-              getNavItemStyle('/match'),
-              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
-            ]}
+            style={getNavItemStyle('/match')}
           />
         </TouchableOpacity>
 
@@ -133,10 +124,7 @@ const BottomNavBar = () => {
           <Ionicons 
             name="person-circle-outline" 
             size={18}
-            style={[
-              getNavItemStyle('/profile'),
-              isDarkMode && { color: isDarkMode ? '#fff' : '#000' }
-            ]}
+            style={getNavItemStyle('/profile')}
           />
         </TouchableOpacity>
       </View>
