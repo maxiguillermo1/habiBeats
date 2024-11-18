@@ -454,28 +454,428 @@ const Match = () => {
     }
   }, [user2]);
 
+  // Fetch the user's theme preference
+  const [themePreference, setThemePreference] = useState<string>('light');
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const db = getFirestore(app);
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data() as User;
+          setThemePreference(userData.themePreference || 'light');
+        }
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
+
+  // Define styles based on theme preference
+  const isDarkTheme = themePreference === 'dark';
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDarkTheme ? '#1E1E1E' : '#fff8f0',
+    },
+    header: {
+      flexDirection: 'row',
+      paddingLeft: 70,
+      paddingRight: 70,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+    },
+    profileImageContainer: {
+      borderWidth: 3,
+      borderRadius: 50,
+      overflow: 'hidden',
+      width: 80,
+      height: 80,
+      position: 'relative',
+    },
+    profilePicture: {
+      width: '100%',
+      height: '100%',
+    },
+    userInfo: {
+      flex: 1,
+      marginLeft: 15,
+    },
+    name: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+      marginBottom: 4,
+    },
+    locationContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    location: {
+      fontSize: 12,
+      marginLeft: 4,
+    },
+    resetButton: {
+      position: 'absolute',
+      top: 20,
+      right: 20,
+      zIndex: 10, 
+      paddingTop: 30,
+    },
+    resetButtonIcon: {
+      color: isDarkTheme ? '#fff' : '#0e1514', // Adjust the color based on the theme
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: 100,
+    },
+    content: {
+      paddingTop: 14,
+      paddingLeft: 55,
+      paddingRight: 55,
+      paddingBottom: 10,
+    },
+    inputContainer: {
+      marginBottom: 20,
+      position: 'relative',
+      backgroundColor: isDarkTheme ? '#333' : '#FFFFFF',
+      borderRadius: 10,
+      padding: 15,
+    },
+    inputContent: {
+      marginBottom: 20,
+    },
+    inputLabel: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    inputText: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    imageInput: {
+      width: 240,
+      height: 240,
+      alignSelf: 'center',
+    },
+    messageContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    message: {
+      fontSize: 25,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#000',
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      padding: 32,
+      position: 'absolute',
+      bottom: 60,
+      left: 0,
+      right: 0,
+    },
+    actionButton: {
+      borderRadius: 30,
+      width: 55,
+      height: 55,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dislikeButton: {
+      backgroundColor: '#de3c3c',
+    },
+    likeButton: {
+      backgroundColor: '#79ce54',
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+      padding: 20,
+    },
+    modalContent: {
+      backgroundColor: isDarkTheme ? '#333' : '#79ce54',
+      padding: 20,
+      borderRadius: 40,
+      alignItems: 'center',
+      width: 350,
+      height: 750,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginBottom: 20,
+    },
+    modalBody: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+    },
+    modalTitle: {
+      fontSize: 40,
+      fontWeight: '800',
+      color: '#1E1E1E',
+      textAlign: 'center',
+      marginVertical: 30,
+    },
+    modalProfilePic: {
+      width: 190,
+      height: 190,
+      borderRadius: 110,
+      marginVertical: 10,
+    },
+    messageButton: {
+      padding: 10,
+    },
+    closeButton: {
+      padding: 10,
+    },
+    profilePicContainer: {
+      alignItems: 'center',
+      marginBottom: 50,
+    },
+    displayName: {
+      fontSize: 30,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    musicPreference: {
+      marginBottom: 20,
+    },
+    genre: {
+      fontSize: 22,
+      color: isDarkTheme ? '#fff' : '#000',
+      marginBottom: 5,
+      fontWeight: 'bold',
+    },
+    promptImage: {
+      width: 300,
+      height: 300,
+      borderRadius: 20,
+      marginBottom: 25,
+      padding: 20,
+    },
+    profilePic: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+    },
+    contentLikeButton: {
+      position: 'absolute',
+      bottom: 5,
+      right: 5,
+      padding: 6,
+      zIndex: 1,
+    },
+    promptContainer: {
+      backgroundColor: isDarkTheme ? '#333' : '#FFFFFF',
+      borderRadius: 10,
+      marginTop: 5,
+      marginBottom: 6,
+      marginLeft: 10,
+      marginRight: 10,
+    },
+    promptQuestion: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+      marginBottom: 5,
+    },
+    promptAnswer: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    songContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    albumArt: {
+      width: 60,
+      height: 60,
+      borderRadius: 5,
+      marginRight: 15,
+      marginLeft: 15,
+    },
+    songInfo: {
+      flex: 1,
+    },
+    songTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    songArtist: {
+      marginTop: 1,
+      fontSize: 11,
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    albumContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    albumInfo: {
+      flex: 1,
+    },
+    albumName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    albumArtist: {
+      marginTop: 1,
+      fontSize: 11,
+      color: isDarkTheme ? '#666' : '#333',
+    },
+    artistContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    artistImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 50,
+      marginRight: 15,
+      marginLeft: 15,
+      marginTop: 4,
+      marginBottom: 4,
+    },
+    artistName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#333',
+    },
+    waitingModalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+    },
+    waitingText: {
+      fontSize: 20,
+      color: isDarkTheme ? '#fba904' : '#fba904',
+      marginTop: 20,
+    },
+    dislikeModalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+    },
+    dislikeText: {
+      fontSize: 20,
+      color: isDarkTheme ? '#fba904' : '#fba904',
+      marginTop: 20,
+    },
+    animatedBorder: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      borderRadius: 50,
+      zIndex: 1,
+    },
+    pausedContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 30,
+    },
+    pausedTitle: {
+      fontSize: 25,
+      fontWeight: 'bold',
+      color: isDarkTheme ? '#fff' : '#000',
+      textAlign: 'center',
+      fontStyle: 'italic',
+      marginBottom: 20,
+    },
+    settingsButton: {
+      padding: 15,
+    },
+    settingsButtonText: {
+      fontSize: 14,
+      color: '#79ce54',
+      textAlign: 'center',
+      fontWeight: 'bold',
+    },
+    pauseSettingsButtonText: {
+      fontSize: 12,
+      color: '#7d7d7d',
+      textAlign: 'center',
+    },
+    pauseIconContainer: {
+      marginBottom: 30,
+    },
+    disposableGallery: {
+      marginTop: 10,
+    },
+    disposablePhotoContainer: {
+      backgroundColor: '#fafafa',
+      padding: 2,
+      paddingBottom: 35,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 3,
+      marginBottom: 20,
+    },
+    disposablePhoto: {
+      width: 150,
+      height: 150,
+      borderRadius: 10,
+      borderWidth: 10,
+      borderColor: '#fafafa',
+      backgroundColor: '#fff',
+    },
+    separator: {
+      width: 95,
+    },
+    flatListContentContainer: {
+      paddingHorizontal: 50,
+    },
+  });
+
   // UI rendering
   // Mariann Grace Dizon
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {isPaused ? (
-        <View style={styles.pausedContainer}>
-          <View style={styles.pauseIconContainer}>
+        <View style={dynamicStyles.pausedContainer}>
+          <View style={dynamicStyles.pauseIconContainer}>
           <Ionicons name="pause" size={50} color="#0e1514" />
           </View>
-          <Text style={styles.pausedTitle}>new interactions are currently paused</Text>
+          <Text style={dynamicStyles.pausedTitle}>new interactions are currently paused</Text>
           <TouchableOpacity 
-            style={styles.settingsButton}
+            style={dynamicStyles.settingsButton}
             onPress={() => router.push('/settings')}
           >
-            <Text style={styles.settingsButtonText}>
+            <Text style={dynamicStyles.settingsButtonText}>
               click here to go to settings to resume interactions and see new matches 
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.pauseSettingsButtonText}>
+          <Text style={dynamicStyles.pauseSettingsButtonText}>
               you may need to refresh the page to see update
             </Text>
         </View>
@@ -485,40 +885,40 @@ const Match = () => {
           { noMoreUsers && (
             <View style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
               <TouchableOpacity
-                style={styles.resetButton}
+                style={dynamicStyles.resetButton}
                 onPress={() => {
                   console.log("Reset button pressed");
                   confirmResetMatches();
                 }}
               >
-                <Ionicons name="refresh" size={40} color="#0e1514" />
+                <Ionicons name="refresh" size={40} style={dynamicStyles.resetButtonIcon} />
               </TouchableOpacity>
             </View>
           )}
           
-          <View style={styles.header}>
+          <View style={dynamicStyles.header}>
             {user2 && (
               <>
                 <View style={[
-                  styles.profileImageContainer,
+                  dynamicStyles.profileImageContainer,
                   { borderColor: getBorderColor(user2.gender) }
                 ]}>
                   <Image
                     source={{ uri: user2.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
-                    style={styles.profilePicture}
+                    style={dynamicStyles.profilePicture}
                   />
                   {user2AnimatedBorder && (
                     <Image
                       source={user2AnimatedBorder}
-                      style={styles.animatedBorder} // Apply the new animated border style
+                      style={dynamicStyles.animatedBorder} // Apply the new animated border style
                     />
                   )}
                 </View>
-                <View style={styles.userInfo}>
-                  <Text style={styles.name}>{user2.displayName}</Text>
-                  <View style={styles.locationContainer}>
+                <View style={dynamicStyles.userInfo}>
+                  <Text style={dynamicStyles.name}>{user2.displayName}</Text>
+                  <View style={dynamicStyles.locationContainer}>
                     <Ionicons name="location-outline" size={12} color={getTextColor(user2.gender)} />
-                    <Text style={[styles.location, { color: getTextColor(user2.gender) }]}>{user2.location}</Text>
+                    <Text style={[dynamicStyles.location, { color: getTextColor(user2.gender) }]}>{user2.location}</Text>
                   </View>
                 </View>
               </>
@@ -526,17 +926,17 @@ const Match = () => {
             
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView contentContainerStyle={dynamicStyles.scrollContent}>
             {isLoading ? (
-              <View style={styles.messageContainer}>
-                <Text style={styles.message}>loading users ...</Text>
+              <View style={dynamicStyles.messageContainer}>
+                <Text style={dynamicStyles.message}>loading users ...</Text>
               </View>
             ) : user2 ? (
-              <View style={styles.content}>
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Music Preference</Text>
-                    <Text style={styles.inputText}>
+              <View style={dynamicStyles.content}>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Music Preference</Text>
+                    <Text style={dynamicStyles.inputText}>
                       {Array.isArray(user2.musicPreference) 
                         ? user2.musicPreference.join(', ') 
                         : user2.musicPreference || 'No preferences set'}
@@ -544,7 +944,7 @@ const Match = () => {
                   </View>
                   
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('musicPreference')}
                   >
                     <Ionicons 
@@ -555,35 +955,35 @@ const Match = () => {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Tune of the Month</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Tune of the Month</Text>
                     {user2?.tuneOfMonth ? (
                       (() => {
                         try {
                           const tuneData = JSON.parse(user2.tuneOfMonth);
                           return (
-                            <View style={styles.songContainer}>
+                            <View style={dynamicStyles.songContainer}>
                               {tuneData.albumArt && (
-                                <Image source={{ uri: tuneData.albumArt }} style={styles.albumArt} />
+                                <Image source={{ uri: tuneData.albumArt }} style={dynamicStyles.albumArt} />
                               )}
-                              <View style={styles.songInfo}>
-                                <Text style={styles.songTitle}>{tuneData.name || 'Unknown Title'}</Text>
-                                <Text style={styles.songArtist}>{tuneData.artist || 'Unknown Artist'}</Text>
+                              <View style={dynamicStyles.songInfo}>
+                                <Text style={dynamicStyles.songTitle}>{tuneData.name || 'Unknown Title'}</Text>
+                                <Text style={dynamicStyles.songArtist}>{tuneData.artist || 'Unknown Artist'}</Text>
                               </View>
                             </View>
                           );
                         } catch (error) {
                           console.error('Error parsing tuneOfMonth:', error);
-                          return <Text style={styles.inputText}>{user2.tuneOfMonth}</Text>;
+                          return <Text style={dynamicStyles.inputText}>{user2.tuneOfMonth}</Text>;
                         }
                       })()
                     ) : (
-                      <Text style={styles.inputText}>No tune of the month set</Text>
+                      <Text style={dynamicStyles.inputText}>No tune of the month set</Text>
                     )}
                   </View>
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('tuneOfMonth')}
                   >
                     <Ionicons 
@@ -594,36 +994,36 @@ const Match = () => {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Favorite Artists</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Favorite Artists</Text>
                     {user2?.favoriteArtists ? (
                       (() => {
                         try {
                           const artistsData = JSON.parse(user2.favoriteArtists);
                           return Array.isArray(artistsData) && artistsData.length > 0 ? (
                             artistsData.map((artist) => (
-                              <View key={artist.id} style={styles.artistContainer}>
+                              <View key={artist.id} style={dynamicStyles.artistContainer}>
                                 {artist.picture && (
-                                  <Image source={{ uri: artist.picture }} style={styles.artistImage} />
+                                  <Image source={{ uri: artist.picture }} style={dynamicStyles.artistImage} />
                                 )}
-                                <Text style={styles.artistName}>{artist.name || 'Unknown Artist'}</Text>
+                                <Text style={dynamicStyles.artistName}>{artist.name || 'Unknown Artist'}</Text>
                               </View>
                             ))
                           ) : (
-                            <Text style={styles.inputText}>No favorite artists set</Text>
+                            <Text style={dynamicStyles.inputText}>No favorite artists set</Text>
                           );
                         } catch (error) {
                           console.error('Error parsing favoriteArtists:', error);
-                          return <Text style={styles.inputText}>{user2.favoriteArtists}</Text>;
+                          return <Text style={dynamicStyles.inputText}>{user2.favoriteArtists}</Text>;
                         }
                       })()
                     ) : (
-                      <Text style={styles.inputText}>No favorite artists set</Text>
+                      <Text style={dynamicStyles.inputText}>No favorite artists set</Text>
                     )}
                   </View>
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('favoriteArtists')}
                   >
                     <Ionicons 
@@ -635,35 +1035,35 @@ const Match = () => {
                 </View>
 
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Favorite Album</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Favorite Album</Text>
                     {user2?.favoriteAlbum ? (
                       (() => {
                         try {
                           const albumData = JSON.parse(user2.favoriteAlbum);
                           return (
-                            <View style={styles.albumContainer}>
+                            <View style={dynamicStyles.albumContainer}>
                               {albumData.albumArt && (
-                                <Image source={{ uri: albumData.albumArt }} style={styles.albumArt} />
+                                <Image source={{ uri: albumData.albumArt }} style={dynamicStyles.albumArt} />
                               )}
-                              <View style={styles.albumInfo}>
-                                <Text style={styles.albumName}>{albumData.name || 'Unknown Album'}</Text>
-                                <Text style={styles.albumArtist}>{albumData.artist || 'Unknown Artist'}</Text>
+                              <View style={dynamicStyles.albumInfo}>
+                                <Text style={dynamicStyles.albumName}>{albumData.name || 'Unknown Album'}</Text>
+                                <Text style={dynamicStyles.albumArtist}>{albumData.artist || 'Unknown Artist'}</Text>
                               </View>
                             </View>
                           );
                         } catch (error) {
                           console.error('Error parsing favoriteAlbum:', error);
-                          return <Text style={styles.inputText}>{user2.favoriteAlbum}</Text>;
+                          return <Text style={dynamicStyles.inputText}>{user2.favoriteAlbum}</Text>;
                         }
                       })()
                     ) : (
-                      <Text style={styles.inputText}>No favorite album set</Text>
+                      <Text style={dynamicStyles.inputText}>No favorite album set</Text>
                     )}
                   </View>
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('favoriteAlbum')}
                   >
                     <Ionicons 
@@ -675,17 +1075,17 @@ const Match = () => {
                 </View>
 
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Favorite Performance</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Favorite Performance</Text>
                     {user2.favoritePerformance ? (
-                      <Image source={{ uri: user2.favoritePerformance }} style={styles.imageInput} />
+                      <Image source={{ uri: user2.favoritePerformance }} style={dynamicStyles.imageInput} />
                     ) : (
-                      <Text style={styles.inputText}>No favorite performance set</Text>
+                      <Text style={dynamicStyles.inputText}>No favorite performance set</Text>
                     )}
                   </View>
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('favoritePerformance')}
                   >
                     <Ionicons 
@@ -696,22 +1096,22 @@ const Match = () => {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Learn More About Me</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Learn More About Me</Text>
                     {user2.prompts && typeof user2.prompts === 'object' ? (
                       Object.entries(user2.prompts).map(([promptTitle, response], index) => (
-                        <View key={index} style={styles.promptContainer}>
-                          <Text style={styles.promptQuestion}>{promptTitle}</Text>
-                          <Text style={styles.promptAnswer}>{response || 'No response provided'}</Text>
+                        <View key={index} style={dynamicStyles.promptContainer}>
+                          <Text style={dynamicStyles.promptQuestion}>{promptTitle}</Text>
+                          <Text style={dynamicStyles.promptAnswer}>{response || 'No response provided'}</Text>
                         </View>
                       ))
                     ) : (
-                      <Text style={styles.inputText}>No prompts set</Text>
+                      <Text style={dynamicStyles.inputText}>No prompts set</Text>
                     )}
                   </View>
                   <TouchableOpacity 
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('prompts')}
                   >
                     <Ionicons 
@@ -722,9 +1122,9 @@ const Match = () => {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputContent}>
-                    <Text style={styles.inputLabel}>Disposable Photos</Text>
+                <View style={dynamicStyles.inputContainer}>
+                  <View style={dynamicStyles.inputContent}>
+                    <Text style={dynamicStyles.inputLabel}>Disposable Photos</Text>
                     {disposablePhotos.length > 0 ? (
                       <FlatList
                         data={disposablePhotos}
@@ -733,22 +1133,22 @@ const Match = () => {
                         showsHorizontalScrollIndicator={false}
                         keyExtractor={(item, index) => index.toString()}
                         renderItem={({ item }) => (
-                          <View style={styles.disposablePhotoContainer}>
+                          <View style={dynamicStyles.disposablePhotoContainer}>
                             <Image
                               source={{ uri: item.imageUrl }}
-                              style={styles.disposablePhoto}
+                              style={dynamicStyles.disposablePhoto}
                             />
                           </View>
                         )}
-                        ItemSeparatorComponent={() => <View style={styles.separator} />}
-                        contentContainerStyle={styles.flatListContentContainer}
+                        ItemSeparatorComponent={() => <View style={dynamicStyles.separator} />}
+                        contentContainerStyle={dynamicStyles.flatListContentContainer}
                       />
                     ) : (
-                      <Text style={styles.inputText}>No disposable photos yet</Text>
+                      <Text style={dynamicStyles.inputText}>No disposable photos yet</Text>
                     )}
                   </View>
                   <TouchableOpacity
-                    style={styles.contentLikeButton}
+                    style={dynamicStyles.contentLikeButton}
                     onPress={() => handleContentLike('myDisposables')}
                   >
                     <Ionicons
@@ -761,23 +1161,23 @@ const Match = () => {
 
               </View>
             ) : noMoreUsers ? (
-              <View style={styles.messageContainer}>
-                <Text style={styles.message}>no more matches for now !</Text>
+              <View style={dynamicStyles.messageContainer}>
+                <Text style={dynamicStyles.message}>no more matches for now !</Text>
               </View>
             ) : null}
           </ScrollView>
 
           {/* Action buttons (like and dislike) */}
-          <View style={styles.actionButtons}>
+          <View style={dynamicStyles.actionButtons}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.dislikeButton]}
+              style={[dynamicStyles.actionButton, dynamicStyles.dislikeButton]}
               onPress={handleClosePress}
             >
               <Ionicons name="close" size={30} color={dislikeButtonColor} />
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.actionButton, styles.likeButton]}
+              style={[dynamicStyles.actionButton, dynamicStyles.likeButton]}
               onPress={handleHeartPress}
             >
               <Ionicons name="heart" size={26} color={likeButtonColor} />
@@ -793,10 +1193,9 @@ const Match = () => {
           >
             <Animated.View 
               style={[
-                styles.modalContainer,
+                dynamicStyles.modalContainer,
                 {
                   transform: [{ scale: scaleValue }],
-                  backgroundColor: '#fff8f0',
                 }
               ]}
             >
@@ -806,7 +1205,7 @@ const Match = () => {
                     <Ionicons name="close" size={50} color="#1E1E1E" />
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={styles.messageButton} 
+                    style={dynamicStyles.messageButton} 
                     onPress={() => {
                       setShowMatchModal(false);
                       navigateToDirectMessage(user2?.uid || '', user2?.displayName || '');
@@ -815,15 +1214,15 @@ const Match = () => {
                     <Ionicons name="chatbubble-ellipses" size={40} color="#1E1E1E" />
                   </TouchableOpacity>
                 </View>
-                <View style={styles.modalBody}>
+                <View style={dynamicStyles.modalBody}>
                   <Image
                     source={{ uri: currentUserImage || 'https://example.com/placeholder-profile.png' }}
-                    style={styles.modalProfilePic}
+                    style={dynamicStyles.modalProfilePic}
                   />
-                  <Text style={styles.modalTitle}>BEAT SYNCED!</Text>
+                  <Text style={dynamicStyles.modalTitle}>BEAT SYNCED!</Text>
                   <Image
                     source={{ uri: user2?.profileImageUrl || 'https://example.com/placeholder-profile.png' }}
-                    style={styles.modalProfilePic}
+                    style={dynamicStyles.modalProfilePic}
                   />
                 </View>
               </View>
@@ -839,7 +1238,7 @@ const Match = () => {
           >
             <Animated.View 
               style={[
-                styles.waitingModalContainer,
+                dynamicStyles.waitingModalContainer,
                 {
                   transform: [{ scale: waitingModalScale }],
                   backgroundColor: '#fff8f0',
@@ -847,7 +1246,7 @@ const Match = () => {
               ]}
             >
               <Ionicons name="heart" size={100} color="#fc6c85" />
-              <Text style={styles.waitingText}>Waiting for a mutual like...</Text>
+              <Text style={dynamicStyles.waitingText}>Waiting for a mutual like...</Text>
             </Animated.View>
           </Modal>
           {/* END of Waiting modal */}
@@ -860,7 +1259,7 @@ const Match = () => {
           >
             <Animated.View 
               style={[
-                styles.dislikeModalContainer,
+                dynamicStyles.dislikeModalContainer,
                 {
                   transform: [{ scale: dislikeModalScale }],
                   backgroundColor: '#fff8f0',
@@ -868,7 +1267,7 @@ const Match = () => {
               ]}
             >
               <Ionicons name="close" size={100} color="#de3c3c" />
-              <Text style={styles.dislikeText}>Moving to the next user...</Text>
+              <Text style={dynamicStyles.dislikeText}>Moving to the next user...</Text>
             </Animated.View>
           </Modal>
           {/* END of Dislike modal */}
@@ -931,6 +1330,9 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 10, 
     paddingTop: 30,
+  },
+  resetButtonIcon: {
+    color: '#0e1514', // Adjust the color based on the theme
   },
   scrollContent: {
     flexGrow: 1,

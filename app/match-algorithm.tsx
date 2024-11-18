@@ -33,6 +33,7 @@ export interface User {
     myDisposables?: {
       url: string;
     }[];
+    themePreference?: string; // Add this line to include themePreference
   }
   // function structure for compatibility
   // 1. gender compatibility
