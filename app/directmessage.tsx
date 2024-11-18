@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 import { censorMessage } from './settings/hidden-words';
 import { useAuth } from '../hooks/useAuth';
+import { sendPushNotification } from '../scripts/pushNotification';
 
 // Define the message structure
 interface Message {
@@ -119,6 +120,28 @@ const DirectMessageScreen = () => {
             });
         }
 
+        // Get recipient's user document
+        const recipientDoc = await getDoc(doc(db, 'users', recipientId as string));
+        const recipientData = recipientDoc.data();
+        const recipientToken = recipientData?.expoPushToken;
+
+        if (recipientToken) {
+            try {
+                await sendPushNotification(
+                    recipientToken,
+                    'New Message',
+                    `${auth.currentUser?.displayName || 'Someone'} sent you a message`,
+                    {
+                        screen: 'directmessage',
+                        recipientId: recipientId,
+                        senderId: auth.currentUser?.uid,
+                        messageText: message.substring(0, 100) // First 100 chars of message
+                    }
+                );
+            } catch (error) {
+                console.error('Error sending push notification:', error);
+            }
+        }
     };
     // END of Jesus Donate Contribution
 
