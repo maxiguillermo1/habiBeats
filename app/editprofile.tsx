@@ -1,7 +1,7 @@
 // editprofile.tsx
 // Mariann Grace Dizon 
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert, Image, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth, db, storage } from '../firebaseConfig';
@@ -15,6 +15,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import SearchArtist from '../components/search-artist';
+import { ThemeContext } from '../context/ThemeContext';
 
 // Define interfaces for data structures used in the component
 interface Prompt {
@@ -58,6 +59,8 @@ interface DisposableImage {
 export default function EditProfile() {
   const router = useRouter();
   const navigation = useNavigation<NavigationProp<any>>();
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
 
   // State variables to manage user data and UI state
   const [user, setUser] = useState({
@@ -200,6 +203,9 @@ export default function EditProfile() {
           } else {
             setMyDisposables([]);
           }
+
+          const userTheme = userData.themePreference || 'light';
+          setIsDarkMode(userTheme === 'dark');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -466,15 +472,15 @@ export default function EditProfile() {
 
   // Render the component UI
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBackPress}
         >
-          <Ionicons name="chevron-back-outline" size={24} color="black" />
+          <Ionicons name="chevron-back-outline" size={24} color={isDarkMode ? '#fff' : 'black'} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={[styles.headerTitle, { color: isDarkMode ? '#fff' : '#542f11' }]}>Edit Profile</Text>
       </View>
 
       <KeyboardAvoidingView 
@@ -486,8 +492,8 @@ export default function EditProfile() {
           data={[{ key: 'content' }]}
           renderItem={() => (
             <View style={styles.content}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Music Preference</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Music Preference</Text>
                 <View style={styles.genreContainer}>
                   {['EDM', 'Hip Hop', 'Pop', 'Country', 'Jazz', 'R&B', 'Indie', 'Rock', 'Techno', 'Latin', 'Soul', 'Classical', 'J-Pop', 'K-Pop', 'Metal','Reggae'].map((genre) => (
                     <TouchableOpacity
@@ -511,13 +517,13 @@ export default function EditProfile() {
                 </View>
               </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Tune of the Month</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Tune of the Month</Text>
                 <SearchSong onSelectSong={handleSelectSong} initialSong={tuneOfMonth || undefined} />
               </View>
               
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Favorite Artists</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Favorite Artists</Text>
                 <SearchArtist 
                   onSelectArtist={handleSelectArtist} 
                   onRemoveArtist={handleRemoveArtist} 
@@ -525,8 +531,8 @@ export default function EditProfile() {
                 />
               </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Favorite Album</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Favorite Album</Text>
                 <SearchAlbum onSelectAlbum={handleSelectAlbum} />
                 {favoriteAlbum && (
                   <View style={styles.albumContainer}>
@@ -539,8 +545,8 @@ export default function EditProfile() {
                 )}
               </View>
 
-              <View style={styles.favoritePerformanceContainer}>
-                <Text style={styles.inputLabel}>Favorite Performance</Text>
+              <View style={[styles.favoritePerformanceContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Favorite Performance</Text>
                 <View style={styles.performanceImageContainer}>
                   {(image || user.favoritePerformance) ? (
                     <>
@@ -567,8 +573,8 @@ export default function EditProfile() {
                 </View>
               </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Written Prompts ({prompts.length}/8)</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>Written Prompts ({prompts.length}/8)</Text>
                 {prompts.map((prompt, index) => (
                   <View key={index} style={styles.promptContainer}>
                     <PromptSelector
@@ -594,8 +600,8 @@ export default function EditProfile() {
                   </TouchableOpacity>
                 )}
               </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>My Disposables ({myDisposables.length}/4)</Text>
+              <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
+                <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#542f11' }]}>My Disposables ({myDisposables.length}/4)</Text>
                 <View style={styles.disposablesGrid}>
                   {myDisposables.map((photo) => (
                     <View key={photo.id} style={styles.disposableContainer}>
@@ -637,11 +643,11 @@ export default function EditProfile() {
       {hasChanges && (
         <View style={styles.saveButtonContainer}>
           <TouchableOpacity 
-            style={styles.saveButton} 
+            style={[styles.saveButton, { backgroundColor: isDarkMode ? '#4a4a4a' : '#79ce54' }]} 
             onPress={handleSave}
             activeOpacity={0.8}
           >
-            <Text style={styles.saveButtonText}>Save Changes</Text>
+            <Text style={[styles.saveButtonText, { color: isDarkMode ? '#fff' : '#fff' }]}>Save Changes</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -653,7 +659,7 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff8f0',
+    // backgroundColor is set dynamically
   },
   scrollContent: {
     flexGrow: 1,
@@ -687,7 +693,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 24,
-    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
     shadowColor: '#000',
@@ -695,6 +700,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    // backgroundColor is set dynamically
   },
   inputLabel: {
     fontSize: 18,
