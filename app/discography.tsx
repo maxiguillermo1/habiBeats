@@ -11,6 +11,7 @@ import { getSpotifyRecommendations, getSpotifyRelatedArtists } from '@/api/spoti
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
+import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
 
 // Type definitions for data structures
 interface Artist {
@@ -41,10 +42,139 @@ export default function Discography() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [themePreference, setThemePreference] = useState<'light' | 'dark'>('light');
 
   // Auth hooks
   const { user, userData } = useAuth();
   const navigation = useNavigation();
+
+  // Update theme preference based on user data
+  useEffect(() => {
+    if (userData?.themePreference) {
+      setThemePreference(userData.themePreference);
+    }
+  }, [userData]);
+
+  // Define styles based on theme preference
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: themePreference === 'dark' ? '#121212' : '#fff8f0',
+    },
+    content: {
+      flex: 1,
+      paddingRight: 20,
+      paddingLeft: 20,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    item: {
+      flex: 1,
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: themePreference === 'dark' ? '#121212' : '#fff8f0',
+      marginHorizontal: 4,
+    },
+    image: {
+      width: 100,
+      height: 100,
+      borderRadius: 8,
+      marginBottom: 8,
+      alignSelf: 'center',
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 16,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginTop: 30,
+      marginBottom: 20,
+      textAlign: 'center',
+      color: themePreference === 'dark' ? '#ffffff' : '#333',
+    },
+    loadingText: {
+      marginTop: 10,
+      fontSize: 16,
+      color: themePreference === 'dark' ? '#bbbbbb' : '#666',
+    },
+    errorText: {
+      color: '#dc3545',
+      fontSize: 16,
+      textAlign: 'center',
+    },
+    noDataText: {
+      fontSize: 16,
+      color: themePreference === 'dark' ? '#bbbbbb' : '#666',
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginVertical: 10,
+    },
+    itemTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginBottom: 4,
+      textAlign: 'center',
+      color: themePreference === 'dark' ? '#37bdd5' : '#37bdd5',
+    },
+    itemSubtitle: {
+      fontSize: 12,
+      color: themePreference === 'dark' ? '#79ce54' : '#79ce54',
+      marginBottom: 4,
+      textAlign: 'center',
+    },
+    songTitle: { 
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginBottom: 4,
+      textAlign: 'center',
+      color: themePreference === 'dark' ? '#fc6c85' : '#fc6c85',
+    },
+    songArtist: {  
+      fontSize: 12,
+      color: themePreference === 'dark' ? '#fba904' : '#fba904',
+      marginBottom: 4,
+      textAlign: 'center',
+    },
+    header: {
+      fontSize: 25,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      color: themePreference === 'dark' ? '#ffffff' : '#333',
+    },
+    headerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      marginVertical: 10,
+      position: 'relative',
+    },
+    backButton: {
+      position: 'absolute',
+      left: 40,
+    },
+    spotifyButton: {
+      backgroundColor: '#1DB954',
+      padding: 8,
+      marginLeft: 23,
+      marginRight: 23,
+      borderRadius: 15,
+      marginTop: 8,
+      alignItems: 'center',
+    },
+    spotifyButtonText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+  });
 
   // Define useCallback before useEffect
   const onRefresh = useCallback(async () => {
@@ -356,127 +486,6 @@ export default function Discography() {
     </SafeAreaView>
   );
 }
-
-// Styles for component layout and appearance
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff8f0', // Light cream background
-  },
-  content: {
-    flex: 1,
-    paddingRight: 20,
-    paddingLeft: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  item: {
-    flex: 1,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#fff8f0',
-    marginHorizontal: 4,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginBottom: 8,
-    alignSelf: 'center',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 30,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#333',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    color: '#dc3545',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  noDataText: {
-    fontSize: 16,
-    color: '#666',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  itemTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
-    color: '#37bdd5',
-  },
-  itemSubtitle: {
-    fontSize: 12,
-    color: '#79ce54', 
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  songTitle: { 
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
-    color: '#fc6c85',
-  },
-  songArtist: {  
-    fontSize: 12,
-    color: '#fba904',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  header: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#333',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    marginVertical: 10,
-    position: 'relative',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 40,
-  },
-  spotifyButton: {
-    backgroundColor: '#1DB954', // Spotify green
-    padding: 8,
-    marginLeft: 23,
-    marginRight: 23,
-    borderRadius: 15,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  spotifyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-});
 
 const openSpotifyArtist = (artistId: string) => {
   // Try to open in Spotify app first, fallback to web
