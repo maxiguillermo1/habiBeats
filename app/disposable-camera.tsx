@@ -2,7 +2,7 @@
 // Mariann Grace Dizon
 
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -11,12 +11,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '../firebaseConfig.js';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import BottomNavBar from '../components/BottomNavBar'; // Import the BottomNavBar component
+import { ThemeContext } from '../context/ThemeContext'; // Import ThemeContext
 
 // Define the types for the navigation stack
 type RootStackParamList = {
   'disposable-camera': undefined;
   'disposable-gallery': undefined;
-  'profile': undefined;
 };
 
 export default function DisposableCamera() {
@@ -25,6 +26,17 @@ export default function DisposableCamera() {
   const [camera, setCamera] = useState<CameraView | null>(null); // State to manage camera reference
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Navigation hook
   const [isProcessing, setIsProcessing] = useState(false);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+  // Update isDarkMode whenever theme changes
+  useEffect(() => {
+    setIsDarkMode(theme === 'dark');
+  }, [theme]);
+
+  // Debugging: Log the theme and isDarkMode values
+  console.log('Current theme:', theme);
+  console.log('Is dark mode:', isDarkMode);
 
   // If permission is not yet determined, show loading text
   if (!permission) {
@@ -129,15 +141,9 @@ export default function DisposableCamera() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.borderTop}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
+      <View style={[styles.borderTop, { backgroundColor: isDarkMode ? '#2d3235' : '#fff8f0' }]}>
         <View style={styles.topButtonContainer}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.navigate('profile')}
-          >
-            <Ionicons name="arrow-back" size={30} color="#fba904" />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -147,29 +153,30 @@ export default function DisposableCamera() {
         ref={(ref) => setCamera(ref)}
       />
 
-      <View style={styles.borderBottom}>
+      <View style={[styles.borderBottom, { backgroundColor: isDarkMode ? '#2d3235' : '#fff8f0' }]}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.galleryButton}
             onPress={() => navigation.navigate('disposable-gallery')}
           >
-            <Ionicons name="images" size={40} color="#37bdd5" />
+            <Ionicons name="images" size={40} color={isDarkMode ? '#37bdd5' : '#37bdd5'} />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.button}
             onPress={takePicture}
           >
-            <Ionicons name="camera" size={90} color="#79ce54" />
+            <Ionicons name="camera" size={90} color={isDarkMode ? '#79ce54' : '#79ce54'} />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.flipButton}
             onPress={toggleCameraType}
           >
-            <Ionicons name="camera-reverse" size={40} color="#fc6c85" />
+            <Ionicons name="camera-reverse" size={50} color={isDarkMode ? '#fc6c85' : '#fc6c85'} />
           </TouchableOpacity>
         </View>
+        <BottomNavBar />
       </View>
     </View>
   );
@@ -179,16 +186,17 @@ export default function DisposableCamera() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
   },
   camera: {
     aspectRatio: 1,
     width: '100%',
+    marginTop: -100,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 70,
   },
   button: {
     padding: 15,
@@ -199,9 +207,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-  },
-  backButton: {
-    padding: 8,
   },
   galleryButton: {
     padding: 10,
@@ -217,7 +222,6 @@ const styles = StyleSheet.create({
   },
   borderTop: {
     flex: 1,
-    backgroundColor: '#fff8f0',
     justifyContent: 'center',
   },
   topButtonContainer: {
@@ -227,7 +231,6 @@ const styles = StyleSheet.create({
   },
   borderBottom: {
     flex: 1,
-    backgroundColor: '#fff8f0',
     justifyContent: 'center',
   },
 });
