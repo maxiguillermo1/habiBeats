@@ -9,7 +9,8 @@ import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
-import { registerForPushNotificationsAsync, hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
+import { hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
+import { registerForPushNotifications } from '../scripts/pushNotification';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
 import { Colors } from '../constants/Colors';
@@ -195,16 +196,7 @@ export default function Profile() {
   // Register for push notifications and update user document with token
   useEffect(() => {
     console.log("Registering for push notifications");
-    registerForPushNotificationsAsync().then(token => {
-      if (token) {
-        console.log("Push token:", token);
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          updateDoc(userDocRef, { pushToken: token });
-        }
-      }
-    });
+    registerForPushNotifications()
   }, []);
 
   // Checks if there are any unread notifications
