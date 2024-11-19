@@ -11,7 +11,7 @@ import { getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig.js';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { RouteProp } from '@react-navigation/native';
 import { auth } from '../firebaseConfig.js';
 
@@ -38,8 +38,29 @@ export default function DisposableGallery() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const route = useRoute<DisposableGalleryRouteProp>();
   const selectMode = route.params?.selectMode;
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = getAuth().currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark');
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   const loadPhotos = async () => {
     try {
@@ -192,27 +213,27 @@ export default function DisposableGallery() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back-outline" size={24} color="#fba904" />
+          <Ionicons name="chevron-back-outline" size={24} color={isDarkMode ? '#ffffff' : '#fba904'} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>
+        <Text style={[styles.headerText, { color: isDarkMode ? '#ffffff' : '#fba904' }]}>
           {selectMode ? 'Select Photo' : 'My Disposables'}
         </Text>
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#fba904" />
-          <Text style={styles.loadingText}>Loading photos...</Text>
+          <ActivityIndicator size="large" color={isDarkMode ? '#ffffff' : '#fba904'} />
+          <Text style={[styles.loadingText, { color: isDarkMode ? '#ffffff' : '#0e1514' }]}>Loading photos...</Text>
         </View>
       ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: isDarkMode ? '#ff6b6b' : 'red' }]}>{error}</Text>
       ) : photos.length === 0 ? (
-        <Text style={styles.noPhotosText}>No photos yet</Text>
+        <Text style={[styles.noPhotosText, { color: isDarkMode ? '#ffffff' : '#0e1514' }]}>No photos yet</Text>
       ) : (
         <FlatList
           data={photos.filter(photo => photo && photo.url && photo.timestamp)}
@@ -288,7 +309,6 @@ const styles = StyleSheet.create({
     top: 50,
   },
   headerText: {
-    color: '#fba904',
     fontSize: 20,
     fontWeight: 'bold',
   },
