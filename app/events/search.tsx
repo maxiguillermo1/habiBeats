@@ -1,5 +1,5 @@
 // search.tsx
-// Maxwell Guillermo 
+// Maxwell Guillermo and Mariann Grace Dizon
 
 // START of search events page frontend & backend
 // START of Maxwell Guillermo
@@ -299,7 +299,7 @@ const hasExtendedPreferences = (preferences: any): boolean => {
 
 // Main SearchEvents component
 const SearchEvents = () => {
-  // State management for search functionality
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
@@ -780,26 +780,49 @@ const SearchEvents = () => {
   // Log event IDs for debugging
   console.log('Event IDs:', sortedAndFilteredEvents.map(event => event.id));
 
+  // START of Mariann Grace Dizon Contribution
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
+  // END of Mariann Grace Dizon Contribution
+
   // Render main component UI
   return (
-    <SafeAreaView style={styles.pageContainer}>
+    <SafeAreaView style={[styles.pageContainer, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <TopNavBar />
       {/* Search bar section */}
       <View style={styles.searchWrapper}>
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: isDarkMode ? '#333' : '#fff', borderColor: isDarkMode ? '#fff' : '#000' }]}>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: isDarkMode ? '#fff' : '#000' }]}
             placeholder="Search events..."
+            placeholderTextColor={isDarkMode ? '#888' : '#666'}
             value={searchInputValue}
             onChangeText={setSearchInputValue}
             onSubmitEditing={triggerSearch}
           />
           <TouchableOpacity onPress={triggerSearch} style={styles.searchButton}>
-            <Ionicons name="search" size={14} color="#000" />
+            <Ionicons name="search" size={14} color={isDarkMode ? '#fff' : '#000'} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleEditPress} style={styles.editButton}>
-            <Ionicons name="create-outline" size={18} color="#000" />
+            <Ionicons name="create-outline" size={18} color={isDarkMode ? '#fff' : '#000'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -848,13 +871,13 @@ const styles = StyleSheet.create({
     borderWidth: 2, // Adds border around search bar
     borderColor: '#000', // Black border color
     borderRadius: 20, // Rounds corners of search bar
-    width: '40%', // Sets search bar width to 40% of screen
-    height: 20, // Fixed height for search bar
-    paddingHorizontal: 10, // Adds horizontal padding inside search bar
+    width: '50%', // Increased width to make the search bar larger
+    height: 30, // Increased height for a larger search bar
+    paddingHorizontal: 13, // Adjusted padding for better spacing
   },
   searchInput: {
     flex: 1, // Makes input take up remaining space
-    fontSize: 8, // Sets text size in search input
+    fontSize: 10, // Increased font size for better readability
     paddingVertical: 5, // Adds vertical padding inside input
     paddingRight: 25, // Adds space for search icon
   },

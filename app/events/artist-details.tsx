@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaVi
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { auth, db } from '../../firebaseConfig'; // Assuming you have a firebaseConfig file
+import { doc, getDoc } from 'firebase/firestore';
 
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
 
@@ -17,6 +19,27 @@ const ArtistDetailsPage = () => {
     isLoaded: false
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   useEffect(() => {
     const getArtistInfo = async () => {
@@ -86,16 +109,16 @@ const ArtistDetailsPage = () => {
   }, [artistData]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
       <ScrollView>
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
           <View style={styles.customHeader}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={20} color="#007AFF" />
+              <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.title}>{artistData?.name}</Text>
+          <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>{artistData?.name}</Text>
           
           {artistData?.imageUrl && (
             <View style={styles.imageContainer}>
@@ -107,15 +130,15 @@ const ArtistDetailsPage = () => {
           )}
 
           <View style={styles.infoContainer}>
-            <Text style={styles.genreText}>Genre: {aiContent.genre || 'Loading...'}</Text>
-            <Text style={styles.bioTitle}>Biography</Text>
+            <Text style={[styles.genreText, { color: isDarkMode ? '#fba904' : '#fba904' }]}>Genre: {aiContent.genre || 'Loading...'}</Text>
+            <Text style={[styles.bioTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>Biography</Text>
             
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="rgba(121, 206, 84, 0.7)" />
+                <ActivityIndicator size="small" color={isDarkMode ? '#79ce54' : 'rgba(121, 206, 84, 0.7)'} />
               </View>
             ) : (
-              <Text style={[styles.bioText, styles.centeredText]}>{aiContent.biography}</Text>
+              <Text style={[styles.bioText, styles.centeredText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>{aiContent.biography}</Text>
             )}
           </View>
         </View>
@@ -127,12 +150,12 @@ const ArtistDetailsPage = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Default light mode color
   },
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Default light mode color
     borderRadius: 10,
     margin: 30,
     shadowColor: "#000",
@@ -175,7 +198,6 @@ const styles = StyleSheet.create({
   },
   genreText: {
     fontSize: 12,
-    color: '#fba904',
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',

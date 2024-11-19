@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import { getGooglePlacesAPIRequest } from '../../api/google-places-api';
+import { auth, db } from '../../firebaseConfig'; // Assuming you have a firebaseConfig file
+import { doc, getDoc } from 'firebase/firestore';
 
 const EventLocationPage = () => {
   const params = useLocalSearchParams();
@@ -22,6 +24,28 @@ const EventLocationPage = () => {
     city: '',
     state: '',
   });
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -80,21 +104,21 @@ const EventLocationPage = () => {
   }, [venue]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
+      <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
         <View style={styles.customHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#007AFF" />
+            <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
           </TouchableOpacity>
         </View>
         
-        <Text style={styles.title}>Event Location</Text>
-        {eventName && <Text style={styles.eventName}>{eventName}</Text>}
+        <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>Event Location</Text>
+        {eventName && <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666' }]}>{eventName}</Text>}
         
         <View style={styles.venueDetails}>
-          {venue && <Text style={styles.venueText}>{venue}</Text>}
+          {venue && <Text style={[styles.venueText, { color: isDarkMode ? '#fba904' : '#fba904' }]}>{venue}</Text>}
           {locationDetails.address && (
-            <Text style={styles.locationText}>{locationDetails.address}</Text>
+            <Text style={[styles.locationText, { color: isDarkMode ? '#cccccc' : '#666' }]}>{locationDetails.address}</Text>
           )}
         </View>
 
@@ -130,12 +154,12 @@ const EventLocationPage = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Default light mode color
   },
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Default light mode color
     borderRadius: 10,
     margin: 30,
     shadowColor: "#000",

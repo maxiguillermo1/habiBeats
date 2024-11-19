@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons'; // Package for nice-looking icons
 import { Link } from 'expo-router'; // Add this import
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDate } from '../../utils/dateUtils';
+import { auth, db } from '../../firebaseConfig'; // Assuming you have a firebaseConfig file
+import { doc, getDoc } from 'firebase/firestore';
 
 // API key for Google's Gemini AI service that generates event descriptions
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
@@ -31,6 +33,27 @@ const EventDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true); // Shows loading spinner while getting description
   const [isAttending, setIsAttending] = useState(false); // Tracks if user marked as attending
   const [isFavorite, setIsFavorite] = useState(false); // Tracks if user favorited the event
+  const [isDarkMode, setIsDarkMode] = useState(false); // Tracks if dark mode is enabled
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   // Check if event is already saved when component mounts
   useEffect(() => {
@@ -169,19 +192,19 @@ const EventDetailsPage = () => {
 
   // The actual layout/display of the page
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
       <ScrollView>
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
           {/* Back button at top of screen */}
           <View style={styles.customHeader}>
             <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={20} color="#007AFF" />
+              <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
             </TouchableOpacity>
           </View>
           
           {/* Event title and date */}
-          {eventData?.name && <Text style={styles.title}>{eventData.name}</Text>}
-          {eventData?.date && <Text style={styles.date}>{formatDate(eventData.date)}</Text>}
+          {eventData?.name && <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>{eventData.name}</Text>}
+          {eventData?.date && <Text style={[styles.date, { color: isDarkMode ? '#fba904' : '#fba904' }]}>{formatDate(eventData.date)}</Text>}
           
           {/* Event image */}
           {eventData?.imageUrl && (
@@ -198,26 +221,26 @@ const EventDetailsPage = () => {
                 pathname: '/events/event-location',
                 params: { venue: eventData.venue, location: eventData.location }
               })}>
-                <Text style={styles.detailText}>
+                <Text style={[styles.detailText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>
                   {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
                 </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={handleArtistDetails}>
-              <Text style={styles.detailText}>Artist Details</Text>
+              <Text style={[styles.detailText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Artist Details</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleTickets}>
-              <Text style={styles.detailText}>Tickets</Text>
+              <Text style={[styles.detailText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Tickets</Text>
             </TouchableOpacity>
-            <Text style={styles.descriptionTitle}>Event Description</Text>
+            <Text style={[styles.descriptionTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>Event Description</Text>
             
             {/* Show loading spinner or AI description */}
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="rgba(121, 206, 84, 0.7)" />
+                <ActivityIndicator size="small" color={isDarkMode ? '#79ce54' : 'rgba(121, 206, 84, 0.7)'} />
               </View>
             ) : (
-              <Text style={[styles.descriptionText, styles.centeredText]}>{aiDescription}</Text>
+              <Text style={[styles.descriptionText, styles.centeredText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>{aiDescription}</Text>
             )}
           </View>
 

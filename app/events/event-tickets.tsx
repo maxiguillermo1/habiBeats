@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import TicketMasterAPI, { BASE_URL, TICKETMASTER_API_KEY } from '../../api/ticket-master-api';
 import { Linking } from 'react-native';
+import { auth, db } from '../../firebaseConfig'; // Assuming you have a firebaseConfig file
+import { doc, getDoc } from 'firebase/firestore';
 
 interface PriceRange {
   type: string;
@@ -20,6 +22,27 @@ const EventTicketsPage = () => {
   const [ticketTypes, setTicketTypes] = useState<PriceRange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   useEffect(() => {
     const fetchTicketData = async () => {
@@ -132,23 +155,23 @@ const EventTicketsPage = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#007AFF" />
+            <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
           </TouchableOpacity>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#37bdd5" style={styles.loader} />
+            <ActivityIndicator size="large" color={isDarkMode ? '#79ce54' : '#37bdd5'} style={styles.loader} />
           ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, { color: isDarkMode ? '#ff4d4d' : 'red' }]}>{error}</Text>
           ) : (
             <View style={styles.contentContainer}>
               <View style={styles.headerContent}>
-                <Text style={styles.title}>Tickets</Text>
-                <Text style={styles.eventName}>{eventData?.name}</Text>
-                <Text style={styles.priceText}>Ticketmaster: {getTicketPrice()}</Text>
+                <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>Tickets</Text>
+                <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666' }]}>{eventData?.name}</Text>
+                <Text style={[styles.priceText, { color: isDarkMode ? '#79ce54' : '#37bdd5' }]}>Ticketmaster: {getTicketPrice()}</Text>
               </View>
 
               <View style={styles.imageContainer}>
@@ -157,7 +180,7 @@ const EventTicketsPage = () => {
                   style={styles.ticketMasterLogo}
                 />
                 <TouchableOpacity 
-                  style={styles.buyButton}
+                  style={[styles.buyButton, { backgroundColor: isDarkMode ? '#79ce54' : '#37bdd5' }]}
                   onPress={() => handleBuyTickets(ticketTypes[0])}
                 >
                   <Text style={styles.buyButtonText}>Buy Tickets</Text>
@@ -174,13 +197,14 @@ const EventTicketsPage = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#fff8f0', // Default light mode color
   },
   container: {
     flex: 1,
     padding: 15,
     justifyContent: 'center',
     paddingTop: 0,
+    backgroundColor: '#fff8f0', // Default light mode color
   },
   contentContainer: {
     justifyContent: 'center',

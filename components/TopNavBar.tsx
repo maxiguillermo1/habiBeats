@@ -4,20 +4,45 @@
 // START of Top Navigation Bar UI/UX
 // START of Maxwell Guillermo Contribution
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, usePathname, Href } from 'expo-router';
+import { auth, db } from '../firebaseConfig'; // Assuming you have a firebaseConfig file
+import { doc, getDoc } from 'firebase/firestore';
 
 const TopNavBar = () => {
   const router = useRouter();
   const currentPath = usePathname();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const fetchThemePreference = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsDarkMode(userData.themePreference === 'dark'); // Set dark mode based on themePreference
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   const navigateTo = (route: Href<string>) => {
     router.push(route);
   };
 
   const getNavItemStyle = (path: string) => {
-    return currentPath === path ? styles.activeNavItem : styles.navItem;
+    return currentPath === path
+      ? [styles.activeNavItem, { color: '#fc6c85' }]
+      : [styles.navItem, { color: isDarkMode ? '#fff' : '#000' }];
   };
 
   return (
@@ -56,11 +81,9 @@ const styles = StyleSheet.create({
   },
   navItem: {
     fontSize: 14,
-    color: 'black',
   },
   activeNavItem: {
     fontSize: 14,
-    color: '#fc6c85',
   },
   boldText: {
     fontWeight: 'bold',
