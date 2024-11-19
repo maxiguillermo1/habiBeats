@@ -11,8 +11,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '../firebaseConfig.js';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import BottomNavBar from '../components/BottomNavBar'; // Import the BottomNavBar component
-import { ThemeContext } from '../context/ThemeContext'; // Import ThemeContext
+import BottomNavBar from '../components/BottomNavBar';
+import { ThemeContext } from '../context/ThemeContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig.js';
 
 // Define the types for the navigation stack
 type RootStackParamList = {
@@ -21,22 +23,50 @@ type RootStackParamList = {
 };
 
 export default function DisposableCamera() {
-  const [type, setType] = useState<CameraType>('back'); // State to manage camera type (front/back)
-  const [permission, requestPermission] = useCameraPermissions(); // State to manage camera permissions
-  const [camera, setCamera] = useState<CameraView | null>(null); // State to manage camera reference
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Navigation hook
-  const [isProcessing, setIsProcessing] = useState(false);
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
-
-  // Update isDarkMode whenever theme changes
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [type, setType] = useState<CameraType>('back');
+  const [permission, requestPermission] = useCameraPermissions();
+  const [camera, setCamera] = useState<CameraView | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Single useEffect to handle theme
   useEffect(() => {
-    setIsDarkMode(theme === 'dark');
-  }, [theme]);
+    const fetchThemePreference = async () => {
+      try {
+        const userId = getAuth().currentUser?.uid;
+        if (!userId) {
+          console.error('User not authenticated');
+          return;
+        }
 
-  // Debugging: Log the theme and isDarkMode values
-  console.log('Current theme:', theme);
-  console.log('Is dark mode:', isDarkMode);
+        const userDoc = doc(db, 'users', userId);
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          const storedTheme = userData.themePreference;
+
+          console.log('Stored theme from Firestore:', storedTheme); // Debug log
+
+          if (storedTheme === 'dark' && theme === 'light') {
+            toggleTheme();
+          } else if (storedTheme === 'light' && theme === 'dark') {
+            toggleTheme();
+          }
+
+          setIsDarkMode(storedTheme === 'dark');
+        } else {
+          console.error('No user data found');
+        }
+      } catch (error) {
+        console.error('Error fetching theme preference:', error);
+      }
+    };
+
+    fetchThemePreference();
+  }, []);
 
   // If permission is not yet determined, show loading text
   if (!permission) {
@@ -50,22 +80,25 @@ export default function DisposableCamera() {
   // If permission is not granted, show permission request buttons
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 60 }}>
-          We need your permission to show the camera...
+      <View style={[styles.container, styles.centeredContainer, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
+        <Text style={[styles.permissionText, { color: isDarkMode ? '#fff8f0' : '#151718' }]}>
+          Please give HabiBeats camera access to continue...
         </Text>
         <View style={styles.permissionButtons}>
           <Button 
-            onPress={requestPermission} 
+            onPress={() => {
+              requestPermission();
+            }} 
             title="Grant Permission"
-            color="#007AFF"
+            color={isDarkMode ? '#37bdd5' : '#37bdd5'}
           />
           <Button 
             onPress={() => navigation.goBack()} 
             title="Don't Allow" 
-            color="#007AFF"
+            color={isDarkMode ? '#fc6c85' : '#fc6c85'}
           />
         </View>
+        <BottomNavBar />
       </View>
     );
   }
@@ -141,8 +174,12 @@ export default function DisposableCamera() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
-      <View style={[styles.borderTop, { backgroundColor: isDarkMode ? '#2d3235' : '#fff8f0' }]}>
+    <View style={[styles.container, { 
+      backgroundColor: isDarkMode ? '#151718' : '#fff8f0' ,
+      borderWidth: 1,
+      borderColor: isDarkMode ? '#151718' : '#fff8f0' 
+    }]}>
+      <View style={[styles.borderTop, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
         <View style={styles.topButtonContainer}>
         </View>
       </View>
@@ -153,7 +190,7 @@ export default function DisposableCamera() {
         ref={(ref) => setCamera(ref)}
       />
 
-      <View style={[styles.borderBottom, { backgroundColor: isDarkMode ? '#2d3235' : '#fff8f0' }]}>
+      <View style={[styles.borderBottom, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.galleryButton}
@@ -181,7 +218,6 @@ export default function DisposableCamera() {
     </View>
   );
 }
-
 // Styles for the component
 const styles = StyleSheet.create({
   container: {
@@ -213,8 +249,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   permissionButtons: {
-    gap: 10,
+    flexDirection: 'column',
     alignItems: 'center',
+    gap: 10,
   },
   flipButton: {
     padding: 10,
@@ -232,5 +269,19 @@ const styles = StyleSheet.create({
   borderBottom: {
     flex: 1,
     justifyContent: 'center',
+  },
+  permissionContainer: {
+    padding: 20,
+  },
+  permissionText: {
+    textAlign: 'center',
+    marginBottom: 100,
+    fontSize: 38,
+    marginLeft: 30,
+    marginRight: 30,
+  },
+  centeredContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
