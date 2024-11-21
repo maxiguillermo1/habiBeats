@@ -1,7 +1,7 @@
 // ai-chatbot.tsx
 // Reyna Aguirre
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Modal, Linking } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack } from 'expo-router';
@@ -11,6 +11,11 @@ import axios from 'axios';
 import Icon from 'react-native-ico-mingcute-tiny-bold-filled';
 import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getSpotifyRelatedArtists, getAlbumTracks } from '../api/spotify-api';
 import { useRouter } from 'expo-router';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
+import { ThemeContext } from '../context/ThemeContext';
+
+
 const GEMINI_API_KEY = 'AIzaSyD6l21NbFiYT1QtW6H6iaIQMvKxwMAQ604';
 const GENIUS_CLIENT_ID = 'iwKSJyXYREHteYohvjK1U9MXBjXMEA6WYcqLO04u4cp2Q8sZHa52RcuZDj8BZVm7';
 const GENIUS_CLIENT_SECRET = 'HpmbJXRQ_0jpbdoaiP2Nii8gy9Wp9kSzYxl1mfpl9VPPlqKEh1hke-_hrsYJwWkOX22UbrrlLYQ1PG0xJJ4rRw';
@@ -72,6 +77,38 @@ const Chatbot = () => {
     const planMyDayButtonTranslateY = useSharedValue(100);
     const planMyOutfitButtonTranslateY = useSharedValue(100);
     const spotifyButtonScale = useSharedValue(0);
+
+    // START of Mariann Grace Dizon Contribution
+    // Initialize Firebase Auth
+    const auth = getAuth();
+
+    // Initialize Firestore
+    const db = getFirestore();
+
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
     useEffect(() => {
         titleOpacity.value = withSpring(1);
@@ -408,25 +445,25 @@ const Chatbot = () => {
     });
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <View style={styles.innerContainer}>
+            <View style={[styles.innerContainer, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
                 <TouchableOpacity 
                     style={styles.backButton}
                     onPress={() => router.push('/profile')}
                 >
-                    <Ionicons name="chevron-back-outline" size={24} color="rgba(55,189,213,0.6)" />
+                    <Ionicons name="chevron-back-outline" size={24} color={isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'} />
                 </TouchableOpacity>
 
                 <View style={styles.titleContainer}>
                     <View style={styles.titleWrapper}>
-                        <Animated.Text style={[styles.title, animatedTitleStyle]}>habibi ai chatbot</Animated.Text>
+                        <Animated.Text style={[styles.title, animatedTitleStyle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>habibi ai chatbot</Animated.Text>
                     </View>
                     <TouchableOpacity 
                         style={styles.helpButton}
                         onPress={() => setShowHelpModal(true)}
                     >
-                        <Ionicons name="help-circle-outline" size={24} color="rgba(55,189,213,0.6)" />
+                        <Ionicons name="help-circle-outline" size={24} color={isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'} />
                     </TouchableOpacity>
                 </View>
 
@@ -434,9 +471,9 @@ const Chatbot = () => {
                     <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
                         <TouchableOpacity 
                             onPress={() => Linking.openURL(spotifyUrl)}
-                            style={styles.spotifyButtonContent}
+                            style={[styles.spotifyButtonContent, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}
                         >
-                            <Icon name="spotify" size={24}  />
+                            <Icon name="spotify" size={24} />
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -451,7 +488,7 @@ const Chatbot = () => {
                         <Ionicons 
                             name="musical-notes-outline" 
                             size={30} 
-                            color={activeButton === 'album' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                            color={activeButton === 'album' ? 'rgba(252,108,133,1)' : isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'}
                         />
                     </TouchableOpacity>
 
@@ -464,7 +501,7 @@ const Chatbot = () => {
                         <Ionicons 
                             name="heart-outline" 
                             size={27} 
-                            color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                            color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'}
                         />
                     </TouchableOpacity>
 
@@ -477,7 +514,7 @@ const Chatbot = () => {
                         <Ionicons 
                             name="volume-medium-outline" 
                             size={30} 
-                            color={activeButton === 'lyrics' ? 'rgba(252,108,133,1)' : 'rgba(55,189,213,0.6)'}
+                            color={activeButton === 'lyrics' ? 'rgba(252,108,133,1)' : isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'}
                         />
                     </TouchableOpacity>
                 </Animated.View>
@@ -491,11 +528,11 @@ const Chatbot = () => {
                     }}
                 >
                     {chatHistory.map((chat, index) => (
-                        <View key={index} style={styles.responseBox}>
+                        <View key={index} style={[styles.responseBox, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
                             <View style={styles.responseHeader}>
                                 <View>
                                     <Text style={styles.inputLabel}>Input:</Text>
-                                    <Text style={styles.inputText}>{chat.input}</Text>
+                                    <Text style={[styles.inputText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{chat.input}</Text>
                                     <Text style={styles.responseLabel}>Response:</Text>
                                 </View>
                                 {chat.buttonType && (
@@ -510,7 +547,7 @@ const Chatbot = () => {
                                     />
                                 )}
                             </View>
-                            <Text style={styles.responseText}>{chat.response}</Text>
+                            <Text style={[styles.responseText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{chat.response}</Text>
                         </View>
                     ))}
                 </ScrollView>
@@ -521,11 +558,11 @@ const Chatbot = () => {
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
                     style={styles.keyboardAvoidingView}
                 >
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff', color: isDarkMode ? '#fff' : '#0e1514' }]}
                             placeholder={getPlaceholderText()}
-                            placeholderTextColor="#999"
+                            placeholderTextColor={isDarkMode ? '#666' : '#999'}
                             value={userInput}
                             onChangeText={setUserInput}
                             onSubmitEditing={handleSend}
@@ -536,9 +573,9 @@ const Chatbot = () => {
                             disabled={isLoading}
                         >
                             {isLoading ? (
-                                <ActivityIndicator size="small" color="#0e1514" />
+                                <ActivityIndicator size="small" color={isDarkMode ? '#fff' : '#0e1514'} />
                             ) : (
-                                <Ionicons name="arrow-up" size={24} color="#0e1514" />
+                                <Ionicons name="arrow-up" size={24} color={isDarkMode ? '#fff' : '#0e1514'} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -555,33 +592,33 @@ const Chatbot = () => {
                         activeOpacity={1}
                         onPress={() => setShowHelpModal(false)}
                     >
-                        <View style={styles.modalContent}>
+                        <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}>
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Example Queries</Text>
+                                <Text style={[styles.modalTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Example Queries</Text>
                                 <TouchableOpacity onPress={() => setShowHelpModal(false)}>
-                                    <Ionicons name="close" size={24} color="#0e1514" />
+                                    <Ionicons name="close" size={24} color={isDarkMode ? '#fff' : '#0e1514'} />
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.querySection}>
                                 <View style={styles.queryHeader}>
                                     <Ionicons name="musical-notes-outline" size={20} color="rgba(252,108,133,1)" />
-                                    <Text style={styles.querySectionTitle}>Album</Text>
+                                    <Text style={[styles.querySectionTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Album</Text>
                                 </View>
-                                <Text style={styles.queryText}>{exampleQueries.album.join('\n')}</Text>
+                                <Text style={[styles.queryText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{exampleQueries.album.join('\n')}</Text>
                             </View>
                             <View style={styles.querySection}>
                                 <View style={styles.queryHeader}>
                                     <Ionicons name="heart-outline" size={20} color="rgba(252,108,133,1)" />
-                                    <Text style={styles.querySectionTitle}>Similar Artists</Text>
+                                    <Text style={[styles.querySectionTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Similar Artists</Text>
                                 </View>
-                                <Text style={styles.queryText}>{exampleQueries.similarArtists.join('\n')}</Text>
+                                <Text style={[styles.queryText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{exampleQueries.similarArtists.join('\n')}</Text>
                             </View>
                             <View style={styles.querySection}>
                                 <View style={styles.queryHeader}>
                                     <Ionicons name="volume-medium-outline" size={20} color="rgba(252,108,133,1)" />
-                                    <Text style={styles.querySectionTitle}>Lyrics</Text>
+                                    <Text style={[styles.querySectionTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Lyrics</Text>
                                 </View>
-                                <Text style={styles.queryText}>{exampleQueries.lyrics.join('\n')}</Text>
+                                <Text style={[styles.queryText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{exampleQueries.lyrics.join('\n')}</Text>
                             </View>
                         </View>
                     </TouchableOpacity>
@@ -594,7 +631,6 @@ const Chatbot = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff8f0',
     },
     backButton: {
         position: 'absolute',
@@ -606,7 +642,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingTop: 80,
         paddingHorizontal: 20,
-        
     },
     titleContainer: {
         flexDirection: 'row',
@@ -623,7 +658,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#0e1514',
         textAlign: 'center',
     },
     helpButton: {
@@ -647,7 +681,6 @@ const styles = StyleSheet.create({
         marginTop: 50,
     },
     responseBox: {
-        backgroundColor: '#fff',
         borderRadius: 15,
         padding: 15,
         marginVertical: 10,
@@ -662,7 +695,6 @@ const styles = StyleSheet.create({
     },
     responseText: {
         fontSize: 12,
-        color: '#0e1514',
         lineHeight: 20,
         fontWeight: 'bold',
     },
@@ -670,13 +702,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingHorizontal: 25,
         paddingVertical: 8,
-        backgroundColor: '#fff8f0',
         borderTopWidth: 1,
-        borderTopColor: '#fff8f0',
+        borderTopColor: 'transparent',
     },
     input: {
         flex: 1,
-        backgroundColor: '#fff',
         borderRadius: 20,
         paddingHorizontal: 15,
         paddingVertical: 8,
@@ -704,7 +734,6 @@ const styles = StyleSheet.create({
     },
     inputText: {
         fontSize: 12,
-        color: '#0e1514',
         marginBottom: 20,
         marginHorizontal: 10,
         lineHeight: 18,
@@ -729,7 +758,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: '#fff',
         padding: 20,
         borderRadius: 10,
         width: '80%',
@@ -744,7 +772,6 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#0e1514',
     },
     querySection: {
         marginBottom: 20,
@@ -757,12 +784,10 @@ const styles = StyleSheet.create({
     querySectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#0e1514',
         marginLeft: 10,
     },
     queryText: {
         fontSize: 12,
-        color: '#0e1514',
         lineHeight: 20,
     },
     spotifyButton: {
@@ -778,7 +803,6 @@ const styles = StyleSheet.create({
     spotifyButtonContent: {
         padding: 10,
         borderRadius: 50,
-        backgroundColor: '#fff',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',

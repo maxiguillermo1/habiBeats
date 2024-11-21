@@ -845,41 +845,66 @@ const Settings = () => {
       onRequestClose={() => setShowLanguageModal(false)}
     >
       <View style={languageModalStyles.container}>
-        <View style={languageModalStyles.content}>
-          <Text style={languageModalStyles.title}>{t('settings.select_language')}</Text>
+        <View style={[
+          languageModalStyles.content,
+          { backgroundColor: getThemeColors(isDarkMode).background }
+        ]}>
+          <Text style={[
+            languageModalStyles.title,
+            { color: isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+          ]}>{t('settings.select_language')}</Text>
           <TouchableOpacity 
             style={[languageModalStyles.option, currentLanguage === 'en' && languageModalStyles.selectedOption]}
             onPress={() => handleLanguageChange('en')}
           >
-            <Text style={[languageModalStyles.optionText, currentLanguage === 'en' && languageModalStyles.selectedText]}>English</Text>
+            <Text style={[
+              languageModalStyles.optionText, 
+              currentLanguage === 'en' && languageModalStyles.selectedText,
+              { color: currentLanguage === 'en' && isDarkMode ? '#FFA500' : isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+            ]}>English</Text>
             {currentLanguage === 'en' && <Ionicons name="checkmark" size={20} color="#fba904" />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[languageModalStyles.option, currentLanguage === 'es' && languageModalStyles.selectedOption]}
             onPress={() => handleLanguageChange('es')}
           >
-            <Text style={[languageModalStyles.optionText, currentLanguage === 'es' && languageModalStyles.selectedText]}>Español</Text>
+            <Text style={[
+              languageModalStyles.optionText, 
+              currentLanguage === 'es' && languageModalStyles.selectedText,
+              { color: currentLanguage === 'es' && isDarkMode ? '#FFA500' : isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+            ]}>Español</Text>
             {currentLanguage === 'es' && <Ionicons name="checkmark" size={20} color="#fba904" />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[languageModalStyles.option, currentLanguage === 'fr' && languageModalStyles.selectedOption]}
             onPress={() => handleLanguageChange('fr')}
           >
-            <Text style={[languageModalStyles.optionText, currentLanguage === 'fr' && languageModalStyles.selectedText]}>Français</Text>
+            <Text style={[
+              languageModalStyles.optionText, 
+              currentLanguage === 'fr' && languageModalStyles.selectedText,
+              { color: currentLanguage === 'fr' && isDarkMode ? '#FFA500' : isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+            ]}>Français</Text>
             {currentLanguage === 'fr' && <Ionicons name="checkmark" size={20} color="#fba904" />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[languageModalStyles.option, currentLanguage === 'ja' && languageModalStyles.selectedOption]}
             onPress={() => handleLanguageChange('ja')}
           >
-            <Text style={[languageModalStyles.optionText, currentLanguage === 'ja' && languageModalStyles.selectedText]}>日本語</Text>
+            <Text style={[
+              languageModalStyles.optionText, 
+              currentLanguage === 'ja' && languageModalStyles.selectedText,
+              { color: currentLanguage === 'ja' && isDarkMode ? '#FFA500' : isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+            ]}>日本語</Text>
             {currentLanguage === 'ja' && <Ionicons name="checkmark" size={20} color="#fba904" />}
           </TouchableOpacity>
           <TouchableOpacity 
             style={[languageModalStyles.option, languageModalStyles.cancelOption]}
             onPress={() => setShowLanguageModal(false)}
           >
-            <Text style={languageModalStyles.optionText}>{t('common.cancel')}</Text>
+            <Text style={[
+              languageModalStyles.optionText,
+              { color: isDarkMode ? '#FFFFFF' : getThemeColors(isDarkMode).text }
+            ]}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -898,8 +923,14 @@ const Settings = () => {
     >
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={nameModalStyles.container}>
-          <View style={nameModalStyles.content}>
-            <Text style={nameModalStyles.title}>Change Name</Text>
+          <View style={[
+            nameModalStyles.content,
+            { backgroundColor: getThemeColors(isDarkMode).background }
+          ]}>
+            <Text style={[
+              nameModalStyles.title,
+              { color: getThemeColors(isDarkMode).text }
+            ]}>Change Name</Text>
             <TextInput
               style={nameModalStyles.input}
               value={nameInput}
@@ -939,9 +970,15 @@ const Settings = () => {
         onRequestClose={() => setIsEditingLocation(false)}
       >
         <View style={locationStyles.modalContainer}>
-          <View style={locationStyles.modalContent}>
+          <View style={[
+            locationStyles.modalContent,
+            { backgroundColor: getThemeColors(isDarkMode).background }
+          ]}>
             <View style={locationStyles.headerContainer}>
-              <Text style={locationStyles.modalTitle}>Change Location</Text>
+              <Text style={[
+                locationStyles.modalTitle,
+                { color: getThemeColors(isDarkMode).text }
+              ]}>Change Location</Text>
               <TouchableOpacity 
                 onPress={() => setIsEditingLocation(false)}
                 style={locationStyles.closeButton}
@@ -1030,8 +1067,14 @@ const Settings = () => {
       onRequestClose={() => setIsEditingBorder(false)}
     >
       <View style={borderModalStyles.container}>
-        <View style={borderModalStyles.content}>
-          <Text style={borderModalStyles.title}>Select an Animated Border</Text>
+        <View style={[
+          borderModalStyles.content,
+          { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0' }
+        ]}>
+          <Text style={[
+            borderModalStyles.title,
+            { color: isDarkMode ? '#ffffff' : '#0e1514' }
+          ]}>Select an Animated Border</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {Object.keys(gifImages).map((gifKey) => (
               <TouchableOpacity
@@ -1214,7 +1257,11 @@ const Settings = () => {
               {languageNames[currentLanguage as keyof typeof languageNames]}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
+          <Ionicons 
+            name="chevron-forward" 
+            size={24} 
+            color={getThemeColors(isDarkMode).subText} 
+          />
         </TouchableOpacity>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 

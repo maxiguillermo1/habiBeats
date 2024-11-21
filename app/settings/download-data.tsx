@@ -1,18 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Checkbox } from 'react-native-paper';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useNavigation } from '@react-navigation/native';
 import * as Print from 'expo-print';
 import { Stack } from 'expo-router';
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function DownloadData() {
   const [pdfSelected, setPdfSelected] = useState(false);
   const [jsonSelected, setJsonSelected] = useState(false);
   const navigation = useNavigation();
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   // Creates a PDF file with the user's profile data
   const generatePDF = async (userData: any) => {
@@ -143,50 +170,51 @@ export default function DownloadData() {
       Alert.alert('Error', 'Failed to download data. Please try again.');
     }
   };
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.header}>
+      <View style={[styles.header, isDarkMode && styles.headerDark]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>‹</Text>
+          <Text style={[styles.backButton, isDarkMode && styles.backButtonDark]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Download Your Data</Text>
+        <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>Download Your Data</Text>
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.description}>
+      <View style={[styles.content, isDarkMode && styles.contentDark]}>
+        <Text style={[styles.description, isDarkMode && styles.descriptionDark]}>
           Select the format(s) in which you'd like to download your profile data:
         </Text>
 
         <TouchableOpacity 
-          style={styles.checkboxContainer}
+          style={[styles.checkboxContainer, isDarkMode && styles.checkboxContainerDark]}
           onPress={() => setJsonSelected(!jsonSelected)}
         >
           <Checkbox
             status={jsonSelected ? 'checked' : 'unchecked'}
             onPress={() => setJsonSelected(!jsonSelected)}
+            color={isDarkMode ? '#fba904' : undefined}
           />
           <View style={styles.checkboxText}>
-            <Text style={styles.formatTitle}>JSON Format</Text>
-            <Text style={styles.formatDescription}>
+            <Text style={[styles.formatTitle, isDarkMode && styles.formatTitleDark]}>JSON Format</Text>
+            <Text style={[styles.formatDescription, isDarkMode && styles.formatDescriptionDark]}>
               Raw data format, useful for data backup or transfer
             </Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={styles.checkboxContainer}
+          style={[styles.checkboxContainer, isDarkMode && styles.checkboxContainerDark]}
           onPress={() => setPdfSelected(!pdfSelected)}
         >
           <Checkbox
             status={pdfSelected ? 'checked' : 'unchecked'}
             onPress={() => setPdfSelected(!pdfSelected)}
+            color={isDarkMode ? '#fba904' : undefined}
           />
           <View style={styles.checkboxText}>
-            <Text style={styles.formatTitle}>PDF Format</Text>
-            <Text style={styles.formatDescription}>
+            <Text style={[styles.formatTitle, isDarkMode && styles.formatTitleDark]}>PDF Format</Text>
+            <Text style={[styles.formatDescription, isDarkMode && styles.formatDescriptionDark]}>
               Readable document format with your profile information
             </Text>
           </View>
@@ -195,12 +223,13 @@ export default function DownloadData() {
         <TouchableOpacity 
           style={[
             styles.downloadButton,
-            (!jsonSelected && !pdfSelected) && styles.downloadButtonDisabled
+            (!jsonSelected && !pdfSelected) && styles.downloadButtonDisabled,
+            isDarkMode && styles.downloadButtonDark
           ]}
           onPress={downloadData}
           disabled={!jsonSelected && !pdfSelected}
         >
-          <Text style={styles.downloadButtonText}>Download</Text>
+          <Text style={[styles.downloadButtonText, isDarkMode && styles.downloadButtonTextDark]}>Download</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -212,6 +241,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff8f0',
   },
+  containerDark: {
+    backgroundColor: '#0e1514',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -219,13 +251,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
+  headerDark: {
+    backgroundColor: '#0e1514',
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
   },
+  headerTitleDark: {
+    color: '#fff',
+  },
   backButton: {
     fontSize: 34,
     color: '#333',
+  },
+  backButtonDark: {
+    color: '#fff',
   },
   placeholder: {
     width: 24,
@@ -233,10 +274,16 @@ const styles = StyleSheet.create({
   content: {
     padding: 30,
   },
+  contentDark: {
+    backgroundColor: '#0e1514',
+  },
   description: {
     fontSize: 14,
     color: '#8e8e8e',
     marginBottom: 20,
+  },
+  descriptionDark: {
+    color: '#aaa',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -248,6 +295,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eee',
   },
+  checkboxContainerDark: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333',
+  },
   checkboxText: {
     marginLeft: 12,
     flex: 1,
@@ -257,9 +308,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
+  formatTitleDark: {
+    color: '#fff',
+  },
   formatDescription: {
     fontSize: 14,
     color: '#8e8e8e',
+  },
+  formatDescriptionDark: {
+    color: '#aaa',
   },
   downloadButton: {
     backgroundColor: '#fba904',
@@ -268,6 +325,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
+  downloadButtonDark: {
+    backgroundColor: '#fba904',
+  },
   downloadButtonDisabled: {
     backgroundColor: '#ccc',
   },
@@ -275,5 +335,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  downloadButtonTextDark: {
+    color: '#fff',
   },
 });
