@@ -2,7 +2,7 @@
 // Mariann Grace Dizon, Reyna Aguirre and Maxwell Guillermo
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType, FlatList } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType, FlatList, TextInput } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -852,7 +852,92 @@ const Match = () => {
     flatListContentContainer: {
       paddingHorizontal: 50,
     },
+    contentCommentButton: {
+      position: 'absolute',
+      bottom: 5,
+      right: 28,
+      padding: 6,
+      zIndex: 1,
+    },
+    commentModalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      padding: 20,
+    },
+    commentModalContent: {
+      backgroundColor: '#fff',
+      padding: 20,
+      borderRadius: 20,
+      alignItems: 'center',
+      width: '90%',
+      maxWidth: 400,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    commentModalTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#333',
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    commentInput: {
+      width: '100%',
+      height: 100,
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 10,
+      padding: 10,
+      marginBottom: 20,
+      textAlignVertical: 'top', // Ensures text starts at the top of the input
+    },
+    commentSubmitButton: {
+      backgroundColor: '#79ce54',
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 10,
+      width: '100%',
+      alignItems: 'center',
+    },
+    commentSubmitButtonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
+    commentCloseButton: {
+      backgroundColor: '#de3c3c',
+      padding: 10,
+      borderRadius: 10,
+      width: '100%',
+      alignItems: 'center',
+    },
+    commentCloseButtonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
   });
+
+  // Add new state for comment modal visibility and comment text
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentText, setCommentText] = useState('');
+
+  // Function to handle comment button press
+  const handleCommentPress = () => {
+    setShowCommentModal(true);
+  };
+
+  // Function to handle comment submission
+  const handleCommentSubmit = () => {
+    console.log('Comment submitted:', commentText);
+    setShowCommentModal(false);
+    setCommentText('');
+  };
 
   // UI rendering
   // Mariann Grace Dizon
@@ -953,6 +1038,16 @@ const Match = () => {
                       color="#fc6c85" 
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={dynamicStyles.inputContainer}>
@@ -988,6 +1083,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('tuneOfMonth') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1032,6 +1137,16 @@ const Match = () => {
                       color="#fc6c85" 
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
                 </View>
 
 
@@ -1072,8 +1187,17 @@ const Match = () => {
                       color="#fc6c85" 
                     />
                   </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
                 </View>
-
 
                 <View style={dynamicStyles.inputContainer}>
                   <View style={dynamicStyles.inputContent}>
@@ -1090,6 +1214,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1116,6 +1250,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('prompts') ? "heart" : "heart-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1155,6 +1299,16 @@ const Match = () => {
                       name={likedContent.has('myDisposables') ? "heart" : "heart-outline"}
                       size={18}
                       color="#fc6c85"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    onPress={handleCommentPress}
+                  >
+                    <Ionicons 
+                      name="chatbubble-outline" 
+                      size={18} 
+                      color="#fc6c85" 
                     />
                   </TouchableOpacity>
                 </View>
@@ -1271,6 +1425,52 @@ const Match = () => {
             </Animated.View>
           </Modal>
           {/* END of Dislike modal */}
+
+          {/* Add the comment modal */}
+          <Modal
+            transparent={true}
+            visible={showCommentModal}
+            onRequestClose={() => setShowCommentModal(false)}
+          >
+            <View style={dynamicStyles.commentModalContainer}>
+              <View style={[
+                dynamicStyles.commentModalContent,
+                {backgroundColor: isDarkTheme ? '#333' : '#fff'}
+              ]}>
+                <Text style={[
+                  dynamicStyles.commentModalTitle,
+                  {color: isDarkTheme ? '#fff' : '#333'}
+                ]}>Leave a Comment!</Text>
+                <TextInput
+                  style={[
+                    dynamicStyles.commentInput,
+                    {
+                      backgroundColor: isDarkTheme ? '#444' : '#fff',
+                      color: isDarkTheme ? '#fff' : '#333',
+                      borderColor: isDarkTheme ? '#666' : '#ccc'
+                    }
+                  ]}
+                  placeholder="Write your comment here..."
+                  placeholderTextColor={isDarkTheme ? '#999' : '#666'}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  multiline={true}
+                />
+                <TouchableOpacity 
+                  style={dynamicStyles.commentSubmitButton}
+                  onPress={handleCommentSubmit}
+                >
+                  <Text style={dynamicStyles.commentSubmitButtonText}>Submit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={dynamicStyles.commentCloseButton}
+                  onPress={() => setShowCommentModal(false)}
+                >
+                  <Text style={dynamicStyles.commentCloseButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
 
