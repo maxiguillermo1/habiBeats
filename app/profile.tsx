@@ -181,7 +181,7 @@ export default function Profile() {
             } else {
               setSelectedDisposable(null);
             }
-            addNotification(currentUser.uid, 'Welcome to Habibeats!', 'welcome', {});
+            // addNotification(currentUser.uid, 'Welcome to Habibeats!', 'welcome', {});
           }
         });
 
