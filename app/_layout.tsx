@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Stack } from 'expo-router';
-import InAppNotification from './InAppNotification'; // Adjust the path as necessary
+import InAppNotification from '../components/InAppNotification';
 import { onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 
