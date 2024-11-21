@@ -37,6 +37,7 @@ const DirectMessageScreen = () => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
 
+    // START of Mariann Grace Dizon Contribution
     // Use theme context
     const { theme, toggleTheme } = useContext(ThemeContext);
     const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
@@ -60,6 +61,7 @@ const DirectMessageScreen = () => {
 
         return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
     }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
     // Fetch hidden words from current user
     useEffect(() => {

@@ -1,5 +1,5 @@
 // messages.tsx
-// Jesus Donate
+// Jesus Donate & Mariann Grace Dizon
 
 import React, { useState, useCallback, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
@@ -43,6 +43,7 @@ const Messages = () => {
   const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
   const params = useLocalSearchParams();
 
+  // START of Mariann Grace Dizon Contribution
       // Use theme context
       const { theme, toggleTheme } = useContext(ThemeContext);
       const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
@@ -66,6 +67,7 @@ const Messages = () => {
   
           return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
       }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   useEffect(() => {
     // This if statement checks if we need to redirect to group-message after creating a group
