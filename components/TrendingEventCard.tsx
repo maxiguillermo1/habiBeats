@@ -1,16 +1,20 @@
 // TrendingEvents.tsx
-// Maxwell Guillermo 
+// Maxwell Guillermo & Mariann Grace Dizon
 
 // START of TrendingEvents UI/UX
 // START of Maxwell Guillermo Contribution
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, StyleSheet, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserFavoriteArtists } from './getUserFavoriteArtists';
 import { TicketMasterAPI } from '../api/ticket-master-api';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../context/ThemeContext';
+import { getAuth } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebaseConfig'; // Adjust the path as necessary
 
 // Define the structure for event data
 interface Event {
@@ -49,7 +53,7 @@ const getBestImage = (images: any[]) => {
 };
 
 // Sub-component to display event details (title, date, venue)
-const EventInfoContainer = ({ title, date, venue, formatDate, event, onFavorite, isFavorite }: { 
+const EventInfoContainer = ({ title, date, venue, formatDate, event, onFavorite, isFavorite, isDarkMode }: { 
   title: string; 
   date: string; 
   venue: string;
@@ -57,6 +61,7 @@ const EventInfoContainer = ({ title, date, venue, formatDate, event, onFavorite,
   event: Event;
   onFavorite: (event: Event) => void;
   isFavorite: boolean;
+  isDarkMode: boolean;
 }) => (
   <View style={styles.eventInfoContainer}>
     <View style={styles.titleContainer}>
@@ -67,10 +72,10 @@ const EventInfoContainer = ({ title, date, venue, formatDate, event, onFavorite,
         <Ionicons 
           name={isFavorite ? "star" : "star-outline"} 
           size={14}
-          color={isFavorite ? "#FFD700" : "#000"}
+          color={isFavorite ? "#FFD700" : (isDarkMode ? "#FFF" : "#000")}
         />
       </TouchableOpacity>
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+      <Text style={isDarkMode ? styles.darkTitle : styles.title} numberOfLines={1} ellipsizeMode="tail">
         {title}
       </Text>
     </View>
@@ -93,6 +98,36 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
   const [loading, setLoading] = useState(true);                      // Tracks loading state
   const [error, setError] = useState<string | null>(null);          // Stores error messages
   const [favoriteEvents, setFavoriteEvents] = useState<{[key: string]: boolean}>({});
+
+    // START of Mariann Grace Dizon Contribution
+
+    // Initialize Firebase Auth
+    const auth = getAuth();
+
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   useEffect(() => {
     // Function to fetch and process event data
@@ -248,8 +283,8 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
   // Show loading state
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.sectionTitle}>Loading events...</Text>
+      <View style={isDarkMode ? styles.darkContainer : styles.container}>
+        <Text style={isDarkMode ? styles.darkSectionTitle : styles.sectionTitle}>Loading events...</Text>
       </View>
     );
   }
@@ -257,8 +292,8 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
   // Show error state
   if (error) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={isDarkMode ? styles.darkContainer : styles.container}>
+        <Text style={isDarkMode ? styles.darkErrorText : styles.errorText}>{error}</Text>
       </View>
     );
   }
@@ -266,12 +301,12 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
   // Render the component
   return (
     <ScrollView 
-      style={styles.container}
+      style={isDarkMode ? styles.darkContainer : styles.container}
       contentContainerStyle={styles.scrollContent}
     >
-      <Text style={styles.sectionTitle}>Trending Events</Text>
+      <Text style={isDarkMode ? styles.darkSectionTitle : styles.sectionTitle}>Trending Events</Text>
       {trendingEvents.map((event, index) => (
-        <View key={index} style={styles.eventContainer}>
+        <View key={index} style={isDarkMode ? styles.darkEventContainer : styles.eventContainer}>
           <EventInfoContainer 
             title={event.title} 
             date={event.date} 
@@ -280,6 +315,7 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
             event={event}
             onFavorite={handleFavorite}
             isFavorite={favoriteEvents[event.title] || false}
+            isDarkMode={isDarkMode}
           />
           <TouchableOpacity onPress={() => handleEventPress(event)}>
             <Image 
@@ -296,14 +332,27 @@ const TrendingEventCard: React.FC<TrendingEventCardProps> = ({ formatDate }) => 
 // Styles define the visual appearance of components
 const styles = StyleSheet.create({
   container: {
-    flex: 1,                  // Take up all available space
-    backgroundColor: '#fff8f0', // Light cream background color
-    paddingHorizontal: 20,    // Add horizontal padding
+    flex: 1,
+    backgroundColor: '#fff8f0',
+    paddingHorizontal: 20,
+  },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#1c1c1c',
+    paddingHorizontal: 20,
   },
   scrollContent: {
-    paddingBottom: 100, // Add padding at the bottom for scrolling
+    paddingBottom: 100,
   },
   sectionTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#79ce54',
+    marginBottom: 0,
+    marginLeft: 85,
+    marginTop: 20,
+  },
+  darkSectionTitle: {
     fontSize: 15,
     fontWeight: 'bold',
     color: '#79ce54',
@@ -318,6 +367,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
     borderRadius: 10,
     padding: 15,
+  },
+  darkEventContainer: {
+    marginTop: 0,
+    marginBottom: 20,
+    alignItems: 'center',
+    backgroundColor: '#1c1c1c',
+    borderRadius: 10,
+    padding: 15,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  darkErrorText: {
+    color: '#CF6679',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  image: {
+    width: 185,
+    height: 185,
+    resizeMode: 'cover',
+    backgroundColor: '#f0f0f0',
   },
   eventInfoContainer: {
     width: '100%',
@@ -342,7 +415,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 5,
   },
-
+  darkTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
+    flex: 1,
+    marginRight: 5,
+  },
   date: {
     fontSize: 10,
     fontWeight: 'bold',
@@ -362,17 +441,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     flex: 1,
     flexWrap: 'wrap', // Allow text to wrap
-  },
-  image: {
-    width: 185,
-    height: 185,
-    resizeMode: 'cover',
-    backgroundColor: '#f0f0f0', // Placeholder color while loading
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
   },
 });
 

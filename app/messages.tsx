@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
-    marginBottom: 100,
+    marginBottom: 10,
   },
   title: {
     fontSize: 12.5,

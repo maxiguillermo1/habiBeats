@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0, // Removes horizontal margins
   },
   card: {
-    backgroundColor: '#fff8f0', // Sets cream background for cards
+    backgroundColor: 'transparent', // Sets cream background for cards
     borderRadius: 0, // Removes corner rounding
     overflow: 'hidden', // Clips content to card bounds
     aspectRatio: 1, // Makes cards square
