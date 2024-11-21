@@ -232,6 +232,12 @@ const EventDetailsPage = () => {
             <TouchableOpacity onPress={handleTickets}>
               <Text style={[styles.detailText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Tickets</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push({
+              pathname: '/events/event-spaces',
+              params: { eventData: JSON.stringify(eventData) }
+            })}>
+              <Text style={[styles.detailText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Event Spaces</Text>
+            </TouchableOpacity>
             <Text style={[styles.descriptionTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>Event Description</Text>
             
             {/* Show loading spinner or AI description */}

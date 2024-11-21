@@ -105,6 +105,8 @@ export default function RootLayout() {
         <Stack.Screen name="events/artist-details" options={{ headerShown: false }} />
         {/* Define the disposable gallery screen with no header */}
         <Stack.Screen name="disposable-gallery" options={{ headerShown: false }} />
+        {/* Define the event spaces screen with no header */}
+        <Stack.Screen name="events/event-spaces" options={{ headerShown: false }} />  
       </Stack>
       {notification && (
         <InAppNotification
