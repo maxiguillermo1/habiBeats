@@ -55,7 +55,7 @@ export async function registerForPushNotificationsAsync(): Promise<PushToken> {
 
 
 // Add a notification to the user's notifications collection
-export const addNotification = async (userId: string, message: string) => {
+export const addNotification = async (userId: string, message: string, type: string, data: any) => {
   const db = getFirestore();
   const userDocRef = doc(db, 'users', userId);
   const notificationsRef = collection(userDocRef, 'notifications');
@@ -65,6 +65,8 @@ export const addNotification = async (userId: string, message: string) => {
       message,
       timestamp: serverTimestamp(),
       read: false,
+      type,
+      data,
     });
     console.log('Notification added successfully with ID:', newNotificationRef.id);
     return newNotificationRef.id;

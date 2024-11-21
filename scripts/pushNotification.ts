@@ -1,18 +1,20 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { AndroidNotificationPriority } from 'expo-notifications';
 
 // Configure notification handler
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    priority: Platform.OS === 'android' ? AndroidNotificationPriority.HIGH : undefined,
-  }),
+  handleNotification: async () => {
+    const appState = AppState.currentState;
+    return {
+      shouldShowAlert: appState !== 'active', // Show alert only if app is not active
+      shouldPlaySound: appState !== 'active',
+      shouldSetBadge: appState !== 'active',
+    };
+  },
 });
 
 // Register for push notifications
@@ -46,11 +48,12 @@ export async function registerForPushNotifications() {
 
   // Set up special requirements for Android
   if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
+    await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#FF231F7C',
+      sound: '../assets/sounds/notification_sound.wav',
     });
   }
 
@@ -73,20 +76,33 @@ export async function sendPushNotification(expoPushToken: string, title: string,
     title: title,
     body: body,
     data: data || {},
-    priority: 'high',
+    priority: Platform.OS === 'android' ? 'high' : undefined,
     channelId: Platform.OS === 'android' ? 'default' : undefined,
     badge: 1,
+    icon: '../assets/habibeats-logo.png',
   };
 
-  await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  });
+  try {
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+
+    const responseData = await response.json();
+    console.log('Push notification response:', responseData);
+
+    if (!response.ok) {
+      throw new Error(`Push notification failed: ${responseData.message}`);
+    }
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+    throw error;
+  }
 }
 
 // Set up notification listeners

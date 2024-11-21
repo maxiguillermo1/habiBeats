@@ -11,8 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 import { censorMessage } from './settings/hidden-words';
-import { useAuth } from '../hooks/useAuth';
 import { sendPushNotification } from '../scripts/pushNotification';
+import { addNotification } from '../scripts/notificationHandler';
 import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
 
 // Define the message structure
@@ -74,6 +74,7 @@ const DirectMessageScreen = () => {
         return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
     }, []);
 
+    // START of Jesus Donate Contribution
     // Fetches the messages from the database
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -108,6 +109,7 @@ const DirectMessageScreen = () => {
         return () => unsubscribe();
     }, [recipientId, profileImageUrl]);
 
+    // START of Jesus Donate Contribution
     // Sends a message to the recipient
     const sendMessage = async () => {
         const message = newMessage;
@@ -151,6 +153,20 @@ const DirectMessageScreen = () => {
         const recipientData = recipientDoc.data();
         const recipientToken = recipientData?.expoPushToken;
 
+        // Add notification to recipient's notifications collection
+        await addNotification(
+            recipientId as string,
+            `${auth.currentUser?.displayName || 'Someone'} sent you a message`,
+            'directmessage',
+            {
+                screen: 'directmessage',
+                recipientId: recipientId,
+                recipientName: recipientName,
+                senderId: auth.currentUser?.uid,
+                messageText: message.substring(0, 100)
+            }
+        );
+
         if (recipientToken) {
             try {
                 await sendPushNotification(
@@ -169,7 +185,9 @@ const DirectMessageScreen = () => {
             }
         }
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
     // Updates the conversationIds of the users in the database
     const updateUsersConversationIds = async (userId1: string, userId2: string, conversationId: string) => {
         const updateUser = async (userId: string, otherUserId: string) => {
@@ -196,7 +214,9 @@ const DirectMessageScreen = () => {
             updateUser(userId2, userId1)
         ]);
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
     // When the user long presses on a message, the delete modal is shown
     const handleLongPress = (message: Message) => {
         if (message.senderId === auth.currentUser?.uid) {
@@ -205,6 +225,7 @@ const DirectMessageScreen = () => {
         }
     };
 
+    // START of Jesus Donate Contribution
     // Deletes a message from the conversation sent by the current user
     const handleDeleteMessage = async () => {
         if (!selectedMessage || !auth.currentUser) return;
@@ -248,7 +269,9 @@ const DirectMessageScreen = () => {
             Alert.alert("Error", "Failed to delete message. Please try again.");
         }
     };
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
     // Scrolls to the bottom of the flatlist
     const scrollToBottom = () => {
         if (flatListRef.current && messages.length > 0) {
@@ -259,7 +282,9 @@ const DirectMessageScreen = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+    // END of Jesus Donate Contribution
 
+    // START of Jesus Donate Contribution
     // Loading screen rendered while the conversation is loading
     if (isLoading) {
         return (
@@ -272,8 +297,10 @@ const DirectMessageScreen = () => {
             </SafeAreaView>
         );
     }
+    // END of Jesus Donate Contribution
 
-    // Rendering the DirectMessageScreen component
+    // START of rendering the DirectMessageScreen component
+    // START of Mariann Grace Dizon Contribution and Jesus Donate
     return (
         <View style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
             <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
@@ -385,8 +412,11 @@ const DirectMessageScreen = () => {
             </SafeAreaView>
         </View>
     );
+    // END of rendering the DirectMessageScreen component
+    // END of Mariann Grace Dizon Contribution and Jesus Donate
 };
 
+// START of Mariann Grace Dizon Contribution
 // Define the styles for the DirectMessageScreen
 const styles = StyleSheet.create({
     container: {
