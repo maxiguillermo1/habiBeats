@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator } from 'react-native';
-import { doc, setDoc, collection, query, where, getDocs, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Alert } from 'react-native';
+import { doc, setDoc, collection, query, where, getDocs, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig';
-import { Alert } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
+import { ThemeContext } from '../context/ThemeContext';
 
 interface User {
   uid: string;
@@ -27,6 +27,32 @@ const CreateGroup = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [groupId, setGroupId] = useState('');
   const { user, userData } = useAuth();
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   useEffect(() => {
     const newGroupId = doc(collection(db, 'groups')).id;
@@ -186,25 +212,27 @@ const CreateGroup = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0' }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={isDarkMode ? 'white' : 'black'} />
         </TouchableOpacity>
-        <Text style={styles.title}>Create Group</Text>
+        <Text style={[styles.title, { color: isDarkMode ? 'white' : 'black' }]}>Create Group</Text>
       </View>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: isDarkMode ? '#2a2a2a' : 'white', color: isDarkMode ? 'white' : 'black' }]}
         placeholder="Group Name"
+        placeholderTextColor={isDarkMode ? '#666' : '#999'}
         value={groupName}
         onChangeText={setGroupName}
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: isDarkMode ? '#2a2a2a' : 'white', color: isDarkMode ? 'white' : 'black' }]}
         placeholder="Search Users"
+        placeholderTextColor={isDarkMode ? '#666' : '#999'}
         value={searchQuery}
         onChangeText={(text) => {
           setSearchQuery(text);
@@ -218,7 +246,7 @@ const CreateGroup = () => {
         }}
       />
 
-      <Text style={styles.selectedCount}>
+      <Text style={[styles.selectedCount, { color: isDarkMode ? '#ccc' : '#666' }]}>
         Selected: {selectedUsers.length} users
       </Text>
 
@@ -228,7 +256,7 @@ const CreateGroup = () => {
           keyExtractor={(item) => item.uid}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.userItem}
+              style={[styles.userItem, { backgroundColor: isDarkMode ? '#2a2a2a' : 'transparent' }]}
               onPress={() => {
                 toggleUserSelection(item);
                 setSearchQuery('');
@@ -239,7 +267,7 @@ const CreateGroup = () => {
                 source={{ uri: item.profileImageUrl }}
                 style={styles.avatar}
               />
-              <Text style={styles.userName}>{item.displayName}</Text>
+              <Text style={[styles.userName, { color: isDarkMode ? 'white' : 'black' }]}>{item.displayName}</Text>
               {selectedUsers.some(u => u.uid === item.uid) && (
                 <Ionicons name="checkmark-circle" size={24} color="#fba904" />
               )}

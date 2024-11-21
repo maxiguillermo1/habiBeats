@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 import { censorMessage } from './settings/hidden-words';
+import { ThemeContext } from '../context/ThemeContext';
 
 interface Message {
     id: string;
@@ -35,6 +36,32 @@ const GroupMessageScreen = () => {
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
     useEffect(() => {
         if (!auth.currentUser || !groupId) return;
@@ -156,19 +183,19 @@ const GroupMessageScreen = () => {
 
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#fff8f0' }}>
-            <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#fff8f0' }}>
+            <SafeAreaView style={isDarkMode ? styles.darkContainer : styles.container}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <View style={styles.header}>
+                <View style={isDarkMode ? styles.darkHeader : styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Ionicons name="arrow-back" size={24} color="black" />
+                        <Ionicons name="arrow-back" size={24} color={isDarkMode ? 'white' : 'black'} />
                     </TouchableOpacity>
                     <View style={styles.headerContent}>
                         <Image 
                             source={{ uri: groupImage }} 
                             style={styles.groupImage} 
                         />
-                        <Text style={styles.groupName}>{groupName}</Text>
+                        <Text style={isDarkMode ? styles.darkGroupName : styles.groupName}>{groupName}</Text>
                     </View>
                 </View>
 
@@ -183,9 +210,8 @@ const GroupMessageScreen = () => {
                             delayLongPress={500}
                         >
                             <View style={item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage}>
-                                <Text style={styles.senderName}>{item.senderName}</Text>
+                                <Text style={isDarkMode ? styles.darkSenderName : styles.senderName}>{item.senderName}</Text>
                                 <Text style={styles.messageText}>
-                                    {/* If the message is sent by the current user, show the message as is. Otherwise, censor the message */}
                                     {item.senderId === auth.currentUser?.uid 
                                         ? item.message 
                                         : censorMessage(item.message, userHiddenWords)}
@@ -201,10 +227,11 @@ const GroupMessageScreen = () => {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
                 >
-                    <View style={styles.inputContainer}>
+                    <View style={isDarkMode ? styles.darkInputContainer : styles.inputContainer}>
                         <TextInput
-                            style={styles.input}
+                            style={isDarkMode ? styles.darkInput : styles.input}
                             placeholder="Type a message..."
+                            placeholderTextColor={isDarkMode ? '#B0BEC5' : '#666'}
                             value={newMessage}
                             onChangeText={setNewMessage}
                             multiline
@@ -225,9 +252,9 @@ const GroupMessageScreen = () => {
                     onRequestClose={() => setIsDeleteModalVisible(false)}
                 >
                     <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Delete Message</Text>
-                            <Text style={styles.modalText}>Are you sure you want to delete this message?</Text>
+                        <View style={isDarkMode ? styles.darkModalContent : styles.modalContent}>
+                            <Text style={isDarkMode ? styles.darkModalTitle : styles.modalTitle}>Delete Message</Text>
+                            <Text style={isDarkMode ? styles.darkModalText : styles.modalText}>Are you sure you want to delete this message?</Text>
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.cancelButton]}
@@ -254,16 +281,30 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff8f0',
-        marginLeft: 10,  // Keep the left margin
-        marginRight: 10, // Keep the right margin
+        marginLeft: 10,
+        marginRight: 10,
+    },
+    darkContainer: {
+        flex: 1,
+        backgroundColor: '#121212',
+        marginLeft: 10,
+        marginRight: 10,
     },
     inputContainer: {
         flexDirection: 'row',
         padding: 20,
         paddingBottom: 40,
         backgroundColor: '#fff8f0',
-        marginLeft: -10,  // Compensate for container margin
-        marginRight: -10, // Compensate for container margin
+        marginLeft: -10,
+        marginRight: -10,
+    },
+    darkInputContainer: {
+        flexDirection: 'row',
+        padding: 20,
+        paddingBottom: 40,
+        backgroundColor: '#121212',
+        marginLeft: -10,
+        marginRight: -10,
     },
     input: {
         flex: 1,
@@ -274,6 +315,20 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         marginRight: 10,
         fontSize: 16,
+        color: '#000',
+        backgroundColor: '#fff',
+    },
+    darkInput: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#333',
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        marginRight: 10,
+        fontSize: 16,
+        color: '#FFFFFF',
+        backgroundColor: '#1E1E1E',
     },
     sendButton: {
         backgroundColor: '#37bdd5',
@@ -307,7 +362,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 17,
     },
-    navbar: {
+    header: {
         height: 80,
         flexDirection: 'row',
         alignItems: 'center',
@@ -316,36 +371,44 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
     },
-    backButton: {
-        padding: 10,
-    },
-    navbarNameContainer: {
-        flex: 1,
+    darkHeader: {
+        height: 80,
         flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: 15,
+        backgroundColor: '#121212',
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
+    },
+    headerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
         marginLeft: 15,
     },
-    profileImage: {
-        width: 55,
-        height: 55,
-        borderRadius: 30,
-        marginRight: 15,
+    groupImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 20,
+        marginRight: 10,
     },
-    navbarName: {
-        fontSize: 20,
+    groupName: {
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
-        marginTop: 10,
     },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    darkGroupName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
     },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: '#333',
+    senderName: {
+        fontSize: 12,
+        color: '#666',
+    },
+    darkSenderName: {
+        fontSize: 12,
+        color: '#FFFFFF',
     },
     messageList: {
         flexGrow: 1,
@@ -366,16 +429,38 @@ const styles = StyleSheet.create({
         width: '80%',
         maxWidth: 300,
     },
+    darkModalContent: {
+        backgroundColor: '#1E1E1E',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+        elevation: 5,
+        width: '80%',
+        maxWidth: 300,
+    },
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
         textAlign: 'center',
     },
+    darkModalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+        color: '#FFFFFF',
+    },
     modalText: {
         fontSize: 16,
         marginBottom: 20,
         textAlign: 'center',
+    },
+    darkModalText: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+        color: '#FFFFFF',
     },
     modalButtons: {
         flexDirection: 'row',
@@ -405,19 +490,8 @@ const styles = StyleSheet.create({
         marginLeft: 15,
         marginTop: 10,
     },
-    groupImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 20,
-        marginRight: 10,
-    },
     groupInfo: {
         flex: 1,
-    },
-    groupName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
     },
     memberCount: {
         fontSize: 12,
@@ -425,25 +499,6 @@ const styles = StyleSheet.create({
     },
     groupInfoButton: {
         padding: 10,
-    },
-    senderName: {
-        fontSize: 12,
-        color: '#666',
-    },
-    header: {
-        height: 80,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        backgroundColor: '#fff8f0',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
-    },
-    headerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        marginLeft: 15,
     },
 });
 

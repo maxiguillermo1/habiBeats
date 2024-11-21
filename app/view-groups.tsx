@@ -1,14 +1,45 @@
-import React, { useState, useEffect } from 'react';
+// view-group.tsx
+// Jesus Donate & Mariann Grace Dizon
+
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, Alert } from 'react-native';
-import { doc, getDoc, updateDoc, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../context/ThemeContext';
 
+// START of Jesus Donate Contribution
 const ViewGroups = () => {
   const router = useRouter();
   const [groups, setGroups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   useEffect(() => {
     fetchGroups();
@@ -166,13 +197,13 @@ const ViewGroups = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0' }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={isDarkMode ? 'white' : 'black'} />
         </TouchableOpacity>
-        <Text style={styles.title}>Your Groups</Text>
+        <Text style={[styles.title, { color: isDarkMode ? 'white' : 'black' }]}>Your Groups</Text>
       </View>
 
       <FlatList
@@ -180,7 +211,7 @@ const ViewGroups = () => {
         keyExtractor={(item) => item.groupId}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.groupItem}
+            style={[styles.groupItem, { backgroundColor: isDarkMode ? '#2a2a2a' : 'transparent' }]}
             onPress={() => router.push({
               pathname: '/group-message',
               params: {
@@ -194,13 +225,13 @@ const ViewGroups = () => {
               style={styles.groupImage}
             />
             <View style={styles.groupInfo}>
-              <Text style={styles.groupName}>{item.groupName}</Text>
-              <Text style={styles.lastMessage} numberOfLines={1}>
+              <Text style={[styles.groupName, { color: isDarkMode ? 'white' : 'black' }]}>{item.groupName}</Text>
+              <Text style={[styles.lastMessage, { color: isDarkMode ? '#ccc' : '#666' }]} numberOfLines={1}>
                 {item.lastMessage}
               </Text>
             </View>
             <View style={styles.rightContent}>
-              <Text style={styles.timestamp}>
+              <Text style={[styles.timestamp, { color: isDarkMode ? '#999' : '#666' }]}>
                 {item.timestamp?.toDate?.() 
                   ? item.timestamp.toDate().toLocaleDateString() 
                   : new Date(item.timestamp).toLocaleDateString()}
@@ -287,3 +318,4 @@ const styles = StyleSheet.create({
 });
 
 export default ViewGroups;
+// END of Jesus Donate Contribution
