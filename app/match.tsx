@@ -53,6 +53,7 @@ const Match = () => {
   const [showWaitingModal, setShowWaitingModal] = useState(false); // New state for waiting modal
   const [showDislikeModal, setShowDislikeModal] = useState(false); // New state for dislike modal
   const [disposablePhotos, setDisposablePhotos] = useState<Array<{imageUrl: string}>>([]);
+  const [commentedContent, setCommentedContent] = useState<Set<string>>(new Set());
 
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
@@ -871,6 +872,7 @@ const Match = () => {
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       padding: 20,
+      marginTop: -200,
     },
     commentModalContent: {
       backgroundColor: '#fff',
@@ -948,7 +950,12 @@ const Match = () => {
 
   // Function to handle comment submission
   const handleCommentSubmit = () => {
-    console.log('Comment submitted:', commentText);
+    console.log(`Comment submitted for ${currentContentType}:`, commentText); // Log the content type and comment
+    setCommentedContent(prev => {
+      const newSet = new Set(prev);
+      newSet.add(currentContentType); // Use currentContentType
+      return newSet;
+    });
     setShowCommentModal(false);
     setCommentText('');
   };
@@ -970,6 +977,9 @@ const Match = () => {
       return newSet;
     });
   };
+
+  // Add this state definition at the beginning of your component
+  const [currentContentType, setCurrentContentType] = useState<string>('');
 
   // UI rendering
   return (
@@ -1081,10 +1091,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} 
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('musicPreference'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('musicPreference') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1140,10 +1153,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('tuneOfMonth'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('tuneOfMonth') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1200,10 +1216,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('favoriteArtists'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('favoriteArtists') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1260,10 +1279,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('favoriteAlbum'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('favoriteAlbum') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1301,10 +1323,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('favoritePerformance'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('favoritePerformance') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1347,10 +1372,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('prompts'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('prompts') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1404,10 +1432,13 @@ const Match = () => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
-                    onPress={handleCommentPress}
+                    onPress={() => {
+                      setShowCommentModal(true);
+                      setCurrentContentType('myDisposables'); // Set the current content type for commenting
+                    }}
                   >
                     <Ionicons 
-                      name="chatbubble-outline" 
+                      name={commentedContent.has('myDisposables') ? "chatbubble" : "chatbubble-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
