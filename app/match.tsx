@@ -1,5 +1,5 @@
 // match.tsx
-// Mariann Grace Dizon, Reyna Aguirre and Maxwell Guillermo
+// Mariann Grace Dizon & Reyna Aguirre
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType, FlatList, TextInput } from 'react-native';
@@ -415,21 +415,24 @@ const Match = () => {
   // END of Mariann Grace Dizon Contribution
 
   // START of content like handler
-  // START of Maxwell Guillermo  Contribution  
+  // START of Mariann Grace Dizon Contribution  
   const handleContentLike = (contentType: string) => {
     setLikedContent(prev => {
       const newSet = new Set(prev);
       if (newSet.has(contentType)) {
+        console.log(`Unlike button pressed for ${contentType}`); // Log when unliked
         newSet.delete(contentType);
       } else {
+        console.log(`Like button pressed for ${contentType}`); // Log when liked
         newSet.add(contentType);
       }
       return newSet;
     });
   };
   // END of content like handler
-  // END of Maxwell Guillermo Contribution  
+  // END of Mariann Grace Dizon Contribution  
 
+  // START of Mariann Grace Dizon Contribution
   // Add near other useEffect hooks
   useEffect(() => {
     const fetchDisposablePhotos = async () => {
@@ -453,7 +456,9 @@ const Match = () => {
       fetchDisposablePhotos();
     }
   }, [user2]);
+  // END of Mariann Grace Dizon Contribution
 
+  // START of Mariann Grace Dizon Contribution
   // Fetch the user's theme preference
   const [themePreference, setThemePreference] = useState<string>('light');
 
@@ -474,6 +479,7 @@ const Match = () => {
 
     fetchThemePreference();
   }, []);
+  // END of Mariann Grace Dizon Contribution
 
   // Define styles based on theme preference
   const isDarkTheme = themePreference === 'dark';
@@ -678,8 +684,8 @@ const Match = () => {
     },
     contentLikeButton: {
       position: 'absolute',
-      bottom: 5,
-      right: 5,
+      bottom: 3,
+      right: 7,
       padding: 6,
       zIndex: 1,
     },
@@ -855,7 +861,7 @@ const Match = () => {
     contentCommentButton: {
       position: 'absolute',
       bottom: 5,
-      right: 28,
+      right: 40,
       padding: 6,
       zIndex: 1,
     },
@@ -921,8 +927,16 @@ const Match = () => {
       fontWeight: 'bold',
       color: '#fff',
     },
+    contentThumbsUpButton: {
+      position: 'absolute',
+      bottom: 5,
+      right: 75, // Adjust the position to be left of the comment button
+      padding: 6,
+      zIndex: 1,
+    },
   });
 
+  // START of Mariann Grace Dizon Contribution
   // Add new state for comment modal visibility and comment text
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -939,8 +953,25 @@ const Match = () => {
     setCommentText('');
   };
 
+  // Add a new state to track thumbs up status
+  const [thumbsUpContent, setThumbsUpContent] = useState<Set<string>>(new Set());
+
+  // Add a new handler for thumbs up button press
+  const handleThumbsUpPress = (contentType: string) => {
+    setThumbsUpContent(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(contentType)) {
+        console.log(`Thumbs up removed for ${contentType}`); // Log when thumbs up is removed
+        newSet.delete(contentType);
+      } else {
+        console.log(`Thumbs up for ${contentType}`); // Log when thumbs up is added
+        newSet.add(contentType);
+      }
+      return newSet;
+    });
+  };
+
   // UI rendering
-  // Mariann Grace Dizon
   return (
     <SafeAreaView style={dynamicStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -1034,12 +1065,22 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('musicPreference') ? "heart" : "heart-outline"} 
-                      size={18} // Reduced size from 24 to 18
+                      size={20} // Reduced size from 24 to 18
                       color="#fc6c85" 
                     />
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={dynamicStyles.contentCommentButton} // Add a new style for the comment button
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('musicPreference')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('musicPreference') ? "thumbs-up" : "thumbs-up-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentCommentButton} 
                     onPress={handleCommentPress}
                   >
                     <Ionicons 
@@ -1083,6 +1124,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('tuneOfMonth') ? "heart" : "heart-outline"} 
+                      size={20} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('tuneOfMonth')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('tuneOfMonth') ? "thumbs-up" : "thumbs-up-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1133,6 +1184,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('favoriteArtists') ? "heart" : "heart-outline"} 
+                      size={20} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('favoriteArtists')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('favoriteArtists') ? "thumbs-up" : "thumbs-up-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1183,6 +1244,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('favoriteAlbum') ? "heart" : "heart-outline"} 
+                      size={20} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('favoriteAlbum')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('favoriteAlbum') ? "thumbs-up" : "thumbs-up-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1214,6 +1285,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('favoritePerformance') ? "heart" : "heart-outline"} 
+                      size={20} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('favoritePerformance')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('favoritePerformance') ? "thumbs-up" : "thumbs-up-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1250,6 +1331,16 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('prompts') ? "heart" : "heart-outline"} 
+                      size={20} 
+                      color="#fc6c85" 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('prompts')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('prompts') ? "thumbs-up" : "thumbs-up-outline"} 
                       size={18} 
                       color="#fc6c85" 
                     />
@@ -1297,8 +1388,18 @@ const Match = () => {
                   >
                     <Ionicons
                       name={likedContent.has('myDisposables') ? "heart" : "heart-outline"}
-                      size={18}
+                      size={20}
                       color="#fc6c85"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={dynamicStyles.contentThumbsUpButton}
+                    onPress={() => handleThumbsUpPress('myDisposables')}
+                  >
+                    <Ionicons 
+                      name={thumbsUpContent.has('myDisposables') ? "thumbs-up" : "thumbs-up-outline"} 
+                      size={18} 
+                      color="#fc6c85" 
                     />
                   </TouchableOpacity>
                   <TouchableOpacity 
@@ -1478,8 +1579,8 @@ const Match = () => {
     </SafeAreaView>
   );
 };
-// END of Mariann Grace Dizon Contribution
 // END of UI rendering
+// END of Mariann Grace Dizon Contribution
 
 // Helper functions
 const getBorderColor = (gender: string) => {
