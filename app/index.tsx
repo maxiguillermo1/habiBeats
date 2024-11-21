@@ -10,7 +10,7 @@ import { useRouter } from "expo-router"; // Importing useRouter from expo-router
 export default function Index() {
   const router = useRouter(); // Using useRouter hook to get the router instance
   // Add theme context
-  const { theme, currentTheme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const isDarkMode = theme === 'dark';
 
   const navigateTo = (route: string) => {

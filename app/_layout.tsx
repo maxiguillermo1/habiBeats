@@ -29,6 +29,8 @@ export default function RootLayout() {
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       {/* Define the discography screen with no header */}
       <Stack.Screen name="discography" options={{ headerShown: false }} />
+      {/* Define the messages screen with no header */}
+      <Stack.Screen name="messages" options={{ headerShown: false }} />
       {/* Define the email notifications screen with no header */}
       <Stack.Screen name="settings/email-notifications" options={{ headerShown: false }} />
       {/* Define the push notifications screen with no header */}

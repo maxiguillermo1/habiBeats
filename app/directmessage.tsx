@@ -1,7 +1,7 @@
 // directmessage.tsx
 // Jesus Donate & Mariann Grace Dizon
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
@@ -13,6 +13,7 @@ import { Alert } from 'react-native';
 import { censorMessage } from './settings/hidden-words';
 import { useAuth } from '../hooks/useAuth';
 import { sendPushNotification } from '../scripts/pushNotification';
+import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
 
 // Define the message structure
 interface Message {
@@ -36,6 +37,30 @@ const DirectMessageScreen = () => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
 
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+
     // Fetch hidden words from current user
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -43,9 +68,10 @@ const DirectMessageScreen = () => {
         const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
             setUserHiddenWords(docSnapshot.data()?.hiddenWords || []);
         });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
     }, []);
 
-    // START of Jesus Donate Contribution
     // Fetches the messages from the database
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -78,13 +104,11 @@ const DirectMessageScreen = () => {
         });
 
         return () => unsubscribe();
-    }, [recipientId]);
-    // END of Jesus Donate Contribution
+    }, [recipientId, profileImageUrl]);
 
-    // START of Jesus Donate Contribution
     // Sends a message to the recipient
     const sendMessage = async () => {
-        const message = newMessage
+        const message = newMessage;
         setNewMessage('');
 
         if (message.trim() === '' || !auth.currentUser) return;
@@ -143,9 +167,7 @@ const DirectMessageScreen = () => {
             }
         }
     };
-    // END of Jesus Donate Contribution
 
-    // START of Jesus Donate Contribution
     // Updates the conversationIds of the users in the database
     const updateUsersConversationIds = async (userId1: string, userId2: string, conversationId: string) => {
         const updateUser = async (userId: string, otherUserId: string) => {
@@ -172,9 +194,7 @@ const DirectMessageScreen = () => {
             updateUser(userId2, userId1)
         ]);
     };
-    // END of Jesus Donate Contribution
 
-    // START of Jesus Donate Contribution
     // When the user long presses on a message, the delete modal is shown
     const handleLongPress = (message: Message) => {
         if (message.senderId === auth.currentUser?.uid) {
@@ -182,9 +202,7 @@ const DirectMessageScreen = () => {
             setIsDeleteModalVisible(true);
         }
     };
-    // END of Jesus Donate Contribution
 
-    // START of Jesus Donate Contribution
     // Deletes a message from the conversation sent by the current user
     const handleDeleteMessage = async () => {
         if (!selectedMessage || !auth.currentUser) return;
@@ -228,9 +246,7 @@ const DirectMessageScreen = () => {
             Alert.alert("Error", "Failed to delete message. Please try again.");
         }
     };
-    // END of Jesus Donate Contribution
 
-    // START of Jesus Donate Contribution
     // Scrolls to the bottom of the flatlist
     const scrollToBottom = () => {
         if (flatListRef.current && messages.length > 0) {
@@ -241,42 +257,38 @@ const DirectMessageScreen = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-    // END of Jesus Donate Contribution
 
-    // START of Jesus Donate Contribution
     // Loading screen rendered while the conversation is loading
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
                 <Stack.Screen options={{ headerShown: false }} />
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#007AFF" />
-                    <Text style={styles.loadingText}>Loading conversation...</Text>
+                <View style={[styles.loadingContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
+                    <ActivityIndicator size="large" color={isDarkMode ? '#ffffff' : '#007AFF'} />
+                    <Text style={[styles.loadingText, { color: isDarkMode ? '#ffffff' : '#333' }]}>Loading conversation...</Text>
                 </View>
             </SafeAreaView>
         );
     }
-    // END of Jesus Donate Contribution
 
-    // START of rendering the DirectMessageScreen component
-    // START of Mariann Grace Dizon Contribution and Jesus Donate
+    // Rendering the DirectMessageScreen component
     return (
-        <View style={styles.container}>
-            <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
+            <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
                 <Stack.Screen 
                     options={{ 
                         headerShown: false,
-                        contentStyle: { backgroundColor: '#FFF8F0' }
+                        contentStyle: { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }
                     }} 
                 />
                 
                 {/* Header */}
-                <View style={styles.header}>
+                <View style={[styles.header, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
                     <TouchableOpacity 
                         onPress={() => navigation.goBack()} 
                         style={styles.backButton}
                     >
-                        <Ionicons name="chevron-back" size={18} color="black" />
+                        <Ionicons name="chevron-back" size={18} color={isDarkMode ? 'white' : 'black'} />
                     </TouchableOpacity>
                     
                     <View style={styles.profileHeader}>
@@ -284,7 +296,7 @@ const DirectMessageScreen = () => {
                             source={{ uri: profileImageUrl || 'https://via.placeholder.com/80' }} 
                             style={styles.headerProfileImage} 
                         />
-                        <Text style={styles.headerName}>{recipientName}</Text>
+                        <Text style={[styles.headerName, { color: isDarkMode ? 'white' : 'black' }]}>{recipientName}</Text>
                     </View>
                 </View>
 
@@ -307,9 +319,10 @@ const DirectMessageScreen = () => {
                                 )}
                                 <View style={[
                                     styles.messageBubble,
-                                    item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage
+                                    item.senderId === auth.currentUser?.uid ? styles.sentMessage : styles.receivedMessage,
+                                    { backgroundColor: isDarkMode ? '#3a3a3a' : '#F0F0F0' }
                                 ]}>
-                                    <Text style={styles.messageText}>
+                                    <Text style={[styles.messageText, { color: isDarkMode ? 'white' : 'black' }]}>
                                         {item.senderId === auth.currentUser?.uid 
                                             ? item.message 
                                             : censorMessage(item.message, userHiddenWords)}
@@ -326,13 +339,13 @@ const DirectMessageScreen = () => {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={90}
                 >
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFFFFF', color: isDarkMode ? 'white' : 'black' }]}
                             value={newMessage}
                             onChangeText={setNewMessage}
                             placeholder="Send a message"
-                            placeholderTextColor="#666"
+                            placeholderTextColor={isDarkMode ? '#999' : '#666'}
                             onSubmitEditing={sendMessage}
                             returnKeyType="send"
                             multiline={false}
@@ -347,9 +360,9 @@ const DirectMessageScreen = () => {
                     onRequestClose={() => setIsDeleteModalVisible(false)}
                 >
                     <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Delete Message</Text>
-                            <Text style={styles.modalText}>Are you sure you want to delete this message?</Text>
+                        <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#2d3235' : 'white' }]}>
+                            <Text style={[styles.modalTitle, { color: isDarkMode ? 'white' : 'black' }]}>Delete Message</Text>
+                            <Text style={[styles.modalText, { color: isDarkMode ? 'white' : 'black' }]}>Are you sure you want to delete this message?</Text>
                             <View style={styles.modalButtons}>
                                 <TouchableOpacity
                                     style={[styles.modalButton, styles.cancelButton]}
@@ -370,11 +383,8 @@ const DirectMessageScreen = () => {
             </SafeAreaView>
         </View>
     );
-    // END of rendering the DirectMessageScreen component
-    // END of Mariann Grace Dizon Contribution and Jesus Donate
 };
 
-// START of Mariann Grace Dizon Contribution
 // Define the styles for the DirectMessageScreen
 const styles = StyleSheet.create({
     container: {
@@ -589,5 +599,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default DirectMessageScreen; // Export the DirectMessageScreen component
-// END of Mariann Grace Dizon Contribution
+export default DirectMessageScreen;

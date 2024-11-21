@@ -1,16 +1,17 @@
 // messages.tsx
 // Jesus Donate
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { doc, getDoc, Timestamp, deleteDoc, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, Timestamp, deleteDoc, updateDoc, deleteField, DocumentSnapshot, DocumentData, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Menu, Provider } from 'react-native-paper';
 import { censorMessage } from './settings/hidden-words';
+import { ThemeContext } from '../context/ThemeContext'; // Import ThemeContext
 
 // Define structure for conversation data
 interface Conversation {
@@ -40,11 +41,33 @@ const Messages = () => {
   const [groupMenuVisible, setGroupMenuVisible] = useState(false);
   const [groupConversations, setGroupConversations] = useState([]);
   const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
-
   const params = useLocalSearchParams();
 
-  useEffect(() => {
+      // Use theme context
+      const { theme, toggleTheme } = useContext(ThemeContext);
+      const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+  
+      // Update dark mode state when theme changes
+      useEffect(() => {
+          setIsDarkMode(theme === 'dark');
+      }, [theme]);
+  
+      // Fetch user's theme preference from Firebase
+      useEffect(() => {
+          if (!auth.currentUser) return;
+          const userDoc = doc(db, 'users', auth.currentUser.uid);
+          const unsubscribe = onSnapshot(userDoc, (docSnapshot: DocumentSnapshot<DocumentData>) => {
+              const userData = docSnapshot.data();
+              
+              // Ensure userData is defined before accessing themePreference
+              const userTheme = userData?.themePreference || 'light';
+              setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+          });
+  
+          return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+      }, [auth.currentUser]);
 
+  useEffect(() => {
     // This if statement checks if we need to redirect to group-message after creating a group
     if (params.redirectTo === 'group-message' && params.groupId && params.groupName) {
       // Store the params we need
@@ -332,9 +355,8 @@ const Messages = () => {
       
       const userRef = doc(db, 'users', auth.currentUser.uid);
       const userDoc = await getDoc(userRef);
-      
-      if (userDoc.exists() && userDoc.data().hiddenWords) {
-        setUserHiddenWords(userDoc.data().hiddenWords);
+      if (userDoc.exists()) {
+        setUserHiddenWords(userDoc.data().hiddenWords || []);
       }
     };
 
@@ -343,132 +365,119 @@ const Messages = () => {
 
   return (
     <Provider>
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0' }]}>
         <ScrollView style={styles.scrollView}>
-          <View style={styles.contentContainer}>
-            <View style={styles.contentContainer}>
-              <View style={styles.headerRow}>
-                <Text style={styles.title}>Recent Messages</Text>
-                <Menu
-                  visible={groupMenuVisible}
-                  onDismiss={() => setGroupMenuVisible(false)}
-                  anchor={
-                    <TouchableOpacity 
-                      onPress={() => setGroupMenuVisible(true)}
-                      style={styles.menuButton}
-                    >
-                      <Ionicons name="people" size={24} color="#fba904" />
-                    </TouchableOpacity>
+          <View style={styles.header}>
+            <Menu
+              visible={groupMenuVisible}
+              onDismiss={() => setGroupMenuVisible(false)}
+              anchor={
+                <TouchableOpacity onPress={() => setGroupMenuVisible(true)} style={styles.menuButton}>
+                  <Ionicons name="people" size={24} color={isDarkMode ? '#fba904' : '#fba904'} />
+                </TouchableOpacity>
+              }
+              contentStyle={[styles.menuContent, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0' }]}
+            >
+              <Menu.Item 
+                onPress={() => {
+                  setGroupMenuVisible(false);
+                  router.push('/create-group');
+                }} 
+                title="Create Group"
+                titleStyle={[styles.menuItemText, { color: isDarkMode ? 'white' : '#666' }]}
+              />
+              <Menu.Item 
+                onPress={() => {
+                  setGroupMenuVisible(false);
+                  router.push('/view-groups');
+                }} 
+                title="View Groups"
+                titleStyle={[styles.menuItemText, { color: isDarkMode ? 'white' : '#666' }]}
+              />
+            </Menu>
+          </View>
+          {isLoadingConversations ? (
+            <ActivityIndicator size="large" color="#fba904" />
+          ) : (
+            <>
+              {[...conversations, ...groupConversations]
+                .filter((conv: any) => {
+                  // For direct messages
+                  if (conv.recipientId) {
+                    return conv.lastMessage && conv.lastMessage.trim() !== '';
                   }
-                  contentStyle={styles.menuContent}
-                >
-                  <Menu.Item 
+                  // For group messages
+                  return conv.lastMessage && conv.lastMessage !== 'No messages yet';
+                })
+                .sort((a: any, b: any) => {
+                  const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
+                  const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
+                  return timeB.getTime() - timeA.getTime();
+                })
+                .map((conv: any) => (
+                  <TouchableOpacity 
+                    key={conv.groupId || conv.recipientId} 
+                    style={[styles.messageItem, styles.messageBox, { backgroundColor: isDarkMode ? '#2a2a2a' : 'transparent' }]}
                     onPress={() => {
-                      setGroupMenuVisible(false);
-                      router.push('/create-group');
-                    }} 
-                    title="Create Group"
-                    titleStyle={styles.menuItemText}
-                  />
-                  <Menu.Item 
-                    onPress={() => {
-                      setGroupMenuVisible(false);
-                      router.push('/view-groups');
-                    }} 
-                    title="View Groups"
-                    titleStyle={styles.menuItemText}
-                  />
-                </Menu>
-              </View>
-              {isLoadingConversations ? (
-                <ActivityIndicator size="large" color="#fba904" />
-              ) : (
-                <>
-                  {[...conversations, ...groupConversations]
-                    .filter((conv: any) => {
-                      // For direct messages
-                      if (conv.recipientId) {
-                        return conv.lastMessage && conv.lastMessage.trim() !== '';
-                      }
-                      // For group messages
-                      return conv.lastMessage && conv.lastMessage !== 'No messages yet';
-                    })
-                    .sort((a: any, b: any) => {
-                      const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp);
-                      const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp);
-                      return timeB.getTime() - timeA.getTime();
-                    })
-                    .map((conv: any) => (
-                      <TouchableOpacity 
-                        key={conv.groupId || conv.recipientId} 
-                        style={[styles.messageItem, styles.messageBox]}
-                        onPress={() => {
-                          if (conv.groupId) {
-                            router.push({
-                              pathname: '/group-message',
-                              params: {
-                                groupId: conv.groupId,
-                                groupName: conv.groupName
-                              }
-                            });
-                          } else {
-                            navigateToDirectMessage(conv.recipientId, conv.friendName);
+                      if (conv.groupId) {
+                        router.push({
+                          pathname: '/group-message',
+                          params: {
+                            groupId: conv.groupId,
+                            groupName: conv.groupName
                           }
-                        }}
-                        onLongPress={() => handleLongPress(conv)}
-                        delayLongPress={500}
-                      >
-                        <Image 
-                          source={{ 
-                            uri: conv.groupId ? conv.groupImage : conv.profileImageUrl || 'https://via.placeholder.com/50'
-                          }} 
-                          style={styles.avatar} 
-                        />
-                        <View style={styles.messageContent}>
-                          <Text style={styles.name}>{conv.groupId ? conv.groupName : conv.friendName}</Text>
-                          <Text style={styles.lastMessage} numberOfLines={1}>
-                            {conv.senderId === auth.currentUser?.uid 
-                              ? conv.lastMessage 
-                              : censorMessage(conv.lastMessage, userHiddenWords)}
-                          </Text>
-                        </View>
-                        <Text style={styles.timeText}>
-                          {getTimeAgo(conv.timestamp)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                </>
-              )}
-            </View>
-
-           
-            
-            <View style={styles.largeSpacer} />
-
-            <View style={styles.contentContainer}>
-              <Text style={styles.title}>Send your first message!</Text>
-              {isLoadingMatches ? (
-                <ActivityIndicator size="large" color="#fba904" />
-              ) : newMatches.length > 0 ? (
-                <View style={styles.newMatchesContainer}>
-                  {newMatches.map((match) => (
-                    <TouchableOpacity 
-                      key={match.userId} 
-                      style={styles.newMatchItem}
-                      onPress={() => navigateToDirectMessage(match.userId, match.name)}
-                    >
-                      <View style={styles.matchContent}>
-                        <Image source={{ uri: match.profileImageUrl }} style={styles.matchAvatar} />
-                        <Text style={styles.matchName}>{match.name}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.noMatchesText}>No new matches</Text>
-              )}
-            </View>
+                        });
+                      } else {
+                        navigateToDirectMessage(conv.recipientId, conv.friendName);
+                      }
+                    }}
+                    onLongPress={() => handleLongPress(conv)}
+                    delayLongPress={500}
+                  >
+                    <Image 
+                      source={{ 
+                        uri: conv.groupId ? conv.groupImage : conv.profileImageUrl || 'https://via.placeholder.com/50'
+                      }} 
+                      style={styles.avatar} 
+                    />
+                    <View style={styles.messageContent}>
+                      <Text style={[styles.name, { color: isDarkMode ? 'white' : 'black' }]}>{conv.groupId ? conv.groupName : conv.friendName}</Text>
+                      <Text style={[styles.lastMessage, { color: isDarkMode ? '#ccc' : '#666' }]} numberOfLines={1}>
+                        {conv.senderId === auth.currentUser?.uid 
+                          ? conv.lastMessage 
+                          : censorMessage(conv.lastMessage, userHiddenWords)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.timeText, { color: isDarkMode ? '#999' : '#999' }]}>
+                      {getTimeAgo(conv.timestamp)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </>
+          )}
+          <View style={styles.largeSpacer} />
+          <View style={styles.contentContainer}>
+            <Text style={[styles.title, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Send your first message!</Text>
+            {isLoadingMatches ? (
+              <ActivityIndicator size="large" color="#fba904" />
+            ) : newMatches.length > 0 ? (
+              <View style={styles.newMatchesContainer}>
+                {newMatches.map((match) => (
+                  <TouchableOpacity 
+                    key={match.userId} 
+                    style={styles.newMatchItem}
+                    onPress={() => navigateToDirectMessage(match.userId, match.name)}
+                  >
+                    <View style={styles.matchContent}>
+                      <Image source={{ uri: match.profileImageUrl }} style={styles.matchAvatar} />
+                      <Text style={[styles.matchName, { color: isDarkMode ? 'white' : 'black' }]}>{match.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.noMatchesText, { color: isDarkMode ? '#ccc' : '#666' }]}>No new matches</Text>
+            )}
           </View>
         </ScrollView>
         <BottomNavBar />
@@ -479,9 +488,9 @@ const Messages = () => {
         >
           {/* Modal for deleting a conversation */}
           <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Delete Conversation</Text>
-              <Text style={styles.modalText}>Are you sure you want to delete this conversation?</Text>
+            <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#2d3235' : 'white' }]}>
+              <Text style={[styles.modalTitle, { color: isDarkMode ? 'white' : 'black' }]}>Delete Conversation</Text>
+              <Text style={[styles.modalText, { color: isDarkMode ? 'white' : 'black' }]}>Are you sure you want to delete this conversation?</Text>
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
@@ -503,7 +512,6 @@ const Messages = () => {
     </Provider>
   );
 };
-  // END of Messages component rendering
 
 // Define styles for the Messages component
 const styles = StyleSheet.create({
