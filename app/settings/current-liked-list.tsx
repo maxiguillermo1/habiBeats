@@ -2,7 +2,7 @@
 // shows current matches while allowing users to block and report the users on this page
 // Reyna Aguirre
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
@@ -206,6 +206,9 @@ const MatchesList: React.FC = () => {
     const data = activeTab === 'Liked' ? likedMatches : dislikedMatches;
     const imageStyle = activeTab === 'Liked' ? styles.profileLikedImage : styles.profileDislikedImage;
     const emptyMessage = activeTab === 'Liked' ? 'No liked profiles!' : 'No disliked profiles!';
+    
+    // Use a reliable default avatar URL
+    const defaultImageUrl = 'https://ui-avatars.com/api/?name=User&background=random';
 
     if (data.length === 0) {
       return (
@@ -220,9 +223,16 @@ const MatchesList: React.FC = () => {
         <FlatList
           data={data}
           keyExtractor={(item) => item.uid}
+          contentContainerStyle={styles.content}
           renderItem={({ item }) => (
             <View style={styles.matchItem}>
-              <Image source={{ uri: item.profileImageUrl }} style={imageStyle} />
+              <Image 
+                source={{ 
+                  uri: item.profileImageUrl || defaultImageUrl,
+                  cache: 'force-cache' // Add caching to improve performance
+                }} 
+                style={imageStyle}
+              />
               <Text style={styles.displayName}>{item.displayName}</Text>
               <TouchableOpacity onPress={() => handleBlockUser(item.uid)} style={styles.blockIcon}>
                 <Ionicons name="remove-circle" size={23} color="rgba(222, 60, 60, 0.8)" />
@@ -256,9 +266,7 @@ const MatchesList: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {renderContent()}
-      </ScrollView>
+      {renderContent()}
     </SafeAreaView>
   );
 };
