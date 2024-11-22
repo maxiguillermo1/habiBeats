@@ -1,7 +1,7 @@
 // selfie-verification.tsx
 // START of Maxwell Guillermo Contribution
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView, ActivityIndicator } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Stack } from 'expo-router';
@@ -9,8 +9,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { storage, auth, db } from '../../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
+import { ThemeContext } from '../../context/ThemeContext';
 
 const SelfieVerification = () => {
   // State variables to manage the verification flow
@@ -26,6 +27,32 @@ const SelfieVerification = () => {
                                        // 3: second selfie capture
                                        // 4: processing verification
   const navigation = useNavigation();
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   // Request camera permissions on component mount
   useEffect(() => {
@@ -98,12 +125,12 @@ const SelfieVerification = () => {
       case 1:  // Intro screen with instructions
         return (
           <View style={styles.introContainer}>
-            <Text style={styles.title}>Verify Your Profile</Text>
-            <Text style={styles.description}>
+            <Text style={[styles.title, isDarkMode && styles.darkTitle]}>Verify Your Profile</Text>
+            <Text style={[styles.description, isDarkMode && styles.darkDescription]}>
               Take two selfies to verify your identity and get a verified badge on your profile.
             </Text>
             <TouchableOpacity 
-              style={styles.button}
+              style={[styles.button, isDarkMode && styles.darkButton]}
               onPress={() => setStep(2)}
             >
               <Text style={styles.buttonText}>Start Verification</Text>
@@ -121,11 +148,11 @@ const SelfieVerification = () => {
               ref={(ref) => setCamera(ref)}
             >
               <View style={styles.cameraContent}>
-                <Text style={styles.cameraText}>
+                <Text style={[styles.cameraText, isDarkMode && styles.darkCameraText]}>
                   {step === 2 ? 'Take your first selfie' : 'Take your second selfie'}
                 </Text>
                 <TouchableOpacity 
-                  style={styles.captureButton}
+                  style={[styles.captureButton, isDarkMode && styles.darkCaptureButton]}
                   onPress={takePicture}
                 >
                   <Ionicons name="camera" size={30} color="#fff" />
@@ -138,8 +165,8 @@ const SelfieVerification = () => {
       case 4:  // Processing screen
         return (
           <View style={styles.processingContainer}>
-            <ActivityIndicator size="large" color="#fba904" />
-            <Text style={styles.processingText}>Processing verification...</Text>
+            <ActivityIndicator size="large" color={isDarkMode ? '#bb86fc' : '#fba904'} />
+            <Text style={[styles.processingText, isDarkMode && styles.darkProcessingText]}>Processing verification...</Text>
           </View>
         );
     }
@@ -149,8 +176,8 @@ const SelfieVerification = () => {
   if (!permission) {
     // Show loading while checking permissions
     return (
-      <View style={styles.container}>
-        <Text>Requesting camera permission...</Text>
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+        <Text style={[styles.description, isDarkMode && styles.darkDescription]}>Requesting camera permission...</Text>
       </View>
     );
   }
@@ -158,12 +185,12 @@ const SelfieVerification = () => {
   if (!permission.granted) {
     // Show permission request screen
     return (
-      <View style={styles.container}>
-        <Text style={styles.description}>
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+        <Text style={[styles.description, isDarkMode && styles.darkDescription]}>
           We need your permission to use the camera
         </Text>
         <TouchableOpacity 
-          style={styles.button}
+          style={[styles.button, isDarkMode && styles.darkButton]}
           onPress={requestPermission}
         >
           <Text style={styles.buttonText}>Grant Permission</Text>
@@ -173,13 +200,13 @@ const SelfieVerification = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
       <Stack.Screen options={{ headerShown: false }} />
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Text style={styles.backButtonText}>back</Text>
+        <Text style={[styles.backButtonText, isDarkMode && styles.darkBackButtonText]}>back</Text>
       </TouchableOpacity>
       {renderContent()}
     </SafeAreaView>
@@ -190,6 +217,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
+  },
+  darkContainer: {
+    backgroundColor: '#1a1a1a',
   },
   backButton: {
     position: 'absolute',
@@ -268,6 +298,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  toggleButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#fba904',
+    padding: 10,
+    borderRadius: 5,
+  },
+  toggleButtonText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  darkBackButtonText: {
+    color: '#fba904',
+  },
+  darkTitle: {
+    color: '#fff',
+  },
+  darkDescription: {
+    color: '#ccc',
+  },
+  darkProcessingText: {
+    color: '#ccc'
+  },
+  darkButton: {
+    backgroundColor: '#fba904'
+  },
+  darkCaptureButton: {
+    backgroundColor: '#fba904'
+  },
+  darkCameraText: {
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10
+  }
 });
 
 export default SelfieVerification;

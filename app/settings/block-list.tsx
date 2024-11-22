@@ -1,11 +1,12 @@
 // block-list.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, FlatList, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { app, auth } from '../../firebaseConfig';
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { db, app, auth } from '../../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { ThemeContext } from '../../context/ThemeContext';
 
 type RootStackParamList = {
   Settings: undefined;
@@ -26,6 +27,32 @@ interface UserMatch {
 }
 
 const BlockList = () => {
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
+    
   const navigation = useNavigation<BlockListScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<'Reported' | 'Blocked'>('Blocked');
   const [blockedMatches, setBlockedMatches] = useState<UserMatch[]>([]);
@@ -181,11 +208,113 @@ const BlockList = () => {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#1a1a1a' : '#fff8f0',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      backgroundColor: isDarkMode ? '#1a1a1a' : '#fff',
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: isDarkMode ? '#ffffff' : '#000000',
+    },
+    headerRight: {
+      width: 24,
+    },
+    tabsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: '#e0e0e0',
+      paddingVertical: 10,
+      marginBottom: 20,
+    },
+    activeTab: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isDarkMode ? '#bb86fc' : '#37bdd5',
+      borderBottomWidth: 2,
+      borderBottomColor: isDarkMode ? '#bb86fc' : '#37bdd5',
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      marginHorizontal: 20,
+    },
+    inactiveTab: {
+      fontSize: 16,
+      color: isDarkMode ? '#888' : '#888',
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      marginHorizontal: 20,
+    },
+    content: {
+      flexGrow: 1,
+      paddingHorizontal: 40,
+    },
+    matchItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: '#ddd',
+    },
+    profileImage: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      marginRight: 15,
+    },
+    displayName: {
+      fontSize: 16,
+      fontWeight: '600',
+      flex: 1,
+    },
+    blockIcon: {
+      paddingHorizontal: 10,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyMessage: {
+      fontSize: 16,
+      color: isDarkMode ? '#888' : '#888',
+      textAlign: 'center',
+    },
+    footer: {
+      paddingHorizontal: 30,
+      paddingBottom: 30,
+      textAlign: 'center',
+      color: isDarkMode ? '#888' : '#888',
+      fontSize: 12,
+    },
+    learnMore: {
+      color: isDarkMode ? '#bb86fc' : '#37bdd5',
+    },
+    userInfo: {
+      flex: 1,
+      marginRight: 10,
+    },
+    reportReason: {
+      fontSize: 12,
+      color: '#666',
+      marginTop: 4,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress}>
-          <Ionicons name="chevron-back" size={24} color="black" />
+          <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Block List</Text>
         <View style={styles.headerRight} />
@@ -210,105 +339,5 @@ const BlockList = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff8f0',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerRight: {
-    width: 24,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingVertical: 10,
-    marginBottom: 20,
-  },
-  activeTab: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#37bdd5',
-    borderBottomWidth: 2,
-    borderBottomColor: '#37bdd5',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 20,
-  },
-  inactiveTab: {
-    fontSize: 16,
-    color: '#888',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 20,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 40,
-  },
-  matchItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  displayName: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-  },
-  blockIcon: {
-    paddingHorizontal: 10,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyMessage: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-  },
-  footer: {
-    paddingHorizontal: 30,
-    paddingBottom: 30,
-    textAlign: 'center',
-    color: '#888',
-    fontSize: 12,
-  },
-  learnMore: {
-    color: '#37bdd5',
-  },
-  userInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  reportReason: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-});
 
 export default BlockList;

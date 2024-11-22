@@ -1,11 +1,41 @@
-import { getFirestore, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, getDoc, onSnapshot  } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function PauseNewInteraction() {
   const [isPaused, setIsPaused] = useState(false);
   const db = getFirestore(app);
+  const navigation = useNavigation();
+
+    // START of Mariann Grace Dizon Contribution
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
+    const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
+
+    // Update dark mode state when theme changes
+    useEffect(() => {
+        setIsDarkMode(theme === 'dark');
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
+        const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+            const userData = docSnapshot.data();
+            
+            // Ensure userData is defined before accessing themePreference
+            const userTheme = userData?.themePreference || 'light';
+            setIsDarkMode(userTheme === 'dark'); // Set isDarkMode based on themePreference
+        });
+
+        return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+    // END of Mariann Grace Dizon Contribution
 
   // Fetch initial pause status
   useEffect(() => {
@@ -40,19 +70,23 @@ export default function PauseNewInteraction() {
       console.error('Error updating pause status:', error);
     }
   };
-
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkMode && styles.darkContainer]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.contentWrapper}>
-          <Text style={styles.title}>
-            Pause New Matches
-          </Text>
-          <Text style={styles.description}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
+            </TouchableOpacity>
+            <Text style={[styles.title, isDarkMode && styles.darkText]}>
+              Pause New Matches
+            </Text>
+          </View>
+          <Text style={[styles.description, isDarkMode && styles.darkText]}>
             would you like to temporarily pause being shown to other users?
           </Text>
           <View style={styles.statusWrapper}>
-            <Text style={styles.statusText}>current status of account: </Text>
+            <Text style={[styles.statusText, isDarkMode && styles.darkText]}>current status of account: </Text>
             <Text style={[
               styles.statusValue, 
               { color: isPaused ? '#de3c3c' : '#79ce54' }
@@ -60,13 +94,13 @@ export default function PauseNewInteraction() {
               {isPaused ? 'Paused' : 'Active'}
             </Text>
           </View>
-          <Text style={styles.subtitle}>paused example: </Text>
+          <Text style={[styles.subtitle, isDarkMode && styles.darkSubtitle]}>paused example: </Text>
           <Image 
             source={require('../../assets/images/IMG_9331.jpg')} 
             style={styles.statusImage}
           />
 
-          <Text style={styles.subtitle}>active example: </Text>
+          <Text style={[styles.subtitle, isDarkMode && styles.darkSubtitle]}>active example: </Text>
             <Image 
                 source={require('../../assets/images/IMG_9332.jpg')} 
                 style={styles.statusImage}
@@ -74,7 +108,7 @@ export default function PauseNewInteraction() {
         </View>
       </ScrollView>
 
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, isDarkMode && styles.darkContainer]}>
         <TouchableOpacity
           onPress={togglePauseStatus}
           style={[
@@ -94,17 +128,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff8f0',
   },
+  darkContainer: {
+    backgroundColor: '#1a1a1a',
+  },
   contentWrapper: {
     flexDirection: 'column',
     gap: 8,
   },
-  title: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 80,
+    marginHorizontal: 20,
+    paddingRight: 65,
+  },
+  backButton: {
+    marginRight: 40,
+    padding: 1,
+  },
+  title: {
     fontSize: 18,
     fontWeight: 'bold',
     margin: 20,
     color: '#0e1514',
     textAlign: 'center',
+  },
+  darkText: {
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 12,
@@ -113,6 +164,9 @@ const styles = StyleSheet.create({
     color: '#7d7d7d',
     textAlign: 'left',
     marginTop: 30,
+  },
+  darkSubtitle: {
+    color: '#888888',
   },
   description: {
     fontSize: 14,
@@ -152,7 +206,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 120, // Add padding to prevent content from being hidden behind button
+    paddingBottom: 120,
   },
   statusImage: {
     width: '80%',
@@ -165,7 +219,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginHorizontal: 'auto',
     padding: 40,
-
   },
   buttonContainer: {
     position: 'absolute',
@@ -175,6 +228,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff8f0',
     paddingVertical: 20,
     paddingHorizontal: 20,
-
   }
 });

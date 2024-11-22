@@ -3,15 +3,17 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, TouchableOpacity, SafeAreaView, RefreshControl } from 'react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useContext } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getSpotifyRecommendations, getSpotifyRelatedArtists } from '@/api/spotify-api';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
+import { auth } from '../firebaseConfig';
+import { DocumentSnapshot } from 'firebase/firestore';
 
 // Type definitions for data structures
 interface Artist {
@@ -48,14 +50,34 @@ export default function Discography() {
   const { user, userData } = useAuth();
   const navigation = useNavigation();
 
-  // Update theme preference based on user data
-  useEffect(() => {
-    if (userData?.themePreference) {
-      setThemePreference(userData.themePreference);
-    }
-  }, [userData]);
+    // Use theme context
+    const { theme, toggleTheme } = useContext(ThemeContext);
 
-  // Define styles based on theme preference
+    // Update themePreference state when theme changes
+    useEffect(() => {
+      if (theme === 'light' || theme === 'dark') {
+        setThemePreference(theme);
+      } else {
+        console.warn(`Unexpected theme value: ${theme}`);
+      }
+    }, [theme]);
+
+    // Fetch user's theme preference from Firebase
+    useEffect(() => {
+      if (!auth.currentUser) return;
+      const userDoc = doc(db, 'users', auth.currentUser.uid);
+      const unsubscribe = onSnapshot(userDoc, (docSnapshot: DocumentSnapshot) => {
+        const userData = docSnapshot.data();
+        
+        // Ensure userData is defined before accessing themePreference
+        const userTheme = userData?.themePreference || 'light';
+        setThemePreference(userTheme); // Set themePreference based on user's preference
+      });
+
+      return () => unsubscribe(); // Ensure unsubscribe is returned to clean up the listener
+    }, [auth.currentUser]);
+
+  // Define styles based on themePreference
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -358,9 +380,11 @@ export default function Discography() {
   // Loading state UI
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.loadingText}>Loading recommendations...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: themePreference === 'dark' ? '#121212' : '#fff8f0' }]}>
+        <ActivityIndicator size="large" color={themePreference === 'dark' ? '#37bdd5' : '#0000ff'} />
+        <Text style={[styles.loadingText, { color: themePreference === 'dark' ? '#bbbbbb' : '#666666' }]}>
+          Loading recommendations...
+        </Text>
       </View>
     );
   }
@@ -368,14 +392,22 @@ export default function Discography() {
   // Authentication check UI
   if (!user || !userData) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.headerContainer}>
+      <SafeAreaView style={[styles.container, { backgroundColor: themePreference === 'dark' ? '#121212' : '#fff8f0' }]}>
+        <View style={[styles.headerContainer, { backgroundColor: themePreference === 'dark' ? '#121212' : '#fff8f0' }]}>
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons 
+              name="arrow-back" 
+              size={24} 
+              color={themePreference === 'dark' ? '#ffffff' : '#000000'} 
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Please log in to view recommendations</Text>
+          <Text style={[styles.errorText, {
+            color: themePreference === 'dark' ? '#ff6b6b' : '#dc3545'
+          }]}>
+            Please log in to view recommendations
+          </Text>
         </View>
       </SafeAreaView>
     );
