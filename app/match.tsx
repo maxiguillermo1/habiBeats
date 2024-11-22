@@ -10,7 +10,7 @@ import { User } from './match-algorithm'; // import isMatch and User from match-
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebaseConfig'; 
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
-import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore"; // to store matches 
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore"; // to store matches 
 import { useFocusEffect } from '@react-navigation/native';
 
 // END of Mariann Grace Dizon Contribution
@@ -418,17 +418,21 @@ const Match = () => {
   // START of content like handler
   // START of Mariann Grace Dizon Contribution  
   const handleContentLike = (contentType: string) => {
-    setLikedContent(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(contentType)) {
-        console.log(`Unlike button pressed for ${contentType}`); // Log when unliked
-        newSet.delete(contentType);
-      } else {
-        console.log(`Like button pressed for ${contentType}`); // Log when liked
-        newSet.add(contentType);
-      }
-      return newSet;
-    });
+    if (user2) {
+      setLikedContent(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(contentType)) {
+          console.log(`Unlike button pressed for ${contentType}`);
+          newSet.delete(contentType);
+          removePromptInteraction("like", contentType, user2.uid); // Remove like interaction from Firestore
+        } else {
+          console.log(`Like button pressed for ${contentType}`);
+          newSet.add(contentType);
+          savePromptInteraction("like", contentType, user2.uid); // Save like interaction with user2's ID
+        }
+        return newSet;
+      });
+    }
   };
   // END of content like handler
   // END of Mariann Grace Dizon Contribution  
@@ -615,7 +619,7 @@ const Match = () => {
       padding: 20,
     },
     modalContent: {
-      backgroundColor: isDarkTheme ? '#333' : '#79ce54',
+      backgroundColor: isDarkTheme ? '#79ce54' : '#79ce54',
       padding: 20,
       borderRadius: 40,
       alignItems: 'center',
@@ -772,7 +776,7 @@ const Match = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+      backgroundColor: isDarkTheme ? '#0e1514' : '#fff8f0',
     },
     waitingText: {
       fontSize: 20,
@@ -783,7 +787,7 @@ const Match = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.5)',
+      backgroundColor: isDarkTheme ? '#0e1514' : '#fff8f0',
     },
     dislikeText: {
       fontSize: 20,
@@ -950,36 +954,148 @@ const Match = () => {
 
   // Function to handle comment submission
   const handleCommentSubmit = () => {
-    console.log(`Comment submitted for ${currentContentType}:`, commentText); // Log the content type and comment
-    setCommentedContent(prev => {
-      const newSet = new Set(prev);
-      newSet.add(currentContentType); // Use currentContentType
-      return newSet;
-    });
-    setShowCommentModal(false);
-    setCommentText('');
+    if (user2) {
+      console.log(`Comment submitted for ${currentContentType}:`, commentText);
+      setCommentedContent(prev => {
+        const newSet = new Set(prev);
+        newSet.add(currentContentType);
+        savePromptInteraction("comment", currentContentType, user2.uid, { commentText }); // Save comment interaction with user2's ID
+        return newSet;
+      });
+      setShowCommentModal(false);
+      setCommentText('');
+    }
   };
 
   // Add a new state to track thumbs up status
   const [thumbsUpContent, setThumbsUpContent] = useState<Set<string>>(new Set());
 
   // Add a new handler for thumbs up button press
-  const handleThumbsUpPress = (contentType: string) => {
-    setThumbsUpContent(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(contentType)) {
-        console.log(`Thumbs up removed for ${contentType}`); // Log when thumbs up is removed
-        newSet.delete(contentType);
-      } else {
-        console.log(`Thumbs up for ${contentType}`); // Log when thumbs up is added
-        newSet.add(contentType);
-      }
-      return newSet;
-    });
+  const handleThumbsUpPress = async (contentType: string) => {
+    if (user2) {
+      setThumbsUpContent(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(contentType)) {
+          console.log(`Thumbs up removed for ${contentType}`);
+          newSet.delete(contentType);
+          removePromptInteraction("thumbsUp", contentType, user2.uid); // Remove thumbs up interaction from Firestore
+        } else {
+          console.log(`Thumbs up for ${contentType}`);
+          newSet.add(contentType);
+          savePromptInteraction("thumbsUp", contentType, user2.uid); // Save thumbs up interaction with user2's ID
+        }
+        return newSet;
+      });
+    }
   };
 
   // Add this state definition at the beginning of your component
   const [currentContentType, setCurrentContentType] = useState<string>('');
+
+  // Add this type definition near the top of the file with other interfaces/types
+  interface PromptInteraction {
+    interactionType: 'like' | 'comment' | 'thumbsUp';
+    contentType: string;
+    user2Id: string;
+    timestamp: Date;
+    commentText?: string;
+  }
+
+  // Update the savePromptInteraction function
+  const savePromptInteraction = async (
+    interactionType: PromptInteraction['interactionType'], 
+    contentType: string, 
+    user2Id: string, 
+    additionalData: any = {}
+  ) => {
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      const db = getFirestore(app);
+      const promptInteractionsRef = collection(db, "users", currentUser.uid, "promptInteractions");
+
+      try {
+        // Create the interaction document
+        const interaction: PromptInteraction = {
+          interactionType,
+          contentType,
+          user2Id,
+          timestamp: new Date(),
+          ...additionalData
+        };
+
+        // Add the document to the promptInteractions subcollection
+        const docRef = await addDoc(promptInteractionsRef, interaction);
+        console.log(`Saved ${interactionType} interaction for ${contentType} with user2: ${user2Id}, doc ID: ${docRef.id}`);
+      } catch (error) {
+        console.error("Error saving prompt interaction: ", error);
+      }
+    }
+  };
+
+  // Function to remove interaction from Firestore
+  const removePromptInteraction = async (interactionType: string, contentType: string, user2Id: string) => {
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      const db = getFirestore(app);
+      const promptInteractionsRef = collection(db, "users", currentUser.uid, "promptInteractions");
+
+      try {
+        const q = query(promptInteractionsRef, where("interactionType", "==", interactionType), where("contentType", "==", contentType), where("user2Id", "==", user2Id));
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+          console.log(`Deleted ${interactionType} interaction for ${contentType} with user2: ${user2Id}`);
+        });
+      } catch (error) {
+        console.error("Error deleting prompt interaction: ", error);
+      }
+    }
+  };
+
+  // Fetch existing interactions from Firestore
+  useEffect(() => {
+    const fetchInteractions = async () => {
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+
+      if (currentUser && user2) {
+        const db = getFirestore(app);
+        const promptInteractionsRef = collection(db, "users", currentUser.uid, "promptInteractions");
+
+        try {
+          const q = query(promptInteractionsRef, where("user2Id", "==", user2.uid));
+          const querySnapshot = await getDocs(q);
+          const liked = new Set<string>();
+          const commented = new Set<string>();
+          const thumbsUp = new Set<string>();
+
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.interactionType === "like") {
+              liked.add(data.contentType);
+            } else if (data.interactionType === "comment") {
+              commented.add(data.contentType);
+            } else if (data.interactionType === "thumbsUp") {
+              thumbsUp.add(data.contentType);
+            }
+          });
+
+          setLikedContent(liked);
+          setCommentedContent(commented);
+          setThumbsUpContent(thumbsUp);
+        } catch (error) {
+          console.error("Error fetching prompt interactions: ", error);
+        }
+      }
+    };
+
+    fetchInteractions();
+  }, [user2]);
 
   // UI rendering
   return (
@@ -1075,7 +1191,7 @@ const Match = () => {
                   >
                     <Ionicons 
                       name={likedContent.has('musicPreference') ? "heart" : "heart-outline"} 
-                      size={20} // Reduced size from 24 to 18
+                      size={20} 
                       color="#fc6c85" 
                     />
                   </TouchableOpacity>
@@ -1527,7 +1643,6 @@ const Match = () => {
                 dynamicStyles.waitingModalContainer,
                 {
                   transform: [{ scale: waitingModalScale }],
-                  backgroundColor: isDarkTheme ? '#1E1E1E' : '#fff8f0',
                 }
               ]}
             >
@@ -1548,7 +1663,6 @@ const Match = () => {
                 dynamicStyles.dislikeModalContainer,
                 {
                   transform: [{ scale: dislikeModalScale }],
-                  backgroundColor: isDarkTheme ? '#1E1E1E' : '#fff8f0',
                 }
               ]}
             >
