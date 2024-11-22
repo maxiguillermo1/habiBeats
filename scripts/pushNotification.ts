@@ -1,7 +1,7 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform, AppState } from 'react-native';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { AndroidNotificationPriority } from 'expo-notifications';
 
@@ -70,6 +70,14 @@ export async function registerForPushNotifications() {
 
 // Send push notification
 export async function sendPushNotification(expoPushToken: string, title: string, body: string, data?: any) {
+  const recipientDoc = await getDoc(doc(db, 'users', data.recipientId));
+  const recipientData = recipientDoc.data();
+
+  if (recipientData?.isOnline) {
+    console.log('Recipient is online, skipping push notification.');
+    return;
+  }
+
   const message = {
     to: expoPushToken,
     sound: 'default',

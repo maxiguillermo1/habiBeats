@@ -65,6 +65,7 @@ export const addNotification = async (userId: string, message: string, type: str
       message,
       timestamp: serverTimestamp(),
       read: false,
+      seen: false,
       type,
       data,
     });

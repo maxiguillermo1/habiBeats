@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { writeBatch } from 'firebase/firestore';
+import { router } from 'expo-router';
 
 // Define the notification interface
 interface Notification {
@@ -161,11 +162,12 @@ const NotificationPage = () => {
   const handleNotificationPress = (notification: Notification) => {
     // Handle different notification types
     switch(notification.type) {
-      case 'match':
-        // Navigate to match screen
-        break;
-      case 'message':
-        // Navigate to chat screen
+      case 'directmessage':
+        console.log('Sender Name:', notification.data.senderName);
+        router.push({
+          pathname: '/directmessage',
+          params: { recipientId: notification.data.senderId, recipientName: notification.data.senderName },
+        });
         break;
       case 'like':
         // Navigate to profile screen
