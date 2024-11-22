@@ -163,6 +163,7 @@ const DirectMessageScreen = () => {
                 recipientId: recipientId,
                 recipientName: recipientName,
                 senderId: auth.currentUser?.uid,
+                senderName: auth.currentUser?.displayName,
                 messageText: message.substring(0, 100)
             }
         );

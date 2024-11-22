@@ -39,6 +39,7 @@ interface UserData {
   locationVisible: boolean;
   myEventsVisible: boolean;
   hiddenWords: string[];
+  isOnline: boolean;
 
    // Reyna Aguirre:HashMap to store user matches with their status (liked or disliked)
    matches: {

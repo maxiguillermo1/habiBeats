@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,19 +13,57 @@ interface InAppNotificationProps {
 
 const InAppNotification: React.FC<InAppNotificationProps> = ({ message, type, data, onClose }) => {
   const navigation = useNavigation();
+  const pan = useRef(new Animated.ValueXY()).current;
+  console.log(message);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.timing(pan, {
+        toValue: { x: 0, y: -200 },
+        duration: 300,
+        useNativeDriver: false,
+      }).start(onClose);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 20,
+      onPanResponderMove: Animated.event([null, { dy: pan.y }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -50) {
+          Animated.timing(pan, {
+            toValue: { x: 0, y: -200 },
+            duration: 300,
+            useNativeDriver: false,
+          }).start(onClose);
+        } else {
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  if (type === 'directmessage') {
+    message = `New Message from ${data.recipientName}: ${message}`;
+  }
 
   const handlePress = () => {
     switch (type) {
       case 'directmessage':
+        console.log('Sender Name:', data.senderName);
         router.push({
-            pathname: '/directmessage',
-            params: { recipientId: data.recipientId, recipientName: data.recipientName },
-          });
+          pathname: '/directmessage',
+          params: { recipientId: data.senderId, recipientName: data.senderName },
+        });
         break;
       case 'like':
         // navigation.navigate('ProfileScreen', { userId: data.userId });
         break;
-      // Add more cases for different notification types
       default:
         break;
     }
@@ -46,17 +84,21 @@ const InAppNotification: React.FC<InAppNotificationProps> = ({ message, type, da
   };
 
   return (
-    <TouchableOpacity style={styles.notificationContainer} onPress={handlePress}>
-      <View style={styles.iconContainer}>
-        {getIcon()}
-      </View>
-      <View style={styles.contentContainer}>
-        <Text style={styles.notificationText}>{message}</Text>
-      </View>
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Ionicons name="close" size={20} color="#8E8E93" />
+    <Animated.View
+      style={[styles.notificationContainer, { transform: [{ translateY: pan.y }] }]}
+      {...panResponder.panHandlers}
+    >
+      <TouchableOpacity style={styles.notificationContent} onPress={handlePress}>
+        <View style={styles.iconContainer}>
+          {getIcon()}
+        </View>
+        <View style={styles.contentContainer}>
+          <Text style={styles.notificationText} numberOfLines={2}>
+            {message}
+          </Text>
+        </View>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -91,9 +133,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 20,
   },
-  closeButton: {
-    padding: 4,
-    marginLeft: 8,
+  notificationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
 });
 

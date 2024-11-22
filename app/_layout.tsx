@@ -4,8 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { Stack } from 'expo-router';
 import InAppNotification from '../components/InAppNotification';
-import { onSnapshot, collection, query, where } from 'firebase/firestore';
+import { onSnapshot, collection, query, where, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import initUserStatusService from './services/userStatusService';
+
 
 interface Notification {
   id: string;
@@ -29,26 +32,40 @@ export default function RootLayout() {
   const [notification, setNotification] = useState<Notification | null>(null);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    // Check if the user is logged in
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => { 
+      if (user) {
+        console.log('User is logged in', user.uid);
+        const cleanupUserStatusService = initUserStatusService();
+        // Get the notifications collection for the user
+        const notificationsRef = collection(db, 'users', user.uid, 'notifications');
+        // Get the notifications that have not been seen
+        const q = query(notificationsRef, where('seen', '==', false));
 
-    const notificationsRef = collection(db, 'users', auth.currentUser.uid, 'notifications');
-    const q = query(notificationsRef, where('read', '==', false));
+        // Listen for changes to the notifications
+        const unsubscribeFirestore = onSnapshot(q, (querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            setNotification({
+              id: doc.id,
+              message: data.message,
+              type: data.type,
+              data: data.data,
+            });
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        console.log(data);
-        console.log(doc.id);
-        setNotification({
-          id: doc.id,
-          message: doc.data().message,
-          type: doc.data().type,
-          data: doc.data().data,
+            // Mark the notification as seen
+            updateDoc(doc.ref, { seen: true });
+          });
         });
-      });
+
+        return () => {
+          unsubscribeFirestore();
+          cleanupUserStatusService();
+        };
+      }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   const handleCloseNotification = () => {
