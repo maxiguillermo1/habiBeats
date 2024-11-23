@@ -1,17 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Animated, Keyboard, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDistanceToNow } from 'date-fns';
+import { collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../../firebaseConfig'; 
 
 interface Comment {
   id: string;
   userId: string;
   userName: string;
   text: string;
-  timestamp: any;
+  timestamp: Date;
+}
+
+// Add this interface for animated comments
+interface AnimatedComment extends Comment {
+  position: Animated.ValueXY;
+  scale: Animated.Value;
+  opacity: Animated.Value;
+}
+
+// Add this interface for the time remaining structure
+interface TimeRemaining {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
 }
 
 const EventSpacesPage = () => {
@@ -24,21 +39,26 @@ const EventSpacesPage = () => {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userName, setUserName] = useState('');
+  const [keyboardHeight] = useState(new Animated.Value(0));
+  const [animatedComments, setAnimatedComments] = useState<AnimatedComment[]>([]);
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+  const [isEventDay, setIsEventDay] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Fetch theme preference
   useEffect(() => {
     const fetchThemePreference = async () => {
       try {
-        const userId = auth.currentUser?.uid;
-        if (!userId) throw new Error('User not authenticated');
-
-        const userDocRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setIsDarkMode(userData.themePreference === 'dark');
-          setUserName(userData.username || 'Anonymous');
-        }
+        setIsDarkMode(false);
+        setUserName('Anonymous');
       } catch (error) {
         console.error('Error fetching theme preference:', error);
       }
@@ -49,121 +69,324 @@ const EventSpacesPage = () => {
 
   // Subscribe to comments
   useEffect(() => {
-    if (!eventData?.name) return;
+    if (!eventData?.id) return;
 
-    const commentsRef = collection(db, 'eventComments');
-    const q = query(
-      commentsRef,
-      where('eventId', '==', eventData.name),
-      orderBy('timestamp', 'desc')
-    );
+    const commentsRef = collection(db, 'events', eventData.id, 'comments');
+    const commentsQuery = query(commentsRef, orderBy('timestamp', 'asc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newComments = snapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
+      const fetchedComments = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        timestamp: doc.data().timestamp.toDate()
       })) as Comment[];
-      setComments(newComments);
+      
+      setComments(fetchedComments);
     });
 
     return () => unsubscribe();
   }, [eventData]);
 
-  const handleSubmitComment = async () => {
-    if (!newComment.trim() || !auth.currentUser) return;
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
 
-    setIsLoading(true);
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  // Add this function to create animated comment
+  const createAnimatedComment = (comment: Comment) => {
+    const position = new Animated.ValueXY({
+      x: Math.random() * (screenWidth - 150),
+      y: screenHeight - 200
+    });
+    const scale = new Animated.Value(0);
+    const opacity = new Animated.Value(1);
+
+    const animatedComment: AnimatedComment = {
+      ...comment,
+      position,
+      scale,
+      opacity
+    };
+
+    // Animation sequence
+    Animated.sequence([
+      // Pop in
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+      // Float up
+      Animated.parallel([
+        Animated.timing(position.y, {
+          toValue: -200,
+          duration: 8000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 8000,
+          useNativeDriver: true,
+        })
+      ])
+    ]).start(() => {
+      // Remove comment after animation
+      setAnimatedComments(current => 
+        current.filter(c => c.id !== comment.id)
+      );
+    });
+
+    return animatedComment;
+  };
+
+  const calculateTimeRemaining = (eventDate: Date): TimeRemaining => {
+    const now = new Date();
+    const diffTime = Math.max(0, eventDate.getTime() - now.getTime()); // Ensure non-negative
+    
+    return {
+      days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diffTime % (1000 * 60)) / 1000)
+    };
+  };
+
+  useEffect(() => {
+    if (!eventData?.date) return;
+
+    const eventDate = new Date(eventData.date);
+    
+    const updateCountdown = () => {
+      const remaining = calculateTimeRemaining(eventDate);
+      setTimeRemaining(remaining);
+      
+      // Check if countdown has reached zero
+      if (remaining.days === 0 && remaining.hours === 0 && 
+          remaining.minutes === 0 && remaining.seconds === 0) {
+        setShowChat(true);
+        setIsEventDay(true);
+      }
+    };
+
+    const timer = setInterval(updateCountdown, 1000);
+    updateCountdown(); // Initial call
+
+    return () => clearInterval(timer);
+  }, [eventData?.date]);
+
+  // Parse the timeUntilEvent string back to numbers for display
+  const timeValues = !isEventDay ? JSON.parse(JSON.stringify(timeRemaining)) : null;
+
+  // Modify the submit handler
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !isEventDay || !eventData?.id) return;
+
     try {
-      await addDoc(collection(db, 'eventComments'), {
-        eventId: eventData.name,
-        userId: auth.currentUser.uid,
-        userName: userName,
-        text: newComment.trim(),
+      const commentsRef = collection(db, 'events', eventData.id, 'comments');
+      await addDoc(commentsRef, {
+        userId: 'user-id', // Replace with actual user ID
+        userName,
+        text: newComment,
         timestamp: new Date()
       });
+
       setNewComment('');
+      Keyboard.dismiss();
+      
+      // Scroll to bottom after sending a new message
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     } catch (error) {
-      console.error('Error posting comment:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Error adding comment:', error);
     }
   };
 
-  return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
-      <ScrollView>
-        <View style={[styles.container, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
-          </TouchableOpacity>
+  // Add this inside your return statement, before the ScrollView
+  const renderAnimatedComments = () => (
+    <>
+      {animatedComments.map((comment) => (
+        <Animated.View
+          key={comment.id}
+          style={[
+            styles.floatingComment,
+            {
+              transform: [
+                { translateX: comment.position.x },
+                { translateY: comment.position.y },
+                { scale: comment.scale }
+              ],
+              opacity: comment.opacity,
+            }
+          ]}
+        >
+          <Text style={styles.floatingCommentText}>{comment.text}</Text>
+        </Animated.View>
+      ))}
+    </>
+  );
 
-          <View style={styles.contentContainer}>
-            <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-              Event Space
-            </Text>
-            {eventData?.name && (
-              <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666666' }]}>
-                {eventData.name}
-              </Text>
-            )}
-            
-            {(eventData?.venue || eventData?.location) && (
-              <TouchableOpacity onPress={() => router.push({
-                pathname: '/events/event-location',
-                params: { venue: eventData.venue, location: eventData.location }
-              })}>
-                <Text style={[styles.locationText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>
-                  {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {eventData?.imageUrl && (
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: eventData.imageUrl }} style={styles.eventImage} />
+  // Add this inside the return statement, after the eventImage
+  const renderCountdownOrChat = () => (
+    <View style={styles.countdownContainer}>
+      {!showChat && (
+        <>
+          <Text style={styles.countdownSubtitle}>
+            Event Space Opens :
+          </Text>
+          {timeValues && (
+            <View style={styles.timeUnitsContainer}>
+              <View style={styles.timeUnit}>
+                <Text style={styles.numberText}>{timeValues.days}</Text>
+                <Text style={styles.labelText}>days</Text>
               </View>
-            )}
+              <View style={styles.timeUnit}>
+                <Text style={styles.numberText}>{timeValues.hours}</Text>
+                <Text style={styles.labelText}>hours</Text>
+              </View>
+              <View style={styles.timeUnit}>
+                <Text style={styles.numberText}>{timeValues.minutes}</Text>
+                <Text style={styles.labelText}>minutes</Text>
+              </View>
+              <View style={styles.timeUnit}>
+                <Text style={styles.numberText}>{timeValues.seconds}</Text>
+                <Text style={styles.labelText}>seconds</Text>
+              </View>
+            </View>
+          )}
+        </>
+      )}
+    </View>
+  );
 
+  // Update the comment rendering in the return statement
+  const renderComment = (comment: Comment) => (
+    <View key={comment.id} style={[styles.commentBox, { 
+      backgroundColor: isDarkMode ? '#333333' : '#ffffff'
+    }]}>
+      <View style={styles.commentHeader}>
+        <Text style={[styles.commentUser, { color: isDarkMode ? '#79ce54' : '#37bdd5' }]}>
+          {comment.userName}
+        </Text>
+        <Text style={styles.commentTime}>
+          {formatDistanceToNow(comment.timestamp, { addSuffix: true })}
+        </Text>
+      </View>
+      <Text style={[styles.commentText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+        {comment.text}
+      </Text>
+    </View>
+  );
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      enabled
+    >
+      {renderAnimatedComments()}
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
+        </TouchableOpacity>
+
+        {/* Fixed Header Section */}
+        <View style={[styles.headerSection, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
+          <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+            Event Space
+          </Text>
+          {eventData?.name && (
+            <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666666' }]}>
+              {eventData.name}
+            </Text>
+          )}
+          
+          {(eventData?.venue || eventData?.location) && (
+            <TouchableOpacity onPress={() => router.push({
+              pathname: '/events/event-location',
+              params: { venue: eventData.venue, location: eventData.location }
+            })}>
+              <Text style={[styles.locationText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>
+                {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {eventData?.imageUrl && (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: eventData.imageUrl }} style={styles.eventImage} />
+            </View>
+          )}
+
+          {renderCountdownOrChat()}
+        </View>
+
+        {/* Scrollable Thread Section */}
+        <View style={[styles.threadSection, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
+          <ScrollView 
+            ref={scrollViewRef}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
+          >
             <View style={styles.discussionContainer}>
               {isLoading ? (
                 <ActivityIndicator size="small" color={isDarkMode ? '#79ce54' : '#37bdd5'} style={styles.loader} />
               ) : (
                 <View style={styles.commentsContainer}>
-                  {comments.map((comment) => (
-                    <View key={comment.id} style={[styles.commentBox, { 
-                      backgroundColor: isDarkMode ? '#333333' : '#ffffff'
-                    }]}>
-                      <Text style={[styles.commentUser, { color: isDarkMode ? '#79ce54' : '#37bdd5' }]}>
-                        {comment.userName}
-                      </Text>
-                      <Text style={[styles.commentText, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-                        {comment.text}
-                      </Text>
-                    </View>
-                  ))}
+                  {comments.map(renderComment)}
                 </View>
               )}
             </View>
-          </View>
+          </ScrollView>
         </View>
-      </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={[styles.input, { 
-            backgroundColor: isDarkMode ? '#333333' : '#ffffff',
-            color: isDarkMode ? '#ffffff' : '#000000'
-          }]}
-          placeholder="Add a comment..."
-          placeholderTextColor={isDarkMode ? '#999999' : '#666666'}
-          value={newComment}
-          onChangeText={setNewComment}
-        />
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmitComment}>
-          <Text style={styles.submitButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        {showChat && (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, { 
+                backgroundColor: isDarkMode ? '#333333' : '#ffffff',
+                color: isDarkMode ? '#ffffff' : '#000000'
+              }]}
+              placeholder="add a comment..."
+              placeholderTextColor={isDarkMode ? '#999999' : '#666666'}
+              value={newComment}
+              onChangeText={setNewComment}
+            />
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmitComment}>
+              <Text style={styles.submitButtonText}>send</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -171,31 +394,35 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  container: {
-    flex: 1,
+  headerSection: {
     paddingHorizontal: 40,
+    paddingTop: 40,
+  
   },
-  contentContainer: {
-    paddingTop: 60,
-    paddingBottom: 20,
+  threadSection: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 40,
+    paddingVertical: 20,
   },
   backButton: {
     position: 'absolute',
-    top: 10,
+    top: 25,
     left: 10,
     zIndex: 1,
     padding: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
   },
   eventName: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   locationText: {
     fontSize: 12,
@@ -205,11 +432,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   imageContainer: {
-    width: '100%',
-    height: 180,
+    width: 150,
+    height: 150,
     borderRadius: 8,
     overflow: 'hidden',
-    marginBottom: 20,
+    alignSelf: 'center',
   },
   eventImage: {
     width: '100%',
@@ -247,8 +474,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
     backgroundColor: 'transparent',
   },
   input: {
@@ -257,11 +482,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 15,
     marginRight: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
   submitButton: {
-    backgroundColor: '#37bdd5',
+    backgroundColor: '#fc6c85',
     borderRadius: 18,
     paddingHorizontal: 16,
     justifyContent: 'center',
@@ -274,6 +497,58 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 20,
+  },
+  floatingComment: {
+    position: 'absolute',
+    backgroundColor: 'rgba(252, 108, 133, 0.8)',
+    padding: 10,
+    borderRadius: 20,
+    maxWidth: 150,
+    zIndex: 1000,
+  },
+  floatingCommentText: {
+    color: '#ffffff',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  countdownContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  countdownSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 16,
+    color: "#fc6c85",
+  },
+  timeUnitsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  timeUnit: {
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  numberText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  labelText: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  commentTime: {
+    fontSize: 12,
+    color: '#666666',
   },
 });
 
