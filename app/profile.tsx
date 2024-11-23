@@ -67,7 +67,7 @@ export default function Profile() {
   const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null);
 
   const router = useRouter();
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
   // State for user profile data
   const [user, setUser] = useState({
     name: 'Name not set',
