@@ -12,6 +12,8 @@ import { app } from '../firebaseConfig';
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
 import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore"; // to store matches 
 import { useFocusEffect } from '@react-navigation/native';
+import { addNotification } from '../scripts/notificationHandler';
+import { sendPushNotification } from '../scripts/pushNotification';
 
 // END of Mariann Grace Dizon Contribution
 // Define gifImages for animated borders
@@ -244,33 +246,61 @@ const Match = () => {
 
       if (currentUser) {
         await updateUserMatch(currentUser.uid, user2.uid, "liked");
-      }
 
-      const db = getFirestore(app);
-      const user2DocRef = doc(db, "users", user2.uid);
-      const user2DocSnap = await getDoc(user2DocRef);
+        // Add in-app notification
+        await addNotification(
+          user2.uid,
+          `${currentUser.displayName || 'Someone'} liked you!`,
+          'like',
+          {
+            senderId: currentUser.uid,
+            senderName: currentUser.displayName,
+          }
+        );
+        console.log("In-app notification sent to user2");
 
-      if (user2DocSnap.exists()) {
-        const user2Data = user2DocSnap.data() as User;
-        const user2MatchStatus = currentUser ? user2Data.matches?.[currentUser.uid] : undefined;
+        // Fetch user2's push token
+        const db = getFirestore(app);
+        const user2DocRef = doc(db, "users", user2.uid);
+        const user2DocSnap = await getDoc(user2DocRef);
 
-        if (user2MatchStatus === "liked" && currentUser) {
-          console.log(`It's a match! ${currentUser.displayName} and ${user2.displayName} liked each other.`);
-          setShowMatchModal(true);
-          animateModal(true, scaleValue);
+        if (user2DocSnap.exists()) {
+          const user2Data = user2DocSnap.data() as User;
+          const user2MatchStatus = currentUser ? user2Data.matches?.[currentUser.uid] : undefined;
+          const user2PushToken = user2Data.expoPushToken;
+
+          // Send push notification if user2 has a push token
+          if (user2PushToken) {
+            await sendPushNotification(
+              user2PushToken,
+              'New Like',
+              `${currentUser.displayName || 'Someone'} liked you!`,
+              {
+                senderId: currentUser.uid,
+                senderName: currentUser.displayName,
+              }
+            );
+            console.log("Push notification sent to user2");
+          }
+
+          if (user2MatchStatus === "liked" && currentUser) {
+            console.log(`It's a match! ${currentUser.displayName} and ${user2.displayName} liked each other.`);
+            setShowMatchModal(true);
+            animateModal(true, scaleValue);
+          } else {
+            console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
+            setShowWaitingModal(true);
+            animateModal(true, waitingModalScale);
+            setTimeout(() => {
+              setShowWaitingModal(false);
+              animateModal(false, waitingModalScale);
+              fetchNextUser();
+              setLikeButtonColor('#fff8f0');
+            }, 3000);
+          }
         } else {
-          console.log(`No mutual like yet. ${user2.displayName} has not liked ${currentUser?.displayName || currentUser?.uid}`);
-          setShowWaitingModal(true);
-          animateModal(true, waitingModalScale);
-          setTimeout(() => {
-            setShowWaitingModal(false);
-            animateModal(false, waitingModalScale);
-            fetchNextUser();
-            setLikeButtonColor('#fff8f0');
-          }, 3000);
+          console.error("User2 document not found in Firestore.");
         }
-      } else {
-        console.error("User2 document not found in Firestore.");
       }
     }
   };
@@ -952,9 +982,31 @@ const Match = () => {
     setShowCommentModal(true);
   };
 
+  // Function to save a comment to the other user's document
+  const saveComment = async (userId: string, attribute: string, comment: string) => {
+    const db = getFirestore(app);
+    const userDocRef = doc(db, "users", userId);
+
+  try {
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const comments = userData[`${attribute}Comments`] || [];
+      comments.push(comment);
+
+      await updateDoc(userDocRef, {
+        [`${attribute}Comments`]: comments
+      });
+    }
+  } catch (error) {
+    console.error("Error saving comment: ", error);
+    }
+  };
+
   // Function to handle comment submission
   const handleCommentSubmit = () => {
     if (user2) {
+      saveComment(user2.uid, currentContentType, commentText);
       console.log(`Comment submitted for ${currentContentType}:`, commentText);
       setCommentedContent(prev => {
         const newSet = new Set(prev);

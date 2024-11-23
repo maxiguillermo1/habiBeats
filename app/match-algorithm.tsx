@@ -34,6 +34,7 @@ export interface User {
       url: string;
     }[];
     themePreference?: string; // Add this line to include themePreference
+    expoPushToken?: string; // Add this line to include expoPushToken
   }
   // function structure for compatibility
   // 1. gender compatibility

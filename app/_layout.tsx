@@ -8,6 +8,7 @@ import { onSnapshot, collection, query, where, updateDoc } from 'firebase/firest
 import { db, auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import initUserStatusService from './services/userStatusService';
+import { NavigationContainer } from '@react-navigation/native';
 
 
 interface Notification {
@@ -74,7 +75,7 @@ export default function RootLayout() {
 
   // Return the Stack navigation layout
   return (
-    <>
+    <NavigationContainer>
       <Stack>
         {/* Define the index screen with no header */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -123,7 +124,10 @@ export default function RootLayout() {
         {/* Define the disposable gallery screen with no header */}
         <Stack.Screen name="disposable-gallery" options={{ headerShown: false }} />
         {/* Define the event spaces screen with no header */}
-        <Stack.Screen name="events/event-spaces" options={{ headerShown: false }} />  
+        <Stack.Screen name="events/event-spaces" options={{ headerShown: false }} /> 
+        {/* Define the help center screen with no header */}
+        <Stack.Screen name="settings/safety-resources/help-center" options={{ headerShown: false }} />
+        
       </Stack>
       {notification && (
         <InAppNotification
@@ -133,6 +137,6 @@ export default function RootLayout() {
           onClose={handleCloseNotification}
         />
       )}
-    </>
+    </NavigationContainer>
   );
 }

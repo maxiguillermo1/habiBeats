@@ -278,6 +278,34 @@ export default function Profile() {
     }
   };
 
+  // Fetch comments for each attribute
+  const [tuneOfMonthComments, setTuneOfMonthComments] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setTuneOfMonthComments(userData.tuneOfMonthComments || []);
+          // Fetch other comments similarly
+        }
+      }
+    };
+
+    fetchComments();
+  }, []);
+
+  // Display comments with a chat icon
+  const renderComments = (comments: string[]) => (
+    <View>
+      {comments.map((comment, index) => (
+        <Text key={index} style={styles.commentText}>{comment}</Text>
+      ))}
+    </View>
+  );
+
   return (
     <ThemeProvider>
       <SafeAreaView style={[styles.container, { 
@@ -817,6 +845,53 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: 'red',
+  },
+  commentText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    maxHeight: '80%',
+    overflow: 'scroll',
+  },
+  attributeContainer: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  attributeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  attributeValue: {
+    fontSize: 14,
+    color: '#666',
+    marginVertical: 5,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  iconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: '#333',
   },
 });
 
