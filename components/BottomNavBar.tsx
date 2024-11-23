@@ -65,7 +65,7 @@ const BottomNavBar = () => {
 
   // START of Jesus Donate
   // Navigate to a specific route
-  const navigateTo = (route: Href) => {
+  const navigateTo = (route: Href<string>) => {
     router.back(); // Gets rid of previous page
     router.push(route); // Navigates to the new page
   };
