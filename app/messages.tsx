@@ -291,7 +291,7 @@ const Messages = () => {
     if (!auth?.currentUser) return;
 
     // Store interval ID for cleanup
-    let pollInterval: NodeJS.Timeout;
+    // let pollInterval: NodeJS.Timeout;
 
     const pollMessages = async () => {
       // Fetch direct messages
@@ -341,13 +341,13 @@ const Messages = () => {
     pollMessages();
 
     // Set up polling interval
-    pollInterval = setInterval(pollMessages, 4000);
+    // pollInterval = setInterval(pollMessages, 4000);
 
     // Cleanup function to clear interval when component unmounts
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
+      // if (pollInterval) {
+      //   clearInterval(pollInterval);
+      // }
     };
   }, []); // Empty dependency array means this effect runs once on mount
 
