@@ -58,7 +58,7 @@ const EventSpacesPage = () => {
     const fetchThemePreference = async () => {
       try {
         setIsDarkMode(false);
-        setUserName('Anonymous');
+        setUserName('attendee');
       } catch (error) {
         console.error('Error fetching theme preference:', error);
       }
@@ -319,34 +319,67 @@ const EventSpacesPage = () => {
         </TouchableOpacity>
 
         {/* Fixed Header Section */}
-        <View style={[styles.headerSection, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
-          <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
-            Event Space
-          </Text>
-          {eventData?.name && (
-            <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666666' }]}>
-              {eventData.name}
+        <View style={[styles.headerSection, { 
+          backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0',
+          flexDirection: showChat ? 'row' : 'column',
+          alignItems: showChat ? 'flex-start' : 'center',
+          justifyContent: showChat ? 'space-between' : 'flex-start',
+        }]}>
+          <View style={[
+            showChat ? styles.headerTextContainer : { alignItems: 'center' }
+          ]}>
+            <Text style={[styles.title, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
+              Event Space
             </Text>
-          )}
-          
-          {(eventData?.venue || eventData?.location) && (
-            <TouchableOpacity onPress={() => router.push({
-              pathname: '/events/event-location',
-              params: { venue: eventData.venue, location: eventData.location }
-            })}>
-              <Text style={[styles.locationText, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>
-                {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
+            
+            {(eventData?.venue || eventData?.location) && (
+              <TouchableOpacity 
+                onPress={() => router.push({
+                  pathname: '/events/event-location',
+                  params: { venue: eventData.venue, location: eventData.location }
+                })}
+                style={[
+                  styles.locationContainer,
+                  !showChat && styles.centeredLocation
+                ]}
+              >
+                {showChat && (
+                  <Ionicons 
+                    name="location-outline" 
+                    size={14} 
+                    color="#fc6c85" 
+                    style={styles.locationIcon}
+                  />
+                )}
+                <Text style={[
+                  styles.locationText, 
+                  { 
+                    color: isDarkMode ? '#fc6c85' : '#fc6c85',
+                    marginBottom: showChat ? 0 : 15 
+                  }
+                ]}>
+                  {`${eventData.venue || ''} ${eventData.venue && eventData.location ? '-' : ''} ${eventData.location || ''}`}
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {eventData?.name && (
+              <Text style={[styles.eventName, { color: isDarkMode ? '#cccccc' : '#666666' }]}>
+                {eventData.name}
               </Text>
-            </TouchableOpacity>
-          )}
+            )}
+          </View>
 
           {eventData?.imageUrl && (
-            <View style={styles.imageContainer}>
+            <View style={[
+              styles.imageContainer, 
+              showChat && styles.smallImageContainer
+            ]}>
               <Image source={{ uri: eventData.imageUrl }} style={styles.eventImage} />
             </View>
           )}
 
-          {renderCountdownOrChat()}
+          {!showChat && renderCountdownOrChat()}
         </View>
 
         {/* Scrollable Thread Section */}
@@ -397,7 +430,11 @@ const styles = StyleSheet.create({
   headerSection: {
     paddingHorizontal: 40,
     paddingTop: 40,
-  
+    paddingBottom: 15,
+  },
+  headerTextContainer: {
+    flex: 1,
+    paddingRight: 20,
   },
   threadSection: {
     flex: 1,
@@ -416,20 +453,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    textAlign: 'center',
     marginBottom: 8,
   },
   eventName: {
-    fontSize: 14,
-    textAlign: 'center',
+    fontSize: 11,
     marginBottom: 15,
+    paddingTop: 10,
+
   },
   locationText: {
     fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 15,
     color: '#fc6c85',
     fontWeight: 'bold',
+    marginBottom: 15,
   },
   imageContainer: {
     width: 150,
@@ -437,6 +473,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     alignSelf: 'center',
+  },
+  smallImageContainer: {
+    width: 80,
+    height: 80,
+    alignSelf: 'flex-start',
   },
   eventImage: {
     width: '100%',
@@ -549,6 +590,18 @@ const styles = StyleSheet.create({
   commentTime: {
     fontSize: 12,
     color: '#666666',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  locationIcon: {
+    marginRight: 4,
+  },
+  centeredLocation: {
+    alignItems: 'center',
+    width: '100%',
   },
 });
 
