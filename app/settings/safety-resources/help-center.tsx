@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 
 const HelpCenter = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Defines the help categories and their routes
   const helpCategories = [
-    {
+    { 
       title: 'Tips for Matching',
       route: 'settings/safety-resources/tips-for-matching'
     },
@@ -39,7 +39,7 @@ const HelpCenter = () => {
         <Text style={styles.headerTitle}>Help Center</Text>
         <TouchableOpacity 
           style={styles.closeButton} 
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
         >
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
@@ -61,7 +61,7 @@ const HelpCenter = () => {
           <TouchableOpacity
             key={index}
             style={styles.categoryButton}
-            onPress={() => navigation.navigate(category.route as never)}
+            onPress={() => router.push(category.route as never)}
           >
             <Text style={styles.categoryText}>{category.title}</Text>
           </TouchableOpacity>

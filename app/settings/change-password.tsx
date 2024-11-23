@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, ScrollView, Keyboard } from 'react-native';
 import { getAuth, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const navigation = useNavigation();
+  const router = useRouter();
   const auth = getAuth();
 
   const handleChangePassword = async () => {
@@ -38,7 +38,7 @@ const ChangePassword = () => {
         await signInWithEmailAndPassword(auth, auth.currentUser.email, currentPassword);
         await updatePassword(auth.currentUser, newPassword);
         Alert.alert(t('common.success'), t('alerts.success_password'));
-        navigation.goBack();
+        router.back();
       }
     } catch (error: any) {
       console.error('Error changing password:', error);
@@ -58,7 +58,7 @@ const ChangePassword = () => {
       
       <TouchableOpacity 
         style={styles.backButton}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
       >
         <Text style={styles.backButtonText}>{t('common.back')}</Text>
       </TouchableOpacity>

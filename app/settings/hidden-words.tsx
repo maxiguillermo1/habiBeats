@@ -7,8 +7,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { useRouter } from 'expo-router';
 import { db, auth } from '../../firebaseConfig';
 import { doc, updateDoc, getDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -19,8 +18,7 @@ type RootStackParamList = {
   // ... other routes
 };
 
-// Define the navigation prop for the hidden words screen
-type HiddenWordsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
+
 
 // Function to censor messages (new)
 export const censorMessage = (message: string, hiddenWords: string[]): string => {
@@ -114,7 +112,7 @@ const HiddenWords: React.FC = () => {
 
   const [hiddenWord, setHiddenWord] = useState('');
   const [hiddenWords, setHiddenWords] = useState<string[]>([]);
-  const navigation = useNavigation<HiddenWordsScreenNavigationProp>();
+  const router = useRouter();
 
   // Fetch hidden words when component mounts
   useEffect(() => {
@@ -168,11 +166,15 @@ const HiddenWords: React.FC = () => {
     }
   };
 
+  const handleBackPress = () => {
+    router.back();
+  };
+
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={isDarkMode ? 'white' : 'black'} />
+        <TouchableOpacity onPress={handleBackPress}>
+          <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, isDarkMode && styles.darkHeaderTitle]}>Hidden Words</Text>
         <View style={styles.headerRight} />

@@ -5,15 +5,15 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { useNavigation } from '@react-navigation/native';
 import * as Print from 'expo-print';
 import { Stack } from 'expo-router';
 import { ThemeContext } from '../../context/ThemeContext';
+import { useRouter } from 'expo-router';
 
 export default function DownloadData() {
   const [pdfSelected, setPdfSelected] = useState(false);
   const [jsonSelected, setJsonSelected] = useState(false);
-  const navigation = useNavigation();
+  const router = useRouter();
 
     // START of Mariann Grace Dizon Contribution
     // Use theme context
@@ -174,7 +174,7 @@ export default function DownloadData() {
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.header, isDarkMode && styles.headerDark]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text style={[styles.backButton, isDarkMode && styles.backButtonDark]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>Download Your Data</Text>

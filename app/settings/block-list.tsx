@@ -4,15 +4,8 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Fla
 import { Ionicons } from '@expo/vector-icons';
 import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db, app, auth } from '../../firebaseConfig';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { useRouter } from 'expo-router';
 import { ThemeContext } from '../../context/ThemeContext';
-
-type RootStackParamList = {
-  Settings: undefined;
-};
-
-type BlockListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
 
 interface UserMatch {
   uid: string;
@@ -53,7 +46,7 @@ const BlockList = () => {
     }, [auth.currentUser]);
     // END of Mariann Grace Dizon Contribution
     
-  const navigation = useNavigation<BlockListScreenNavigationProp>();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Reported' | 'Blocked'>('Blocked');
   const [blockedMatches, setBlockedMatches] = useState<UserMatch[]>([]);
   const [reportedMatches, setReportedMatches] = useState<UserMatch[]>([]);
@@ -158,7 +151,7 @@ const BlockList = () => {
   };
 
   const handleBackPress = () => {
-    navigation.navigate('settings' as never);
+    router.push('/settings');
   };
 
   const renderContent = () => {

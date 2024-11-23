@@ -9,11 +9,11 @@ import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getSpotifyRecommendations, getSpotifyRelatedArtists } from '@/api/spotify-api';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
 import { auth } from '../firebaseConfig';
 import { DocumentSnapshot } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
 
 // Type definitions for data structures
 interface Artist {
@@ -48,7 +48,7 @@ export default function Discography() {
 
   // Auth hooks
   const { user, userData } = useAuth();
-  const navigation = useNavigation();
+  const router = useRouter();
 
     // Use theme context
     const { theme, toggleTheme } = useContext(ThemeContext);
@@ -374,7 +374,7 @@ export default function Discography() {
 
   // Navigation handler for back button
   const handleBackPress = () => {
-    navigation.goBack();
+    router.push('/profile');
   };
 
   // Loading state UI

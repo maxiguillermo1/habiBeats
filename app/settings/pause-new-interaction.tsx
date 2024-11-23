@@ -2,14 +2,14 @@ import { getFirestore, doc, updateDoc, getDoc, onSnapshot  } from 'firebase/fire
 import { app, auth } from '../../firebaseConfig';
 import { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeContext } from '../../context/ThemeContext';
 
 export default function PauseNewInteraction() {
   const [isPaused, setIsPaused] = useState(false);
   const db = getFirestore(app);
-  const navigation = useNavigation();
+  const router = useRouter();
 
     // START of Mariann Grace Dizon Contribution
     // Use theme context
@@ -75,7 +75,7 @@ export default function PauseNewInteraction() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.contentWrapper}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
             </TouchableOpacity>
             <Text style={[styles.title, isDarkMode && styles.darkText]}>

@@ -7,7 +7,7 @@ import {
   TouchableOpacity, 
   ScrollView 
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 
@@ -18,7 +18,7 @@ interface FAQItem {
 }
 
 const FAQ = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [faqs, setFaqs] = useState<FAQItem[]>([
     {
       question: "How do I match with other users?",
@@ -93,7 +93,7 @@ const FAQ = () => {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Frequently asked questions</Text>

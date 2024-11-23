@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, SafeAreaView, Image } from 'react-native';
 import { getAuth, updateEmail, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ const ChangeEmail = () => {
   const [newEmail, setNewEmail] = useState(''); // Holds the new email address
   const [message, setMessage] = useState(''); // Stores feedback messages to show to the user
   const [showMessage, setShowMessage] = useState(false); // Controls whether to display the feedback message
-  const navigation = useNavigation(); // Navigation object for screen transitions
+  const router = useRouter(); // Navigation object for screen transitions
   const auth = getAuth(); // Firebase authentication instance
 
   // Create animation values for smooth transitions
@@ -94,7 +94,7 @@ const ChangeEmail = () => {
 
       // Show success message and return to previous screen
       Alert.alert(t('common.success'), t('alerts.success_email'));
-      navigation.goBack();
+      router.back();
     } catch (error: any) {
       // Handle different types of errors with specific messages
       console.error('Error changing email:', error);
@@ -150,7 +150,7 @@ const ChangeEmail = () => {
         <View style={styles.content}>
           {/* Back button with animation */}
           <Animated.View style={[styles.backButton, animatedBackButtonStyle]}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.backButtonText}>{t('common.back')}</Text>
             </TouchableOpacity>
           </Animated.View>

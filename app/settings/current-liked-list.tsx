@@ -6,14 +6,7 @@ import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity, Alert, SafeA
 import { Ionicons } from '@expo/vector-icons';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { app, auth } from '../../firebaseConfig';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-
-type RootStackParamList = {
-  Settings: undefined;
-};
-
-type LikedListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
+import { useRouter } from 'expo-router';
 
 interface UserMatch {
   uid: string;
@@ -22,7 +15,7 @@ interface UserMatch {
 }
 
 const MatchesList: React.FC = () => {
-  const navigation = useNavigation<LikedListScreenNavigationProp>();
+  const router = useRouter();
   const [likedMatches, setLikedMatches] = useState<UserMatch[]>([]);
   const [dislikedMatches, setDislikedMatches] = useState<UserMatch[]>([]);
   const [activeTab, setActiveTab] = useState<'Liked' | 'Disliked'>('Liked');
@@ -199,7 +192,7 @@ const MatchesList: React.FC = () => {
   };
 
   const handleBackPress = () => {
-    navigation.navigate('settings' as never);
+    router.back();
   };
 
   const renderContent = () => {

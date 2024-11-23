@@ -5,7 +5,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, SafeAreaView, ActivityIndicator } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Stack } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { storage, auth, db } from '../../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -26,7 +26,7 @@ const SelfieVerification = () => {
                                        // 2: first selfie capture
                                        // 3: second selfie capture
                                        // 4: processing verification
-  const navigation = useNavigation();
+  const router = useRouter();
 
     // START of Mariann Grace Dizon Contribution
     // Use theme context
@@ -204,7 +204,7 @@ const SelfieVerification = () => {
       <Stack.Screen options={{ headerShown: false }} />
       <TouchableOpacity 
         style={styles.backButton}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
       >
         <Text style={[styles.backButtonText, isDarkMode && styles.darkBackButtonText]}>back</Text>
       </TouchableOpacity>

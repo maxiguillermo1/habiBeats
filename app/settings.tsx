@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView, SafeAreaView, Alert, Image, TextInput, Modal, Platform, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut, verifyBeforeUpdateEmail, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, deleteDoc, updateDoc, getDoc, addDoc, collection, Timestamp, query, where, getDocs, getFirestore } from 'firebase/firestore';
 import { db, app } from '../firebaseConfig'; // Ensure this path is correct
@@ -27,7 +26,6 @@ interface UserMatch {
 }
 
 const Settings = () => {
-  const navigation = useNavigation();
   const auth = getAuth();
   const { t, i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
@@ -158,7 +156,7 @@ const Settings = () => {
             try {
               await signOut(auth);
               console.log("User signed out successfully");
-              navigation.navigate('login-signup' as never);
+              router.replace('/login-signup');
             } catch (error) {
               console.error("Error signing out: ", error);
             }
@@ -178,7 +176,7 @@ const Settings = () => {
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            navigation.navigate('post-delete-survey' as never); // Navigate to the survey screen
+            router.replace('/post-delete-survey');
           }
         }
       ]
@@ -402,8 +400,7 @@ const Settings = () => {
           text: "Change", 
           style: "destructive",
           onPress: () => {
-            // Navigate to a separate screen for changing password
-            navigation.navigate('settings/change-password' as never);
+            router.push('/settings/change-password');
           }
         }
       ]
@@ -420,8 +417,7 @@ const Settings = () => {
           text: "Change", 
           style: "destructive",
           onPress: () => {
-            // Navigate to the change email screen
-            navigation.navigate('settings/change-email' as never);
+            router.push('/settings/change-email');
           }
         }
       ]
@@ -443,7 +439,7 @@ const Settings = () => {
   };
   
   const handleBackPress = () => {
-    navigation.goBack();
+    router.push('/profile');
   };
 
 
@@ -1298,7 +1294,7 @@ const Settings = () => {
         </View>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('settings/current-liked-list' as never)}>
+        <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/settings/current-liked-list')}>
           <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
             {t('settings.matches.current_interactions')}
           </Text>
@@ -1351,7 +1347,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/push-notifications' as never)}
+          onPress={() => router.push('/settings/push-notifications')}
         >
           <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
             {t('settings.notifications.push_notifications')}
@@ -1362,7 +1358,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/email-notifications' as never)}
+          onPress={() => router.push('/settings/email-notifications')}
         >
           <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
             {t('settings.notifications.email_notifications')}
@@ -1382,7 +1378,7 @@ const Settings = () => {
         
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/pause-new-interaction' as never)}
+          onPress={() => router.push('/settings/pause-new-interaction')}
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
@@ -1398,7 +1394,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/selfie-verification' as never)}
+          onPress={() => router.push('/settings/selfie-verification')}
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
@@ -1414,7 +1410,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/block-list' as never)}
+          onPress={() => router.push('/settings/block-list')}
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
@@ -1430,7 +1426,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/hidden-words' as never)}
+          onPress={() => router.push('/settings/hidden-words')}
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
@@ -1483,7 +1479,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/download-data' as never)}
+          onPress={() => router.push('/settings/download-data')}
         >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
@@ -1508,7 +1504,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/crisis-hotlines' as never)}
+          //onPress={() => router.push('/settings/crisis-hotlines')}
         >
           <View style={styles.settingContent}>
             <View style={styles.settingTitleContainer}>
@@ -1524,7 +1520,7 @@ const Settings = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={() => navigation.navigate('settings/safety-resources/help-center' as never)}
+          onPress={() => router.push('/settings/safety-resources/help-center')}
         >
           <View style={styles.settingContent}>
             <View style={styles.settingTitleContainer}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform, Animated, Keyboard, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -33,6 +33,7 @@ const EventSpacesPage = () => {
   const params = useLocalSearchParams();
   const eventData = params.eventData ? JSON.parse(params.eventData as string) : null;
   const router = useRouter();
+  const navigation = useNavigation();
   
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -305,6 +306,15 @@ const EventSpacesPage = () => {
     </View>
   );
 
+  // Add this function to handle back press
+  const handleBackPress = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      router.push('/');  // Fallback to home/root if can't go back
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -314,7 +324,11 @@ const EventSpacesPage = () => {
     >
       {renderAnimatedComments()}
       <SafeAreaView style={[styles.safeArea, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity 
+          onPress={handleBackPress}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
           <Ionicons name="chevron-back" size={20} color={isDarkMode ? '#ffffff' : '#007AFF'} />
         </TouchableOpacity>
 
@@ -445,10 +459,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 25,
-    left: 10,
-    zIndex: 1,
-    padding: 10,
+    top: 60,
+    left: 20,
+    zIndex: 999,
+    padding: 15,
+    backgroundColor: 'transparent',
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 20,

@@ -7,7 +7,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { ThemeContext } from '../../context/ThemeContext';
 import { auth, db } from '../../firebaseConfig'; 
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -60,7 +60,7 @@ const PushNotificationsSettings: React.FC = () => {
   }, [auth.currentUser]);
   // END of Mariann Grace Dizon Contribution
 
-  const navigation = useNavigation();
+  const router = useRouter();
   const [settings, setSettings] = React.useState<Settings>({
     allNotifications: false,
     newLikes: true,
@@ -84,7 +84,7 @@ const PushNotificationsSettings: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    router.back();
   };
 
   return (
