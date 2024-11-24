@@ -55,7 +55,7 @@
       "pause_account": "Mettre en Pause le Compte",
       "pause_account_description": "Masquer temporairement votre profil des nouvelles correspondances",
       "selfie_verification": "Vérification par Selfie",
-      "not_verified": "Vous n'êtes pas encore vérifié",
+      "not_verified": "Non vérifié",
       "block_list": "Liste de Blocage",
       "block_list_description": "Gérer les utilisateurs bloqués",
       "hidden_words": "Mots Cachés",
@@ -83,7 +83,11 @@
       "verification": {
         "title": "Vérification du Compte",
         "description": "Vérifiez votre profil pour montrer que vous êtes une personne réelle"
-      }
+      },
+      "verified": "Vous êtes vérifié",
+      "already_verified_title": "Déjà Vérifié",
+      "already_verified_message": "Votre compte est déjà vérifié. Aucune vérification supplémentaire n'est nécessaire.",
+      "reset_verification": "Réinitialiser la Vérification"
     },
     "phone_email": {
       "title": "Téléphone et Email",
@@ -112,7 +116,8 @@
     "success": "Succès",
     "error": "Erreur",
     "loading": "Chargement...",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "ok": "OK"
   },
   "alerts": {
     "logout_title": "Déconnexion",

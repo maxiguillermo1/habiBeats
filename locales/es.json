@@ -83,7 +83,11 @@
       "verification": {
         "title": "Verificación de Cuenta",
         "description": "Verifica tu perfil para mostrar que eres una persona real"
-      }
+      },
+      "verified": "Estás verificado",
+      "already_verified_title": "Ya Verificado",
+      "already_verified_message": "Tu cuenta ya está verificada. No se necesita verificación adicional.",
+      "reset_verification": "Reiniciar Verificación"
     },
     "phone_email": {
       "title": "Teléfono y Correo"
@@ -108,7 +112,8 @@
     "success": "Éxito",
     "error": "Error",
     "loading": "Cargando...",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "ok": "Aceptar"
   },
   "alerts": {
     "logout_title": "Cerrar Sesión",

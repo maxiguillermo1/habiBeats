@@ -55,7 +55,7 @@
       "pause_account": "Pause Account",
       "pause_account_description": "Temporarily hide your profile from new matches",
       "selfie_verification": "Selfie Verification",
-      "not_verified": "You are not verified yet",
+      "not_verified": "Not verified",
       "block_list": "Block List",
       "block_list_description": "Manage blocked users",
       "hidden_words": "Hidden Words",
@@ -83,7 +83,11 @@
       "verification": {
         "title": "Account Verification",
         "description": "Verify your profile to show others you're a real person"
-      }
+      },
+      "verified": "You are verified",
+      "already_verified_title": "Already Verified",
+      "already_verified_message": "Your account is already verified. No further verification is needed.",
+      "reset_verification": "Reset Verification"
     },
     "phone_email": {
       "title": "Phone & Email",
@@ -112,7 +116,8 @@
     "success": "Success",
     "error": "Error",
     "loading": "Loading...",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "ok": "OK"
   },
   "alerts": {
     "logout_title": "Log Out",
