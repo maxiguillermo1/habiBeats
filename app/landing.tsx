@@ -1,5 +1,5 @@
 // landing.tsx
-// Reyna Aguirre 
+// Maxi Guillermo
 
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
