@@ -95,6 +95,37 @@ export default function Profile() {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
 
+  // Add state variables for likes, thumbs ups, and comments
+  const [musicPreferenceLikes, setMusicPreferenceLikes] = useState(0);
+  const [musicPreferenceThumbsUp, setMusicPreferenceThumbsUp] = useState(0);
+  const [musicPreferenceComments, setMusicPreferenceComments] = useState<string[]>([]);
+  const [showMusicPreferenceCommentsModal, setShowMusicPreferenceCommentsModal] = useState(false);
+
+  const [tuneOfMonthLikes, setTuneOfMonthLikes] = useState(0);
+  const [tuneOfMonthThumbsUp, setTuneOfMonthThumbsUp] = useState(0);
+  const [tuneOfMonthComments, setTuneOfMonthComments] = useState<string[]>([]);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+
+  const [favoriteArtistsLikes, setFavoriteArtistsLikes] = useState(0);
+  const [favoriteArtistsThumbsUp, setFavoriteArtistsThumbsUp] = useState(0);
+  const [favoriteArtistsComments, setFavoriteArtistsComments] = useState<string[]>([]);
+  const [showFavoriteArtistsCommentsModal, setShowFavoriteArtistsCommentsModal] = useState(false);
+
+  const [favoriteAlbumLikes, setFavoriteAlbumLikes] = useState(0);
+  const [favoriteAlbumThumbsUp, setFavoriteAlbumThumbsUp] = useState(0);
+  const [favoriteAlbumComments, setFavoriteAlbumComments] = useState<string[]>([]);
+  const [showFavoriteAlbumCommentsModal, setShowFavoriteAlbumCommentsModal] = useState(false);
+
+  const [favoritePerformanceLikes, setFavoritePerformanceLikes] = useState(0);
+  const [favoritePerformanceThumbsUp, setFavoritePerformanceThumbsUp] = useState(0);
+  const [favoritePerformanceComments, setFavoritePerformanceComments] = useState<string[]>([]);
+  const [showFavoritePerformanceCommentsModal, setShowFavoritePerformanceCommentsModal] = useState(false);
+
+  const [myDisposablesLikes, setMyDisposablesLikes] = useState(0);
+  const [myDisposablesThumbsUp, setMyDisposablesThumbsUp] = useState(0);
+  const [myDisposablesComments, setMyDisposablesComments] = useState<string[]>([]);
+  const [showMyDisposablesCommentsModal, setShowMyDisposablesCommentsModal] = useState(false);
+
   // Fetch user data and register push notifications
   useEffect(() => {
     const fetchUserData = async () => {
@@ -278,9 +309,6 @@ export default function Profile() {
     }
   };
 
-  // Fetch comments for each attribute
-  const [tuneOfMonthComments, setTuneOfMonthComments] = useState<string[]>([]);
-
   useEffect(() => {
     const fetchComments = async () => {
       if (auth.currentUser) {
@@ -304,6 +332,116 @@ export default function Profile() {
         <Text key={index} style={styles.commentText}>{comment}</Text>
       ))}
     </View>
+  );
+
+  // Update the `useEffect` to Fetch Data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          
+          fetchUserInteractions();
+        }
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchUserInteractions = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      // Fetch likes, thumbs ups, and comments for each attribute
+      setMusicPreferenceLikes(userData.musicPreferenceLike || 0);
+      setMusicPreferenceThumbsUp(userData.musicPreferenceThumbsUp || 0);
+      setMusicPreferenceComments(userData.musicPreferenceComments || []);
+
+      setTuneOfMonthLikes(userData.tuneOfMonthLike || 0);
+      setTuneOfMonthThumbsUp(userData.tuneOfMonthThumbsUp || 0);
+      setTuneOfMonthComments(userData.tuneOfMonthComments || []);
+
+      setFavoriteArtistsLikes(userData.favoriteArtistsLike || 0);
+      setFavoriteArtistsThumbsUp(userData.favoriteArtistsThumbsUp || 0);
+      setFavoriteArtistsComments(userData.favoriteArtistsComments || []);
+
+      setFavoriteAlbumLikes(userData.favoriteAlbumLike || 0);
+      setFavoriteAlbumThumbsUp(userData.favoriteAlbumThumbsUp || 0);
+      setFavoriteAlbumComments(userData.favoriteAlbumComments || []);
+
+      setFavoritePerformanceLikes(userData.favoritePerformanceLike || 0);
+      setFavoritePerformanceThumbsUp(userData.favoritePerformanceThumbsUp || 0);
+      setFavoritePerformanceComments(userData.favoritePerformanceComments || []);
+
+      setMyDisposablesLikes(userData.myDisposablesLike || 0);
+      setMyDisposablesThumbsUp(userData.myDisposablesThumbsUp || 0);
+      setMyDisposablesComments(userData.myDisposablesComments || []);
+    }
+  };
+
+  // Use this function inside a useEffect to fetch data when the component mounts
+  useEffect(() => {
+    fetchUserInteractions();
+  }, []);
+
+  const handleMusicPreferenceCommentsPress = () => {
+    setShowMusicPreferenceCommentsModal(true);
+    renderCommentsModal(true, musicPreferenceComments, () => setShowMusicPreferenceCommentsModal(false));
+  };
+
+  const handleTuneOfMonthCommentsPress = () => {
+    setShowCommentsModal(true);
+    renderCommentsModal(true, tuneOfMonthComments, () => setShowCommentsModal(false));
+  };
+
+  const handleFavoriteArtistsCommentsPress = () => {
+    setShowFavoriteArtistsCommentsModal(true);
+    renderCommentsModal(true, favoriteArtistsComments, () => setShowFavoriteArtistsCommentsModal(false));
+  };
+
+  const handleFavoriteAlbumCommentsPress = () => {
+    setShowFavoriteAlbumCommentsModal(true);
+    renderCommentsModal(true, favoriteAlbumComments, () => setShowFavoriteAlbumCommentsModal(false));
+  };
+
+  const handleFavoritePerformanceCommentsPress = () => {
+    setShowFavoritePerformanceCommentsModal(true);
+    renderCommentsModal(true, favoritePerformanceComments, () => setShowFavoritePerformanceCommentsModal(false));
+  };
+
+  const handleMyDisposablesCommentsPress = () => {
+    setShowMyDisposablesCommentsModal(true);
+    renderCommentsModal(true, myDisposablesComments, () => setShowMyDisposablesCommentsModal(false));
+  };
+
+  // Render comments in a modal
+  const renderCommentsModal = (visible: boolean, comments: string[], onClose: () => void) => (
+    <Modal visible={visible} onRequestClose={onClose} animationType="slide" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <ScrollView>
+            {comments.map((comment, index) => (
+              <View key={index} style={styles.commentContainer}>
+                <Text style={styles.commentAuthor}>Anonymous</Text>
+                <Text style={styles.commentText}>{comment}</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 
   return (
@@ -450,6 +588,19 @@ export default function Profile() {
                   </Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{musicPreferenceLikes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{musicPreferenceThumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleMusicPreferenceCommentsPress} />
+                  </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -470,6 +621,19 @@ export default function Profile() {
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No tune of the month set</Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                <TouchableOpacity style={styles.iconButton}>
+                  <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                  <Text style={styles.iconText}>{tuneOfMonthLikes}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton}>
+                  <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                  <Text style={styles.iconText}>{tuneOfMonthThumbsUp}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton} >
+                  <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleTuneOfMonthCommentsPress} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -489,6 +653,19 @@ export default function Profile() {
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite artists set</Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoriteArtistsLikes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoriteArtistsThumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleFavoriteArtistsCommentsPress} />
+                  </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -509,6 +686,19 @@ export default function Profile() {
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite album set</Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoriteAlbumLikes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoriteAlbumThumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleFavoriteAlbumCommentsPress} />
+                  </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -523,6 +713,19 @@ export default function Profile() {
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite performance set</Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoritePerformanceLikes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{favoritePerformanceThumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" />
+                  </TouchableOpacity>
+                </View>
             </View>
 
             {prompts.map((prompt, index) => (
@@ -553,6 +756,19 @@ export default function Profile() {
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No disposable photos selected</Text>
                 )}
               </View>
+              <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{myDisposablesLikes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{myDisposablesThumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleMyDisposablesCommentsPress} />
+                  </TouchableOpacity>
+                </View>
             </View>
           </View>
         </ScrollView>
@@ -560,6 +776,14 @@ export default function Profile() {
         <View style={styles.bottomNavBarContainer}>
           <BottomNavBar />
         </View>
+
+        {/* Comments Modals */}
+        {renderCommentsModal(showMusicPreferenceCommentsModal, musicPreferenceComments, () => setShowMusicPreferenceCommentsModal(false))}
+        {renderCommentsModal(showCommentsModal, tuneOfMonthComments, () => setShowCommentsModal(false))}
+        {renderCommentsModal(showFavoriteArtistsCommentsModal, favoriteArtistsComments, () => setShowFavoriteArtistsCommentsModal(false))}
+        {renderCommentsModal(showFavoriteAlbumCommentsModal, favoriteAlbumComments, () => setShowFavoriteAlbumCommentsModal(false))}
+        {renderCommentsModal(showFavoritePerformanceCommentsModal, favoritePerformanceComments, () => setShowFavoritePerformanceCommentsModal(false))}
+        {renderCommentsModal(showMyDisposablesCommentsModal, myDisposablesComments, () => setShowMyDisposablesCommentsModal(false))}
       </SafeAreaView>
     </ThemeProvider>
   );
@@ -803,6 +1027,8 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   menuContainer: {
@@ -855,8 +1081,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
-    maxHeight: '80%',
-    overflow: 'scroll',
+    width: '80%',
+    maxHeight: '70%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   attributeContainer: {
     marginVertical: 10,
@@ -892,6 +1123,40 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 14,
     color: '#333',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    maxHeight: '80%',
+    overflow: 'scroll',
+  },
+  commentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 5,
+  },
+  commentAuthor: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginRight: 5,
+  },
+  closeButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#fc6c85',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -1066,8 +1066,21 @@ const Match = () => {
     if (currentUser) {
       const db = getFirestore(app);
       const promptInteractionsRef = collection(db, "users", currentUser.uid, "promptInteractions");
+      const user2DocRef = doc(db, "users", user2Id);
 
       try {
+        const user2Doc = await getDoc(user2DocRef);
+        if (user2Doc.exists()) {
+          const userData = user2Doc.data();
+          const interactionCountKey = `${contentType}${interactionType.charAt(0).toUpperCase() + interactionType.slice(1)}`;
+          const currentCount = userData[interactionCountKey] || 0;
+
+          await updateDoc(user2DocRef, {
+            [interactionCountKey]: currentCount + 1
+          });
+
+          console.log(`Incremented ${interactionType} count for ${contentType}`);
+        }
         // Create the interaction document
         const interaction: PromptInteraction = {
           interactionType,
@@ -1094,8 +1107,22 @@ const Match = () => {
     if (currentUser) {
       const db = getFirestore(app);
       const promptInteractionsRef = collection(db, "users", currentUser.uid, "promptInteractions");
+      const user2DocRef = doc(db, "users", user2Id);
 
       try {
+        const user2Doc = await getDoc(user2DocRef);
+        if (user2Doc.exists()) {
+          const userData = user2Doc.data();
+          const interactionCountKey = `${contentType}${interactionType.charAt(0).toUpperCase() + interactionType.slice(1)}`;
+          const currentCount = userData[interactionCountKey] || 0;
+
+          await updateDoc(user2DocRef, {
+            [interactionCountKey]: Math.max(0, currentCount - 1)
+          });
+
+          console.log(`Decremented ${interactionType} count for ${contentType}`);
+        }
+        
         const q = query(promptInteractionsRef, where("interactionType", "==", interactionType), where("contentType", "==", contentType), where("user2Id", "==", user2Id));
         const querySnapshot = await getDocs(q);
 
@@ -1801,5 +1828,4 @@ const getTextColor = (gender: string) => {
       return '#333';
   }
 };
-
 export default Match;
