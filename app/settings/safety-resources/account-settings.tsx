@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } fr
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-const AIAtHabibeats = () => {
+const AccountSettings = () => {
   const router = useRouter();
 
   return (
@@ -13,49 +13,59 @@ const AIAtHabibeats = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI at Habibeats</Text>
+        <Text style={styles.headerTitle}>Account Settings</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
         <Text style={styles.description}>
-          Habibeats uses artificial intelligence to enhance your music discovery and social experience. Here's how our AI chatbot can help you:
+          Manage your account settings and preferences. Here's what you can do:
         </Text>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="musical-notes-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Album Discovery</Text>
+            <Ionicons name="person-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Profile Information</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Ask about any artist's albums, from their latest releases to their first works. Get detailed information about track listings and album highlights.
+            Update your profile details including name, bio, and profile picture. Keep your information current to help others connect with you.
           </Text>
         </View>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Similar Artists</Text>
+            <Ionicons name="notifications-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Notification Settings</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Discover new artists based on your favorites. Our AI provides recommendations complete with popular tracks to help you explore similar music.
+            Customize your notification preferences. Choose what you want to be notified about and how you receive these notifications.
           </Text>
         </View>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="volume-medium-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Lyrics Analysis</Text>
+            <Ionicons name="lock-closed-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Privacy Settings</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Get insights into your favorite songs with our lyrics analysis feature. Understand the themes, meanings, and cultural significance behind the music you love.
+            Control who can see your profile, posts, and activity. Manage your blocked users and adjust your visibility settings.
+          </Text>
+        </View>
+
+        <View style={styles.featureSection}>
+          <View style={styles.featureHeader}>
+            <Ionicons name="shield-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Account Security</Text>
+          </View>
+          <Text style={styles.featureDescription}>
+            Change your password, enable two-factor authentication, and review your login activity to keep your account secure.
           </Text>
         </View>
 
         <View style={styles.noteSection}>
-          <Text style={styles.noteTitle}>Privacy Note</Text>
+          <Text style={styles.noteTitle}>Need Help?</Text>
           <Text style={styles.noteText}>
-            Our AI is designed to provide helpful music-related information while protecting your privacy. It will never share personal data or sensitive information about users.
+            If you need assistance with your account settings or have any questions, please contact our support team. We're here to help!
           </Text>
         </View>
       </ScrollView>
@@ -146,4 +156,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AIAtHabibeats;
+export default AccountSettings;

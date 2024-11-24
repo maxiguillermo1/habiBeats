@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } fr
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-const AIAtHabibeats = () => {
+const EventFeatures = () => {
   const router = useRouter();
 
   return (
@@ -13,49 +13,49 @@ const AIAtHabibeats = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI at Habibeats</Text>
+        <Text style={styles.headerTitle}>Event Features Guide</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
         <Text style={styles.description}>
-          Habibeats uses artificial intelligence to enhance your music discovery and social experience. Here's how our AI chatbot can help you:
+          Discover how to make the most of Habibeats' event features to connect with fellow music lovers and share amazing experiences.
         </Text>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="musical-notes-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Album Discovery</Text>
+            <Ionicons name="calendar-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Creating Events</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Ask about any artist's albums, from their latest releases to their first works. Get detailed information about track listings and album highlights.
+            Host your own music events! Whether it's a listening party, jam session, or concert meetup, you can easily create and manage events through the app.
           </Text>
         </View>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Similar Artists</Text>
+            <Ionicons name="people-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Event Discovery</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Discover new artists based on your favorites. Our AI provides recommendations complete with popular tracks to help you explore similar music.
+            Find events that match your music taste. Browse local events, filter by genre, and see which events your matches are attending.
           </Text>
         </View>
 
         <View style={styles.featureSection}>
           <View style={styles.featureHeader}>
-            <Ionicons name="volume-medium-outline" size={24} color="#fc6c85" />
-            <Text style={styles.featureTitle}>Lyrics Analysis</Text>
+            <Ionicons name="chatbubbles-outline" size={24} color="#fc6c85" />
+            <Text style={styles.featureTitle}>Event Chat</Text>
           </View>
           <Text style={styles.featureDescription}>
-            Get insights into your favorite songs with our lyrics analysis feature. Understand the themes, meanings, and cultural significance behind the music you love.
+            Connect with other attendees before, during, and after events through dedicated event chat rooms. Share excitement, coordinate meetups, and stay in touch.
           </Text>
         </View>
 
         <View style={styles.noteSection}>
-          <Text style={styles.noteTitle}>Privacy Note</Text>
+          <Text style={styles.noteTitle}>Safety Tips</Text>
           <Text style={styles.noteText}>
-            Our AI is designed to provide helpful music-related information while protecting your privacy. It will never share personal data or sensitive information about users.
+            While meeting fellow music lovers is exciting, always prioritize your safety. Meet in public places, tell friends about your plans, and trust your instincts.
           </Text>
         </View>
       </ScrollView>
@@ -146,4 +146,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AIAtHabibeats;
+export default EventFeatures;

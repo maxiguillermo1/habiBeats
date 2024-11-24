@@ -11,44 +11,44 @@ const SafetyAndPrivacy = () => {
 
   const safetyItems = [
     {
-      title: t('safety.profile_privacy.title'),
-      description: t('safety.profile_privacy.description'),
-      icon: "eye-off-outline",
+      title: "Profile Privacy",
+      description: "Control who can see your profile and personal information. Manage your visibility settings and protect your privacy.",
+      icon: "eye-off-outline", 
       color: "#fba904"
     },
     {
-      title: t('safety.blocking.title'),
-      description: t('safety.blocking.description'),
+      title: "Blocking & Reporting",
+      description: "Learn how to block and report users who violate our community guidelines. Your safety is our priority.",
       icon: "shield-outline",
       color: "#82327E"
     },
     {
-      title: t('safety.hidden_words.title'),
-      description: t('safety.hidden_words.description'),
+      title: "Hidden Words",
+      description: "Filter out potentially offensive comments and messages. Customize your content filtering preferences.",
       icon: "text-outline",
       color: "#fba904"
     },
     {
-      title: t('safety.location.title'),
-      description: t('safety.location.description'),
+      title: "Location Safety",
+      description: "Control your location sharing settings and learn best practices for location privacy while using the app.",
       icon: "location-outline",
       color: "#82327E"
     },
     {
-      title: t('safety.meeting.title'),
-      description: t('safety.meeting.description'),
+      title: "Safe Meetups",
+      description: "Guidelines for safely meeting people from the app in person. Learn about meetup safety features and best practices.",
       icon: "people-outline",
       color: "#fba904"
     },
     {
-      title: t('safety.data.title'),
-      description: t('safety.data.description'),
+      title: "Data Protection",
+      description: "Understand how we protect your personal data and what security measures we have in place to keep your information safe.",
       icon: "lock-closed-outline",
       color: "#82327E"
     },
     {
-      title: t('safety.verification.title'),
-      description: t('safety.verification.description'),
+      title: "Account Verification",
+      description: "Learn about our verification process and how it helps create a safer community by confirming user identities.",
       icon: "checkmark-circle-outline",
       color: "#fba904"
     }
@@ -61,13 +61,13 @@ const SafetyAndPrivacy = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('safety.title')}</Text>
+        <Text style={styles.headerTitle}>Safety & Privacy</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
         <Text style={styles.description}>
-          {t('safety.description')}
+          Manage your account settings and preferences. Here's what you can do:
         </Text>
 
         {safetyItems.map((item, index) => (

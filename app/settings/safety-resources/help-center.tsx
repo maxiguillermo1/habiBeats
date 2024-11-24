@@ -22,14 +22,22 @@ const HelpCenter = () => {
       title: 'Safety, Security, and Privacy',
       route: 'settings/safety-resources/safety'
     },
-    {
+    { 
       title: 'AI at Habibeats',
       route: 'settings/safety-resources/ai-at-habibeats'
     },
     {
       title: 'Support',
       route: 'settings/safety-resources/support'
-    }
+    },
+    {
+      title: 'Account Settings',
+      route: 'settings/safety-resources/account-settings'
+    },
+    {
+      title: 'Event Features Guide',
+      route: 'settings/safety-resources/event-features'
+    },
   ];
 
   return (
@@ -43,17 +51,6 @@ const HelpCenter = () => {
         >
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#666"
-        />
       </View>
 
       <ScrollView style={styles.content}>
@@ -119,7 +116,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fba904',
     padding: 20,
     borderRadius: 25,
-    marginVertical: 8,
+    marginVertical: 12,
     alignItems: 'center',
   },
   categoryText: {
