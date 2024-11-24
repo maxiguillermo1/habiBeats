@@ -90,6 +90,9 @@ const Settings = () => {
     border: isDark ? '#2d3235' : '#E0E0E0',
   });
 
+  // Add this near other state declarations
+  const [isVerified, setIsVerified] = useState(false);
+
   useEffect(() => {
     if (auth.currentUser) {
       fetchUserData();
@@ -106,6 +109,7 @@ const Settings = () => {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        setIsVerified(userData.isVerified || false);
         setName(userData.displayName || `${userData.firstName} ${userData.lastName}`);
         setLocation(userData.displayLocation || 'Location not set');
         setProfileImage(userData.profileImageUrl || '');
@@ -1154,7 +1158,17 @@ const Settings = () => {
               />
             )}
           </View>
-          <Text style={[styles.nameInput, { color: getThemeColors(isDarkMode).text }]}>{name}</Text>
+          <View style={styles.nameContainer}>
+            <Text style={[styles.nameInput, isDarkMode && { color: getThemeColors(isDarkMode).text }]}>{name}</Text>
+            {isVerified && (
+              <Ionicons 
+                name="checkmark-circle" 
+                size={24}
+                color="#fba904" 
+                style={styles.verifiedBadge} 
+              />
+            )}
+          </View>
           <Text style={[styles.locationInput, { color: getThemeColors(isDarkMode).subText }]}>{location}</Text>
         </View>
 
@@ -1401,7 +1415,7 @@ const Settings = () => {
               {t('settings.safety.selfie_verification')}
             </Text>
             <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
-              {t('settings.safety.not_verified')}
+              {isVerified ? t('settings.safety.verified') : t('settings.safety.not_verified')}
             </Text>
           </View>
           <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
@@ -1689,9 +1703,8 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   nameInput: {
-    fontSize: 22, // Reduced from 24
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 20,
     textAlign: 'center',
   },
   locationInput: {
@@ -1825,6 +1838,15 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: 10,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  verifiedBadge: {
+    marginLeft: 5,
   },
 });
 

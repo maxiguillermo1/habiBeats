@@ -74,7 +74,7 @@
       },
       "meeting": {
         "title": "安全な出会いのヒント",
-        "description": "公共の場所で会い、友人に予定を伝える"
+        "description": "共の場所で会い、友人に予定を伝える"
       },
       "data": {
         "title": "データ保護",
@@ -83,7 +83,11 @@
       "verification": {
         "title": "アカウント認証",
         "description": "実在する人物であることを示すためにプロフィールを認証"
-      }
+      },
+      "verified": "認証済み",
+      "already_verified_title": "既に認証済み",
+      "already_verified_message": "あなたのアカウントは既に認証されています。追加の認証は必要ありません。",
+      "reset_verification": "認証をリセット"
     },
     "phone_email": {
       "title": "電話番号とメール",
@@ -122,7 +126,8 @@
     "success": "成功",
     "error": "エラー",
     "loading": "読み込み中...",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "ok": "OK"
   },
   "alerts": {
     "logout_title": "ログアウト",
