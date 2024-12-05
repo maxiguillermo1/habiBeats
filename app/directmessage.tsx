@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -315,7 +315,7 @@ const DirectMessageScreen = () => {
                 {/* Header */}
                 <View style={[styles.header, { backgroundColor: isDarkMode ? '#1a1a1a' : '#FFF8F0' }]}>
                     <TouchableOpacity 
-                        onPress={() => navigation.goBack()} 
+                        onPress={() => router.back()} 
                         style={styles.backButton}
                     >
                         <Ionicons name="chevron-back" size={18} color={isDarkMode ? 'white' : 'black'} />

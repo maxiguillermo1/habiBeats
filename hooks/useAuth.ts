@@ -40,6 +40,24 @@ interface UserData {
   myEventsVisible: boolean;
   hiddenWords: string[];
   isOnline: boolean;
+  musicPreferenceLikes: number;
+  musicPreferenceThumbsUp: number;
+  musicPreferenceComments: string[];
+  favoriteAlbumLikes: number;
+  favoriteAlbumThumbsUp: number;
+  favoriteAlbumComments: string[];
+  favoritePerformanceLikes: number;
+  favoritePerformanceThumbsUp: number;
+  favoritePerformanceComments: string[];
+  myDisposablesLikes: number; 
+  myDisposablesThumbsUp: number;
+  myDisposablesComments: string[];
+  tuneOfMonthLikes: number;
+  tuneOfMonthThumbsUp: number;
+  tuneOfMonthComments: string[];
+  favoriteArtistsLikes: number;
+  favoriteArtistsThumbsUp: number;
+  favoriteArtistsComments: string[];
 
    // Reyna Aguirre:HashMap to store user matches with their status (liked or disliked)
    matches: {

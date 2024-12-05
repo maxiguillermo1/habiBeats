@@ -170,7 +170,12 @@ const NotificationPage = () => {
         });
         break;
       case 'like':
-        // Navigate to profile screen
+        if (notification.data && notification.data.senderId) {
+          router.push({
+            pathname: '/match',
+            params: { userId: notification.data.senderId },
+          });
+        }
         break;
       default:
         // Default handling

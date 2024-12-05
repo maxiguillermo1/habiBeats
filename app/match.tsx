@@ -8,7 +8,7 @@ import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { User } from './match-algorithm'; // import isMatch and User from match-algorithm.tsx
 import { getAuth } from 'firebase/auth';
-import { app } from '../firebaseConfig'; 
+import { app, db } from '../firebaseConfig'; 
 import { fetchCompatibleUsers } from './match-algorithm'; // for match algorithm
 import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore"; // to store matches 
 import { useFocusEffect } from '@react-navigation/native';
@@ -447,21 +447,46 @@ const Match = () => {
 
   // START of content like handler
   // START of Mariann Grace Dizon Contribution  
-  const handleContentLike = (contentType: string) => {
+  const handleContentLike = async (contentType: string) => {
     if (user2) {
-      setLikedContent(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(contentType)) {
-          console.log(`Unlike button pressed for ${contentType}`);
-          newSet.delete(contentType);
-          removePromptInteraction("like", contentType, user2.uid); // Remove like interaction from Firestore
-        } else {
-          console.log(`Like button pressed for ${contentType}`);
-          newSet.add(contentType);
-          savePromptInteraction("like", contentType, user2.uid); // Save like interaction with user2's ID
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+
+      if (currentUser) {
+        const db = getFirestore(app);
+        const user2DocRef = doc(db, "users", user2.uid);
+        const user2Doc = await getDoc(user2DocRef);
+
+        if (user2Doc.exists()) {
+          const userData = user2Doc.data();
+          const interactionNamesKey = `${contentType}HeartsNames`;
+          const currentNames = new Set(userData[interactionNamesKey] || []);
+
+          if (likedContent.has(contentType)) {
+            console.log(`Heart removed for ${contentType}`);
+            currentNames.delete(currentUser.displayName);
+            removePromptInteraction("like", contentType, user2.uid);
+          } else {
+            console.log(`Heart added for ${contentType}`);
+            currentNames.add(currentUser.displayName);
+            savePromptInteraction("like", contentType, user2.uid);
+          }
+
+          await updateDoc(user2DocRef, {
+            [interactionNamesKey]: Array.from(currentNames)
+          });
+
+          setLikedContent(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(contentType)) {
+              newSet.delete(contentType);
+            } else {
+              newSet.add(contentType);
+            }
+            return newSet;
+          });
         }
-        return newSet;
-      });
+      }
     }
   };
   // END of content like handler
@@ -983,23 +1008,27 @@ const Match = () => {
   };
 
   // Function to save a comment to the other user's document
+  // Jesus Donate Contribution
   const saveComment = async (userId: string, attribute: string, comment: string) => {
     const db = getFirestore(app);
     const userDocRef = doc(db, "users", userId);
-
-  try {
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      const comments = userData[`${attribute}Comments`] || [];
-      comments.push(comment);
-
-      await updateDoc(userDocRef, {
-        [`${attribute}Comments`]: comments
-      });
-    }
-  } catch (error) {
-    console.error("Error saving comment: ", error);
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+  
+    try {
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists() && currentUser) {
+        const userData = userDoc.data();
+        const comments = userData[`${attribute}Comments`] || [];
+        const displayName = currentUser.displayName || 'Anonymous';
+        comments.push(`${displayName}: ${comment}`);
+  
+        await updateDoc(userDocRef, {
+          [`${attribute}Comments`]: comments
+        });
+      }
+    } catch (error) {
+      console.error("Error saving comment: ", error);
     }
   };
 
@@ -1025,19 +1054,44 @@ const Match = () => {
   // Add a new handler for thumbs up button press
   const handleThumbsUpPress = async (contentType: string) => {
     if (user2) {
-      setThumbsUpContent(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(contentType)) {
-          console.log(`Thumbs up removed for ${contentType}`);
-          newSet.delete(contentType);
-          removePromptInteraction("thumbsUp", contentType, user2.uid); // Remove thumbs up interaction from Firestore
-        } else {
-          console.log(`Thumbs up for ${contentType}`);
-          newSet.add(contentType);
-          savePromptInteraction("thumbsUp", contentType, user2.uid); // Save thumbs up interaction with user2's ID
+      const auth = getAuth(app);
+      const currentUser = auth.currentUser;
+
+      if (currentUser) {
+        const db = getFirestore(app);
+        const user2DocRef = doc(db, "users", user2.uid);
+        const user2Doc = await getDoc(user2DocRef);
+
+        if (user2Doc.exists()) {
+          const userData = user2Doc.data();
+          const interactionNamesKey = `${contentType}ThumbsUpNames`;
+          const currentNames = new Set(userData[interactionNamesKey] || []);
+
+          if (thumbsUpContent.has(contentType)) {
+            console.log(`Thumbs up removed for ${contentType}`);
+            currentNames.delete(currentUser.displayName);
+            removePromptInteraction("thumbsUp", contentType, user2.uid);
+          } else {
+            console.log(`Thumbs up added for ${contentType}`);
+            currentNames.add(currentUser.displayName);
+            savePromptInteraction("thumbsUp", contentType, user2.uid);
+          }
+
+          await updateDoc(user2DocRef, {
+            [interactionNamesKey]: Array.from(currentNames)
+          });
+
+          setThumbsUpContent(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(contentType)) {
+              newSet.delete(contentType);
+            } else {
+              newSet.add(contentType);
+            }
+            return newSet;
+          });
         }
-        return newSet;
-      });
+      }
     }
   };
 

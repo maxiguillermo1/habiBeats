@@ -62,6 +62,18 @@ const gifImages: Record<string, any> = {
   'pfpoverlay6.gif': require('../assets/animated-avatar/pfpoverlay6.gif'),
 };
 
+function formatNumber(num: number): string {
+  if (num >= 1_000_000_000) {
+    return (num / 1_000_000_000).toFixed(1) + 'B';
+  } else if (num >= 1_000_000) {
+    return (num / 1_000_000).toFixed(1) + 'M';
+  } else if (num >= 1_000) {
+    return (num / 1_000).toFixed(1) + 'K';
+  } else {
+    return num.toString();
+  }
+}
+
 export default function Profile() {
   // State for animated border image
   const [animatedBorder, setAnimatedBorder] = useState<ImageSourcePropType | null>(null);
@@ -100,31 +112,54 @@ export default function Profile() {
   const [musicPreferenceThumbsUp, setMusicPreferenceThumbsUp] = useState(0);
   const [musicPreferenceComments, setMusicPreferenceComments] = useState<string[]>([]);
   const [showMusicPreferenceCommentsModal, setShowMusicPreferenceCommentsModal] = useState(false);
+  const [musicPreferenceLikesNames, setMusicPreferenceLikesNames] = useState<string[]>([]);
+  const [musicPreferenceThumbsUpNames, setMusicPreferenceThumbsUpNames] = useState<string[]>([]);
 
   const [tuneOfMonthLikes, setTuneOfMonthLikes] = useState(0);
   const [tuneOfMonthThumbsUp, setTuneOfMonthThumbsUp] = useState(0);
   const [tuneOfMonthComments, setTuneOfMonthComments] = useState<string[]>([]);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [tuneOfMonthLikesNames, setTuneOfMonthLikesNames] = useState<string[]>([]);
+  const [tuneOfMonthThumbsUpNames, setTuneOfMonthThumbsUpNames] = useState<string[]>([]);
 
   const [favoriteArtistsLikes, setFavoriteArtistsLikes] = useState(0);
   const [favoriteArtistsThumbsUp, setFavoriteArtistsThumbsUp] = useState(0);
   const [favoriteArtistsComments, setFavoriteArtistsComments] = useState<string[]>([]);
   const [showFavoriteArtistsCommentsModal, setShowFavoriteArtistsCommentsModal] = useState(false);
+  const [favoriteArtistsLikesNames, setFavoriteArtistsLikesNames] = useState<string[]>([]);
+  const [favoriteArtistsThumbsUpNames, setFavoriteArtistsThumbsUpNames] = useState<string[]>([]);
 
   const [favoriteAlbumLikes, setFavoriteAlbumLikes] = useState(0);
   const [favoriteAlbumThumbsUp, setFavoriteAlbumThumbsUp] = useState(0);
   const [favoriteAlbumComments, setFavoriteAlbumComments] = useState<string[]>([]);
   const [showFavoriteAlbumCommentsModal, setShowFavoriteAlbumCommentsModal] = useState(false);
+  const [favoriteAlbumLikesNames, setFavoriteAlbumLikesNames] = useState<string[]>([]);
+  const [favoriteAlbumThumbsUpNames, setFavoriteAlbumThumbsUpNames] = useState<string[]>([]);
 
   const [favoritePerformanceLikes, setFavoritePerformanceLikes] = useState(0);
   const [favoritePerformanceThumbsUp, setFavoritePerformanceThumbsUp] = useState(0);
   const [favoritePerformanceComments, setFavoritePerformanceComments] = useState<string[]>([]);
   const [showFavoritePerformanceCommentsModal, setShowFavoritePerformanceCommentsModal] = useState(false);
+  const [favoritePerformanceLikesNames, setFavoritePerformanceLikesNames] = useState<string[]>([]);
+  const [favoritePerformanceThumbsUpNames, setFavoritePerformanceThumbsUpNames] = useState<string[]>([]); 
 
   const [myDisposablesLikes, setMyDisposablesLikes] = useState(0);
   const [myDisposablesThumbsUp, setMyDisposablesThumbsUp] = useState(0);
   const [myDisposablesComments, setMyDisposablesComments] = useState<string[]>([]);
   const [showMyDisposablesCommentsModal, setShowMyDisposablesCommentsModal] = useState(false);
+  const [myDisposablesLikesNames, setMyDisposablesLikesNames] = useState<string[]>([]);
+  const [myDisposablesThumbsUpNames, setMyDisposablesThumbsUpNames] = useState<string[]>([]);
+
+  // State for names modal
+  const [currentNames, setCurrentNames] = useState<string[]>([]);
+  const [showNamesModal, setShowNamesModal] = useState(false);
+
+  const handleShowNames = (names: string[]) => {
+    console.log("Showing names modal", names);
+    console.log("Current names", musicPreferenceThumbsUpNames);
+    setCurrentNames(names);
+    setShowNamesModal(true);
+  };
 
   // Fetch user data and register push notifications
   useEffect(() => {
@@ -365,26 +400,38 @@ export default function Profile() {
       setMusicPreferenceLikes(userData.musicPreferenceLike || 0);
       setMusicPreferenceThumbsUp(userData.musicPreferenceThumbsUp || 0);
       setMusicPreferenceComments(userData.musicPreferenceComments || []);
+      setMusicPreferenceLikesNames(userData.musicPreferenceLikesNames || []);
+      setMusicPreferenceThumbsUpNames(userData.musicPreferenceThumbsUpNames || []);
 
       setTuneOfMonthLikes(userData.tuneOfMonthLike || 0);
       setTuneOfMonthThumbsUp(userData.tuneOfMonthThumbsUp || 0);
       setTuneOfMonthComments(userData.tuneOfMonthComments || []);
+      setTuneOfMonthLikesNames(userData.tuneOfMonthLikesNames || []);
+      setTuneOfMonthThumbsUpNames(userData.tuneOfMonthThumbsUpNames || []);
 
       setFavoriteArtistsLikes(userData.favoriteArtistsLike || 0);
       setFavoriteArtistsThumbsUp(userData.favoriteArtistsThumbsUp || 0);
       setFavoriteArtistsComments(userData.favoriteArtistsComments || []);
+      setFavoriteArtistsLikesNames(userData.favoriteArtistsLikesNames || []);
+      setFavoriteArtistsThumbsUpNames(userData.favoriteArtistsThumbsUpNames || []);
 
       setFavoriteAlbumLikes(userData.favoriteAlbumLike || 0);
       setFavoriteAlbumThumbsUp(userData.favoriteAlbumThumbsUp || 0);
       setFavoriteAlbumComments(userData.favoriteAlbumComments || []);
+      setFavoriteAlbumLikesNames(userData.favoriteAlbumLikesNames || []);
+      setFavoriteAlbumThumbsUpNames(userData.favoriteAlbumThumbsUpNames || []);
 
       setFavoritePerformanceLikes(userData.favoritePerformanceLike || 0);
       setFavoritePerformanceThumbsUp(userData.favoritePerformanceThumbsUp || 0);
       setFavoritePerformanceComments(userData.favoritePerformanceComments || []);
+      setFavoritePerformanceLikesNames(userData.favoritePerformanceLikesNames || []);
+      setFavoritePerformanceThumbsUpNames(userData.favoritePerformanceThumbsUpNames || []);
 
       setMyDisposablesLikes(userData.myDisposablesLike || 0);
       setMyDisposablesThumbsUp(userData.myDisposablesThumbsUp || 0);
       setMyDisposablesComments(userData.myDisposablesComments || []);
+      setMyDisposablesLikesNames(userData.myDisposablesLikesNames || []);
+      setMyDisposablesThumbsUpNames(userData.myDisposablesThumbsUpNames || []);
     }
   };
 
@@ -429,11 +476,34 @@ export default function Profile() {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <ScrollView>
-            {comments.map((comment, index) => (
-              <View key={index} style={styles.commentContainer}>
-                <Text style={styles.commentAuthor}>Anonymous</Text>
-                <Text style={styles.commentText}>{comment}</Text>
-              </View>
+            {comments.map((comment, index) => {
+              const [name, ...rest] = comment.split(':');
+              const commentText = rest.join(':').trim();
+              return (
+                <View key={index} style={styles.commentContainer}>
+                  <Text>
+                    <Text style={styles.commentAuthor}>{name}:</Text>
+                    <Text style={styles.commentText}> {commentText}</Text>
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderNamesModal = (visible: boolean, names: string[], onClose: () => void) => (
+    <Modal visible={visible} onRequestClose={onClose} animationType="slide" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <ScrollView>
+            {names.map((name, index) => (
+              <Text key={index} style={styles.nameText}>{name}</Text>
             ))}
           </ScrollView>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -587,20 +657,20 @@ export default function Profile() {
                     No music preferences set
                   </Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                  <TouchableOpacity style={styles.iconButton}>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(musicPreferenceLikesNames)}>
                     <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{musicPreferenceLikes}</Text>
+                    <Text style={styles.iconText}>{formatNumber(musicPreferenceLikes)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(musicPreferenceThumbsUpNames)}>
                     <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{musicPreferenceThumbsUp}</Text>
+                    <Text style={styles.iconText}>{formatNumber(musicPreferenceThumbsUp)}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} >
                     <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleMusicPreferenceCommentsPress} />
                   </TouchableOpacity>
                 </View>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -620,19 +690,19 @@ export default function Profile() {
                 ) : (
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No tune of the month set</Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                <TouchableOpacity style={styles.iconButton}>
-                  <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                  <Text style={styles.iconText}>{tuneOfMonthLikes}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}>
-                  <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                  <Text style={styles.iconText}>{tuneOfMonthThumbsUp}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton} >
-                  <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleTuneOfMonthCommentsPress} />
-                </TouchableOpacity>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(tuneOfMonthLikesNames)}>
+                    <Ionicons name="heart-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{formatNumber(tuneOfMonthLikes)}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(tuneOfMonthThumbsUpNames)}>
+                    <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
+                    <Text style={styles.iconText}>{formatNumber(tuneOfMonthThumbsUp)}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} >
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleTuneOfMonthCommentsPress} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -652,20 +722,20 @@ export default function Profile() {
                 ) : (
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite artists set</Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                  <TouchableOpacity style={styles.iconButton}>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoriteArtistsLikesNames)}>
                     <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoriteArtistsLikes}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoriteArtistsLikes)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoriteArtistsThumbsUpNames)}>
                     <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoriteArtistsThumbsUp}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoriteArtistsThumbsUp)}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} >
                     <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleFavoriteArtistsCommentsPress} />
                   </TouchableOpacity>
                 </View>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -685,20 +755,20 @@ export default function Profile() {
                 ) : (
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite album set</Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                  <TouchableOpacity style={styles.iconButton}>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoriteAlbumLikesNames)}>
                     <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoriteAlbumLikes}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoriteAlbumLikes)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoriteAlbumThumbsUpNames)}>
                     <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoriteAlbumThumbsUp}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoriteAlbumThumbsUp)}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} >
                     <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleFavoriteAlbumCommentsPress} />
                   </TouchableOpacity>
                 </View>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
@@ -712,20 +782,20 @@ export default function Profile() {
                 ) : (
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No favorite performance set</Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                  <TouchableOpacity style={styles.iconButton}>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoritePerformanceLikesNames)}>
                     <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoritePerformanceLikes}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoritePerformanceLikes)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(favoritePerformanceThumbsUpNames)}>
                     <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{favoritePerformanceThumbsUp}</Text>
+                    <Text style={styles.iconText}>{formatNumber(favoritePerformanceThumbsUp)}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} >
-                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" />
+                    <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleFavoritePerformanceCommentsPress}/>
                   </TouchableOpacity>
                 </View>
+              </View>
             </View>
 
             {prompts.map((prompt, index) => (
@@ -755,20 +825,20 @@ export default function Profile() {
                 ) : (
                   <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No disposable photos selected</Text>
                 )}
-              </View>
-              <View style={styles.iconContainer}>
-                  <TouchableOpacity style={styles.iconButton}>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(myDisposablesLikesNames)}>
                     <Ionicons name="heart-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{myDisposablesLikes}</Text>
+                    <Text style={styles.iconText}>{formatNumber(myDisposablesLikes)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.iconButton}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(myDisposablesThumbsUpNames)}>
                     <Ionicons name="thumbs-up-outline" size={24} color="#fc6c85" />
-                    <Text style={styles.iconText}>{myDisposablesThumbsUp}</Text>
+                    <Text style={styles.iconText}>{formatNumber(myDisposablesThumbsUp)}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} >
                     <Ionicons name="chatbubble-outline" size={24} color="#fc6c85" onPress={handleMyDisposablesCommentsPress} />
                   </TouchableOpacity>
                 </View>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -784,6 +854,22 @@ export default function Profile() {
         {renderCommentsModal(showFavoriteAlbumCommentsModal, favoriteAlbumComments, () => setShowFavoriteAlbumCommentsModal(false))}
         {renderCommentsModal(showFavoritePerformanceCommentsModal, favoritePerformanceComments, () => setShowFavoritePerformanceCommentsModal(false))}
         {renderCommentsModal(showMyDisposablesCommentsModal, myDisposablesComments, () => setShowMyDisposablesCommentsModal(false))}
+
+        {/* Names Modal */}
+        <Modal visible={showNamesModal} onRequestClose={() => setShowNamesModal(false)} animationType="slide" transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView>
+                {currentNames.map((name, index) => (
+                  <Text key={index} style={styles.nameText}>{name}</Text>
+                ))}
+              </ScrollView>
+              <TouchableOpacity onPress={() => setShowNamesModal(false)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ThemeProvider>
   );
@@ -1157,6 +1243,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  nameText: {
+    fontSize: 18,
+    color: '#333',
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginVertical: 5,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
 });
 
