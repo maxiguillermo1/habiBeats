@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Image, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { doc, setDoc, updateDoc, arrayUnion, onSnapshot, Timestamp, query, collection, where, getDocs, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -187,7 +187,7 @@ const GroupMessageScreen = () => {
             <SafeAreaView style={isDarkMode ? styles.darkContainer : styles.container}>
                 <Stack.Screen options={{ headerShown: false }} />
                 <View style={isDarkMode ? styles.darkHeader : styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={24} color={isDarkMode ? 'white' : 'black'} />
                     </TouchableOpacity>
                     <View style={styles.headerContent}>

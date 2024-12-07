@@ -398,6 +398,7 @@ const Messages = () => {
               />
             </Menu>
           </View>
+          <Text style={[styles.title, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Recent Messages</Text>
           {isLoadingConversations ? (
             <ActivityIndicator size="large" color="#fba904" />
           ) : (
@@ -457,7 +458,7 @@ const Messages = () => {
                 ))}
             </>
           )}
-          <View style={styles.largeSpacer} />
+          <View style={styles.smallSpacer} />
           <View style={styles.contentContainer}>
             <Text style={[styles.title, { color: isDarkMode ? '#fc6c85' : '#fc6c85' }]}>Send your first message!</Text>
             {isLoadingMatches ? (
@@ -481,6 +482,7 @@ const Messages = () => {
               <Text style={[styles.noMatchesText, { color: isDarkMode ? '#ccc' : '#666' }]}>No new matches</Text>
             )}
           </View>
+          <View style={styles.largeSpacer} />
         </ScrollView>
         <BottomNavBar />
         <Modal
@@ -682,6 +684,9 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 30,
+  },
+  smallSpacer: {
+    height: 20,
   },
   largeSpacer: {
     height: 100,
