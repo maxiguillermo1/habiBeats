@@ -53,6 +53,7 @@ export default function RootLayout() {
               type: data.type,
               data: data.data,
             });
+            console.log(`Inside _layout.tsx: ${data.message}`);
 
             // Mark the notification as seen
             updateDoc(doc.ref, { seen: true });

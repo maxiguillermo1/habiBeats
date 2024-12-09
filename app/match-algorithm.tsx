@@ -35,6 +35,7 @@ export interface User {
     }[];
     themePreference?: string; // Add this line to include themePreference
     expoPushToken?: string; // Add this line to include expoPushToken
+    isOnline?: boolean; // Add this line to include isOnline
   }
   // function structure for compatibility
   // 1. gender compatibility

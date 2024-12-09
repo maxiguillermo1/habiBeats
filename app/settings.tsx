@@ -158,8 +158,17 @@ const Settings = () => {
           text: "OK", 
           onPress: async () => {
             try {
+              // Update isOnline status to false before signing out
+              if (auth.currentUser) {
+                const userRef = doc(db, 'users', auth.currentUser.uid);
+                await updateDoc(userRef, {
+                  isOnline: false
+                });
+              }
+
               await signOut(auth);
               console.log("User signed out successfully");
+              
               router.replace('/login-signup');
             } catch (error) {
               console.error("Error signing out: ", error);

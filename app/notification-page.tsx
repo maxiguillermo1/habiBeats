@@ -173,7 +173,7 @@ const NotificationPage = () => {
         if (notification.data && notification.data.senderId) {
           router.push({
             pathname: '/match',
-            params: { userId: notification.data.senderId },
+            params: { userIdParam: notification.data.senderId },
           });
         }
         break;

@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity, ScrollView, Modal, Animated, Alert, ImageSourcePropType, FlatList, TextInput } from 'react-native';
 import BottomNavBar from '../components/BottomNavBar';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { User } from './match-algorithm'; // import isMatch and User from match-algorithm.tsx
 import { getAuth } from 'firebase/auth';
@@ -60,6 +60,9 @@ const Match = () => {
   // Using useRouter hook to get the router instance for navigation
   const router = useRouter();
 
+  // Extract userId from route parameters
+  const { userIdParam } = useLocalSearchParams();
+
   // Animation values for scale and opacity
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(0)).current;
@@ -100,6 +103,19 @@ const Match = () => {
       console.error('Error fetching user2 animated border:', error);
     }
   };
+
+  // Fetch user data based on parameter userId. This is if the user is being matched with a specific user.
+  // START of Jesus Donate Contribution
+  const fetchUserById = async (id: string) => {
+    const db = getFirestore(app);
+    const userDocRef = doc(db, "users", id);
+    const userDocSnap = await getDoc(userDocRef);
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data() as User;
+      return userData;
+    }
+  };
+  // END of Jesus Donate Contribution
 
   // Call fetchUser2AnimatedBorder when user2 is set
   useEffect(() => {
@@ -167,6 +183,14 @@ const Match = () => {
           })
         );
         const compatibleUsers = mutuallyCompatibleUsers.filter((user): user is User => user !== null);
+
+        if (userIdParam) {
+          // If a userId is provided, fetch that user's data
+          const userParamData = await fetchUserById(userIdParam as string);
+          if (userParamData) {
+            compatibleUsers.unshift(userParamData); // Add userParamData to the beginning of the array
+          }
+        }
         setCompatibleUsers(compatibleUsers);
 
         if (compatibleUsers.length > 0) {
@@ -189,9 +213,13 @@ const Match = () => {
 
     // START of fetch a random user (user2) contribution
     const fetchNextUser = async () => {
-      if (currentIndex < compatibleUsers.length - 1) {
-        const nextIndex = currentIndex + 1;
+      let nextIndex = currentIndex + 1;
+    
+      while (nextIndex < compatibleUsers.length) {
         const nextUser = compatibleUsers[nextIndex];
+        console.log("NEXT USER:", nextUser.displayName);
+        console.log("nextIndex:", nextIndex);
+        console.log("compatibleUsers:", compatibleUsers.length);
     
         // Retrieve `user2`'s data to check interaction
         const db = getFirestore(app);
@@ -203,18 +231,22 @@ const Match = () => {
         const currentUserMatchStatus = user1?.uid ? nextUserData.matches?.[user1.uid] : undefined;
         const isMutuallyCompatible = !currentUserMatchStatus || currentUserMatchStatus === "liked";
     
+        console.log("isMutuallyCompatible:", isMutuallyCompatible);
+    
         if (isMutuallyCompatible) {
           setCurrentIndex(nextIndex);
           setUser2(nextUser);
+          console.log("NEXT USER:", nextUser.displayName);
+          return; // Exit the loop once a compatible user is found
         } else {
-          // Skip to the next user if not mutually compatible
-          setCurrentIndex(nextIndex);
-          fetchNextUser();
+          console.log("Fetching next user after skipping", nextIndex);
+          nextIndex += 1; // Move to the next user
         }
-      } else {
-        setUser2(null);
-        setNoMoreUsers(true);
       }
+    
+      // If no compatible user is found, set the state accordingly
+      setUser2(null);
+      setNoMoreUsers(true);
     };
     // END of fetch a random user (user2) contribution
     // END of Reyna Aguirre Contribution
@@ -263,26 +295,15 @@ const Match = () => {
         const db = getFirestore(app);
         const user2DocRef = doc(db, "users", user2.uid);
         const user2DocSnap = await getDoc(user2DocRef);
+        console.log("USER2 DOC SNAP:", user2DocSnap.exists());
 
         if (user2DocSnap.exists()) {
           const user2Data = user2DocSnap.data() as User;
           const user2MatchStatus = currentUser ? user2Data.matches?.[currentUser.uid] : undefined;
           const user2PushToken = user2Data.expoPushToken;
 
-          // Send push notification if user2 has a push token
-          if (user2PushToken) {
-            await sendPushNotification(
-              user2PushToken,
-              'New Like',
-              `${currentUser.displayName || 'Someone'} liked you!`,
-              {
-                senderId: currentUser.uid,
-                senderName: currentUser.displayName,
-              }
-            );
-            console.log("Push notification sent to user2");
-          }
-
+          
+          console.log("USER2 MATCH STATUS:", user2MatchStatus === "liked", " CURRENT USER:", currentUser);
           if (user2MatchStatus === "liked" && currentUser) {
             console.log(`It's a match! ${currentUser.displayName} and ${user2.displayName} liked each other.`);
             setShowMatchModal(true);
@@ -296,7 +317,7 @@ const Match = () => {
               animateModal(false, waitingModalScale);
               fetchNextUser();
               setLikeButtonColor('#fff8f0');
-            }, 3000);
+            }, 2000);
           }
         } else {
           console.error("User2 document not found in Firestore.");
@@ -1724,7 +1745,6 @@ const Match = () => {
           <Modal
             transparent={true}
             visible={showMatchModal}
-            onRequestClose={handleModalClose}
           >
             <Animated.View 
               style={[
@@ -1736,8 +1756,8 @@ const Match = () => {
             >
               <View style={dynamicStyles.modalContent}>
                 <View style={dynamicStyles.modalHeader}>
-                  <TouchableOpacity style={dynamicStyles.closeButton} onPress={handleModalClose}>
-                    <Ionicons name="close" size={50} color="#1E1E1E" />
+                  <TouchableOpacity style={dynamicStyles.closeButton}>
+                    <Ionicons name="close" size={50} color="#1E1E1E" onPress={() => handleModalClose()}/>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={dynamicStyles.messageButton} 

@@ -164,9 +164,10 @@ const DirectMessageScreen = () => {
                 recipientName: recipientName,
                 senderId: auth.currentUser?.uid,
                 senderName: auth.currentUser?.displayName,
-                messageText: message.substring(0, 100)
+                messageText: message.substring(0, 50)
             }
         );
+        console.log(`Inside directmessage.tsx: ${auth.currentUser?.displayName || 'Someone'} sent you a message`);
 
         if (recipientToken) {
             try {

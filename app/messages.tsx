@@ -147,10 +147,11 @@ const Messages = () => {
   }, []);
   // END of Jesus Donate Contributation
 
+
   // START of Jesus Donate Contributation
   // Fetch new matches from Firestore
-  const fetchNewMatches = useCallback(async () => {
-    if (!auth.currentUser) return;
+const fetchNewMatches = useCallback(async () => {
+  if (!auth.currentUser) return;
 
     // loading state for new matches
     setIsLoadingMatches(true);
@@ -172,19 +173,23 @@ const Messages = () => {
 
     // Iterate through matches and fetch details for new matches
     for (const [userId, status] of Object.entries(matches)) {
-      // checks if the user has liked the current user and if they are not already in a conversation
+      // Check if the user has liked the current user and if they are not already in a conversation
       if (status === 'liked' && !conversationIds[userId]) {
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
 
-        // If the user exists, add them to the new matches data
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          newMatchesData.push({
-            userId: userData.uid,
-            name: userData.displayName || `${userData.firstName} ${userData.lastName}`,
-            profileImageUrl: userData.profileImageUrl || '',
-          });
+          const userMatches = userData.matches || {};
+
+          // Check if the other user has also liked the current user
+          if (userMatches[auth.currentUser.uid] === 'liked') {
+            newMatchesData.push({
+              userId: userData.uid,
+              name: userData.displayName || `${userData.firstName} ${userData.lastName}`,
+              profileImageUrl: userData.profileImageUrl || '',
+            });
+          }
         }
       }
     }
@@ -194,6 +199,7 @@ const Messages = () => {
     setIsLoadingMatches(false);
   }, []);
   // END of Jesus Donate Contributation
+
 
   // START of Jesus Donate Contributation
   // Fetch conversations and new matches when the screen comes into focus

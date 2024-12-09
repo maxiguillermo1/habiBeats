@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -12,7 +11,6 @@ interface InAppNotificationProps {
 }
 
 const InAppNotification: React.FC<InAppNotificationProps> = ({ message, type, data, onClose }) => {
-  const navigation = useNavigation();
   const pan = useRef(new Animated.ValueXY()).current;
   console.log(message);
   useEffect(() => {
@@ -49,7 +47,7 @@ const InAppNotification: React.FC<InAppNotificationProps> = ({ message, type, da
   ).current;
 
   if (type === 'directmessage') {
-    message = `New Message from ${data.recipientName}: ${message}`;
+    message = `New Message from ${data.senderName}: ${data.messageText}`;
   }
 
   const handlePress = () => {
@@ -62,7 +60,12 @@ const InAppNotification: React.FC<InAppNotificationProps> = ({ message, type, da
         });
         break;
       case 'like':
-        // navigation.navigate('ProfileScreen', { userId: data.userId });
+        if (data && data.senderId) {
+          router.push({
+            pathname: '/match',
+            params: { userIdParam: data.senderId },
+          });
+        }
         break;
       default:
         break;
