@@ -36,6 +36,8 @@ const GroupMessageScreen = () => {
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
+    const [isGroupInfoVisible, setIsGroupInfoVisible] = useState(false);
+    const [isGroupCreator, setIsGroupCreator] = useState(false);
 
     // START of Mariann Grace Dizon Contribution
     // Use theme context
@@ -98,6 +100,17 @@ const GroupMessageScreen = () => {
         });
 
         return () => unsubscribe();
+    }, [groupId]);
+
+    useEffect(() => {
+        if (!auth.currentUser || !groupId) return;
+        
+        const groupRef = doc(db, 'groups', groupId as string);
+        getDoc(groupRef).then((doc) => {
+            if (doc.exists()) {
+                setIsGroupCreator(doc.data().createdBy === auth.currentUser?.uid);
+            }
+        });
     }, [groupId]);
 
     // Fetch hidden words
@@ -181,6 +194,36 @@ const GroupMessageScreen = () => {
         }
     };
 
+    const handleRemoveMember = async (memberUid: string) => {
+        if (!isGroupCreator || !auth.currentUser || !groupId) return;
+
+        try {
+            const groupRef = doc(db, 'groups', groupId as string);
+            const groupDoc = await getDoc(groupRef);
+            
+            if (!groupDoc.exists()) return;
+
+            // Remove member from group's members array
+            const updatedMembers = groupDoc.data().members.filter((uid: string) => uid !== memberUid);
+            await updateDoc(groupRef, { members: updatedMembers });
+
+            // Remove group from member's groupList
+            const memberRef = doc(db, 'users', memberUid);
+            const memberDoc = await getDoc(memberRef);
+            
+            if (memberDoc.exists()) {
+                const updatedGroupList = memberDoc.data().groupList.filter(
+                    (group: any) => group.groupId !== groupId
+                );
+                await updateDoc(memberRef, { groupList: updatedGroupList });
+            }
+
+            Alert.alert('Success', 'Member removed from group');
+        } catch (error) {
+            console.error('Error removing member:', error);
+            Alert.alert('Error', 'Failed to remove member');
+        }
+    };
 
     return (
         <View style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#fff8f0' }}>
@@ -197,6 +240,9 @@ const GroupMessageScreen = () => {
                         />
                         <Text style={isDarkMode ? styles.darkGroupName : styles.groupName}>{groupName}</Text>
                     </View>
+                    <TouchableOpacity onPress={() => setIsGroupInfoVisible(true)}>
+                        <Ionicons name="information-circle-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Add FlatList for messages */}
@@ -269,6 +315,71 @@ const GroupMessageScreen = () => {
                                     <Text style={styles.modalButtonText}>Delete</Text>
                                 </TouchableOpacity>
                             </View>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* Group Info Modal */}
+                <Modal
+                    transparent={true}
+                    visible={isGroupInfoVisible}
+                    onRequestClose={() => setIsGroupInfoVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={[
+                            isDarkMode ? styles.darkModalContent : styles.modalContent,
+                            styles.groupInfoModal
+                        ]}>
+                            <View style={styles.groupInfoHeader}>
+                                <Text style={isDarkMode ? styles.darkModalTitle : styles.modalTitle}>
+                                    Group Members ({groupMembers.length})
+                                </Text>
+                                <TouchableOpacity 
+                                    onPress={() => setIsGroupInfoVisible(false)}
+                                    style={styles.closeButton}
+                                >
+                                    <Ionicons name="close" size={24} color={isDarkMode ? '#fff' : '#000'} />
+                                </TouchableOpacity>
+                            </View>
+                            <FlatList
+                                data={groupMembers}
+                                keyExtractor={(item) => item.uid}
+                                renderItem={({ item }) => (
+                                    <View style={styles.memberItem}>
+                                        <Image 
+                                            source={{ uri: item.profileImageUrl }} 
+                                            style={styles.memberAvatar}
+                                        />
+                                        <Text style={[
+                                            styles.memberName,
+                                            { color: isDarkMode ? '#fff' : '#000' }
+                                        ]}>
+                                            {item.displayName}
+                                        </Text>
+                                        {isGroupCreator && item.uid !== auth.currentUser?.uid && (
+                                            <TouchableOpacity 
+                                                onPress={() => {
+                                                    Alert.alert(
+                                                        'Remove Member',
+                                                        `Are you sure you want to remove ${item.displayName}?`,
+                                                        [
+                                                            { text: 'Cancel', style: 'cancel' },
+                                                            { 
+                                                                text: 'Remove', 
+                                                                style: 'destructive',
+                                                                onPress: () => handleRemoveMember(item.uid)
+                                                            }
+                                                        ]
+                                                    );
+                                                }}
+                                                style={styles.removeMemberButton}
+                                            >
+                                                <Ionicons name="remove-circle-outline" size={24} color="#ff6b6b" />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                )}
+                            />
                         </View>
                     </View>
                 </Modal>
@@ -499,6 +610,42 @@ const styles = StyleSheet.create({
     },
     groupInfoButton: {
         padding: 10,
+    },
+    groupInfoModal: {
+        height: '50%',
+        width: '90%',
+    },
+    groupInfoHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        marginBottom: 10,
+    },
+    closeButton: {
+        padding: 5,
+    },
+    memberItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+        justifyContent: 'space-between',
+    },
+    memberAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    memberName: {
+        fontSize: 16,
+    },
+    removeMemberButton: {
+        padding: 5,
     },
 });
 

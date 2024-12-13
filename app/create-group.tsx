@@ -63,28 +63,60 @@ const CreateGroup = () => {
   const searchUsers = async (searchQuery: string) => {
     if (!searchQuery.trim() || !auth.currentUser) return;
 
-    const usersRef = collection(db, 'users');
-    // Create a query to find users with display names that start with the search query
-    const q = query(usersRef, where('displayName', '>=', searchQuery), where('displayName', '<=', searchQuery + '\uf8ff'));
-    // Execute the query and get the results
-    const querySnapshot = await getDocs(q);
+    try {
+      // First get current user's matches
+      const currentUserRef = doc(db, 'users', auth.currentUser.uid);
+      const currentUserDoc = await getDoc(currentUserRef);
+      const currentUserData = currentUserDoc.data();
+      const currentUserMatches = currentUserData?.matches || {};
 
-    // Convert the query results to an array of User objects
-    const usersData: User[] = [];
-    // Iterate over the query results
-    querySnapshot.forEach((doc) => {
-      // Get the user data from the document
-      const userData = doc.data() as User;
-      // Add the user to the array if the user is not the current user
-      if (userData.uid !== auth.currentUser?.uid) {
-        usersData.push({
-          uid: userData.uid,
-          displayName: userData.displayName,
-          profileImageUrl: userData.profileImageUrl,
-        });
+      // Get UIDs of users that the current user has liked
+      const likedUserIds = Object.entries(currentUserMatches)
+        .filter(([_, status]) => status === 'liked')
+        .map(([uid]) => uid);
+
+      if (likedUserIds.length === 0) {
+        setUsers([]);
+        return;
       }
-    });
-    setUsers(usersData);
+
+      const usersRef = collection(db, 'users');
+      const q = query(
+        usersRef, 
+        where('displayName', '>=', searchQuery), 
+        where('displayName', '<=', searchQuery + '\uf8ff')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const usersData: User[] = [];
+
+      // Check for mutual likes
+      for (const doc of querySnapshot.docs) {
+        const userData = doc.data() as User & { matches?: Record<string, string> };
+        const userMatches = userData.matches || {};
+
+        // Only include user if:
+        // 1. They are not the current user
+        // 2. Current user has liked them
+        // 3. They have liked the current user back
+        if (
+          userData.uid !== auth.currentUser.uid && 
+          likedUserIds.includes(userData.uid) && 
+          userMatches[auth.currentUser.uid] === 'liked'
+        ) {
+          usersData.push({
+            uid: userData.uid,
+            displayName: userData.displayName,
+            profileImageUrl: userData.profileImageUrl,
+          });
+        }
+      }
+
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      Alert.alert('Error', 'Failed to search users');
+    }
   };
 
   // Toggle the selection of a user
@@ -196,15 +228,15 @@ const CreateGroup = () => {
 
       await Promise.all(updatePromises);
 
-      // Navigate back to messages page
-      router.push({
-        pathname: '/messages',
+      // Replace the existing navigation code with this:
+      router.replace({
+        pathname: '/group-message',
         params: {
-          redirectTo: 'group-message',
           groupId: groupId,
           groupName: groupName
         }
       });
+
     } catch (error) {
       console.error('Error creating group:', error);
       Alert.alert('Error', 'Failed to create group. Please try again.');
@@ -231,7 +263,7 @@ const CreateGroup = () => {
 
       <TextInput
         style={[styles.input, { backgroundColor: isDarkMode ? '#2a2a2a' : 'white', color: isDarkMode ? 'white' : 'black' }]}
-        placeholder="Search Users"
+        placeholder="Search Habibi"
         placeholderTextColor={isDarkMode ? '#666' : '#999'}
         value={searchQuery}
         onChangeText={(text) => {
@@ -249,6 +281,20 @@ const CreateGroup = () => {
       <Text style={[styles.selectedCount, { color: isDarkMode ? '#ccc' : '#666' }]}>
         Selected: {selectedUsers.length} users
       </Text>
+
+      <View style={styles.selectedUsersContainer}>
+        {selectedUsers.map((user) => (
+          <View key={user.uid} style={[styles.selectedUserItem, { backgroundColor: isDarkMode ? '#2a2a2a' : '#f0f0f0' }]}>
+            <Image source={{ uri: user.profileImageUrl }} style={styles.selectedUserAvatar} />
+            <Text style={[styles.selectedUserName, { color: isDarkMode ? '#fff' : '#000' }]}>
+              {user.displayName}
+            </Text>
+            <TouchableOpacity onPress={() => toggleUserSelection(user)}>
+              <Ionicons name="close-circle" size={24} color="#fba904" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
 
       {isSearching && searchQuery.trim() !== '' && (
         <FlatList
@@ -396,6 +442,27 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 12,
     color: '#666',
+  },
+  selectedUsersContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  selectedUserItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  selectedUserAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  selectedUserName: {
+    flex: 1,
+    fontSize: 16,
   },
 });
 

@@ -118,6 +118,9 @@ export default function EditProfile() {
     nextConcert: '',
     unforgettableExperience: '',
     favoriteAfterPartySpot: '',
+    favoriteArtists: [] as Artist[],
+    musicPreference: [] as string[],
+    myDisposables: [] as DisposableImage[]
   });
 
   // Fetch user data from Firebase on component mount
@@ -139,7 +142,18 @@ export default function EditProfile() {
             nextConcert: userData.nextConcert || '',
             unforgettableExperience: userData.unforgettableExperience || '',
             favoriteAfterPartySpot: userData.favoriteAfterPartySpot || '',
+            
           });
+
+          // Store initial values for comparison
+          initialValues.current = {
+            ...initialValues.current,
+            tuneOfMonth: userData.tuneOfMonth ? JSON.parse(userData.tuneOfMonth) : null,
+            favoriteArtists: userData.favoriteArtists ? JSON.parse(userData.favoriteArtists) : [],
+            favoriteAlbum: userData.favoriteAlbum ? JSON.parse(userData.favoriteAlbum) : null,
+            musicPreference: userData.musicPreference || [],
+            myDisposables: userData.myDisposables || []
+          };
 
           // Parse and set tune of the month
           if (userData.tuneOfMonth) {
@@ -241,12 +255,52 @@ export default function EditProfile() {
     return unsubscribe;
   }, [navigation]);
 
+  const resetPromptInteractions = async (changedPrompts: string[]) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+      const userDocRef = doc(db, 'users', currentUser.uid);
+  
+      // Define the type for the updates object
+      const updates: Record<string, any> = {};
+  
+      changedPrompts.forEach((promptName) => {
+        updates[`${promptName}Like`] = 0;
+        updates[`${promptName}ThumbsUp`] = 0;
+        updates[`${promptName}Comments`] = [];
+        updates[`${promptName}LikesNames`] = [];
+        updates[`${promptName}ThumbsUpNames`] = [];
+      });
+  
+      await updateDoc(userDocRef, updates);
+      console.log('Prompt interactions reset successfully');
+    } catch (error) {
+      console.error('Error resetting prompt interactions:', error);
+      Alert.alert('Error', 'Failed to reset prompt interactions');
+    }
+  }
+
   // Handle saving changes to Firebase
   const handleSave = async () => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       const userDocRef = doc(db, 'users', currentUser.uid);
+
+      // When user changes prompts, resetPromptInteractions is triggered
+      const changedPrompts = [];
+      if (JSON.stringify(tuneOfMonth) !== JSON.stringify(initialValues.current.tuneOfMonth)) changedPrompts.push('tuneOfMonth');
+      if (JSON.stringify(favoriteArtists) !== JSON.stringify(initialValues.current.favoriteArtists)) changedPrompts.push('favoriteArtists');
+      if (JSON.stringify(favoriteAlbum) !== JSON.stringify(initialValues.current.favoriteAlbum)) changedPrompts.push('favoriteAlbum');
+      if (user.favoritePerformance !== initialValues.current.favoritePerformance) changedPrompts.push('favoritePerformance');
+      if (JSON.stringify(musicPreference) !== JSON.stringify(initialValues.current.musicPreference)) changedPrompts.push('musicPreference');
+      if (JSON.stringify(myDisposables) !== JSON.stringify(initialValues.current.myDisposables)) changedPrompts.push('myDisposables');
+
+      console.log('ChangePrompts: ', changedPrompts)
+      if (changedPrompts.length > 0){
+        await resetPromptInteractions(changedPrompts)
+      }
+      console.log(" After changed prompts")
 
       // Handle image upload if changed
       let imageUrl = user.favoritePerformance;
