@@ -212,7 +212,7 @@ const BlockList = () => {
       alignItems: 'center',
       paddingHorizontal: 15,
       paddingVertical: 10,
-      backgroundColor: isDarkMode ? '#1a1a1a' : '#fff',
+      backgroundColor: isDarkMode ? '##fff8f0' : '#fff8f0',
     },
     headerTitle: {
       fontSize: 18,
