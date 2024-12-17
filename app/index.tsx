@@ -1,144 +1,137 @@
-// landing.tsx
-// Maxi Guillermo
+// index.tsx
+// Reyna Aguirre, Mariann Grace Dizon, Maxwell Guillermo, Jesus Donate
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Stack } from 'expo-router';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
+import React, { useContext } from "react";
+import { Text, TouchableOpacity, StyleSheet, SafeAreaView, View, ScrollView, Image } from "react-native";
+import { ThemeProvider, ThemeContext } from '../context/ThemeContext';
+import { useRouter } from "expo-router"; // Importing useRouter from expo-router for navigation
 
-export default function Landing() {
-  const router = useRouter();
+// Function to navigate to a specific route using the router instance
+export default function Index() {
+  const router = useRouter(); // Using useRouter hook to get the router instance
+  // Add theme context
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
 
-  const logoOpacity = useSharedValue(0);
-  const logoTranslateY = useSharedValue(50);
-  const subtitleOpacity = useSharedValue(0);
-  const subtitleTranslateY = useSharedValue(50);
-  const buttonOpacity = useSharedValue(0);
-  const buttonTranslateY = useSharedValue(50);
-  const imageOpacity = useSharedValue(0);
-  const imageTranslateY = useSharedValue(50);
-
-// Animated Flow for Logo, Subtitle, Image, and Button
-  useEffect(() => {
-    logoOpacity.value = withSpring(1);
-    logoTranslateY.value = withSpring(0);
-    subtitleOpacity.value = withDelay(150, withSpring(1));
-    subtitleTranslateY.value = withDelay(150, withSpring(0));
-    imageOpacity.value = withDelay(300, withSpring(1));
-    imageTranslateY.value = withDelay(300, withSpring(0));
-    buttonOpacity.value = withDelay(450, withSpring(1));
-    buttonTranslateY.value = withDelay(450, withSpring(0));
-  }, []);
-
-  const animatedLogoStyle = useAnimatedStyle(() => {
-    return {
-      opacity: logoOpacity.value,
-      transform: [{ translateY: logoTranslateY.value }],
-    };
-  });
-
-  const animatedSubtitleStyle = useAnimatedStyle(() => {
-    return {
-      opacity: subtitleOpacity.value,
-      transform: [{ translateY: subtitleTranslateY.value }],
-    };
-  });
-
-  const animatedImageStyle = useAnimatedStyle(() => {
-    return {
-      opacity: imageOpacity.value,
-      transform: [{ translateY: imageTranslateY.value }],
-    };
-  });
-
-  const animatedButtonStyle = useAnimatedStyle(() => {
-    return {
-      opacity: buttonOpacity.value,
-      transform: [{ translateY: buttonTranslateY.value }],
-    };
-  });
-
-  // Navigates to Login/Signup screen when user presses continue button
-  const handleContinue = () => {
-    router.push('/login-signup');
+  const navigateTo = (route: string) => {
+    router.push(route as never);
   };
 
+  const menuItems = [
+    {
+      category: "Authentication",
+      color: "#37bdd5",
+      items: [
+        { name: "Landing", route: "/landing" },
+        { name: "Login/Signup", route: "/login-signup" },
+        { name: "Sign Up", route: "/signup" },
+        { name: "Forgot Password", route: "/forgot-password" },
+        { name: "Forgot Password Confirmation", route: "/forgot-password-confirmation" }
+      ]
+    },
+    {
+      category: "User Profile",
+      color: "#fba904",
+      items: [
+        { name: "Profile", route: "/profile" },
+        { name: "Edit Profile", route: "/editprofile" },
+        { name: "Disposable Camera", route: "/disposable-camera" },
+        { name: "Disposable Gallery", route: "/disposable-gallery" },
+        { name: "Discography", route: "/discography" },
+      ]
+    },
+    {
+      category: "Core Features",
+      color: "#fc6c85",
+      items: [
+        { name: "Search", route: "/events/search" },
+        { name: "Match", route: "/match" },
+        { name: "Messages", route: "/messages" },
+        { name: "Direct Message", route: "/direct-message" },
+        { name: "Events", route: "/events" },
+        { name: "My Events", route: "/my-events" },
+        { name: "Trending", route: "/events/trending" }
+      ] 
+    },
+    {
+      category: "Settings",
+      color: "#79ce54",
+      items: [
+        { name: "Settings", route: "/settings" },
+        { name: "Email Notifications", route: "/settings/email-notifications" },
+        { name: "Push Notifications", route: "/settings/push-notifications" },
+        { name: "Change Password", route: "/settings/change-password" },
+        { name: "Change Email", route: "/settings/change-email" },
+        { name: "Block List", route: "/settings/block-list" },
+        { name: "Hidden Words", route: "/settings/hidden-words" },
+        { name: "Download Data", route: "/settings/download-data" },
+      ]
+    },
+  ];
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.content}>
-        <Animated.View style={[styles.logoContainer, animatedLogoStyle]}>
-          <Image 
-            source={require('../assets/images/transparent_long_logo.png')} 
+    <ThemeProvider>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? '#151718' : '#fff8f0' }]}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/images/transparent_long_logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-        </Animated.View>
-        <Animated.Text style={[styles.subtitle, animatedSubtitleStyle]}>finding your music connection</Animated.Text>
-      </View>
-      <Animated.View style={[styles.imageContainer, animatedImageStyle]}>
-        <Image 
-          source={require('../assets/images/boy_landing_graphic.png')} 
-          style={styles.image}
-          resizeMode="contain"
-        />
-      </Animated.View>
-      <Animated.View style={animatedButtonStyle}>
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-          <Text style={styles.continueButtonText}>continue</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {menuItems.map((category, categoryIndex) => (
+            <View key={categoryIndex} style={styles.categoryContainer}>
+              <Text style={[styles.categoryTitle, { color: category.color }]}>{category.category}</Text>
+              {category.items.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.menuItem}
+                  onPress={() => navigateTo(item.route)}
+                >
+                  <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }
 
+// Styles for the Index component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff8f0',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 120, // FIXME: padding at the bottom to move content up
-  },
   logoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
     marginBottom: 20,
   },
   logo: {
     width: 310,
     height: 70,
   },
-  subtitle: {
-    fontSize: 14.5,
-    fontWeight: 'bold',
-    marginBottom: 18,
-    color: '#0e1514',
-    textAlign: 'center',
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
   },
-  imageContainer: {
-    alignItems: 'flex-end',
+  categoryContainer: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
-  image: {
-    width: 215,
-    height: 215,
+  menuItem: {
+    paddingVertical: 10,
   },
-  continueButton: {
-    backgroundColor: 'rgba(121, 206, 84, 1)', // light green
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 15,
-    marginBottom: 30,
-    marginHorizontal: 20,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    color: 'white',
-    fontSize: 15,
-    fontWeight: '600',
+  menuText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

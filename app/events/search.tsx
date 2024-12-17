@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
+import getUserPreferences from '../../components/getUserPreference';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { debounce } from 'lodash';
 import { getDistance } from 'geolib';
@@ -96,41 +97,59 @@ interface CachedEvents {
 const CACHE_EXPIRATION = 1000 * 60 * 60; // 1 hour
 
 const searchEvents = async (query: string, genres: Set<string>, location: string, artists: string[], pageNumber: number = 0) => {
-  // Map to store one event per artist to avoid duplicates
-  const eventsByArtist = new Map<string, Event>();
-  let allEvents: Event[] = [];
+  const cacheKey = `events_${query}_${Array.from(genres).join(',')}_${location}_${artists.join(',')}_${pageNumber}`;
+  const cachedData = await AsyncStorage.getItem(cacheKey);
 
-  // Search for favorite artists with exact matching
-  for (const artist of artists) {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting
-    
-    try {
-      const response = await fetch(
-        `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&keyword="${encodeURIComponent(artist)}"&size=20&page=${pageNumber}&classificationName=music&sort=date,asc`
-      );
-      const data = await response.json();
-      
-      if (data._embedded?.events) {
-        // Find exact artist name matches
-        const exactMatch = data._embedded.events.find((event: any) =>
-          event._embedded?.attractions?.some((attraction: any) =>
-            attraction.name.toLowerCase() === artist.toLowerCase()
-          )
-        );
-        
-        if (exactMatch) {
-          eventsByArtist.set(artist, {
-            ...exactMatch,
-            relevanceScore: 2
-          });
-        }
-      }
-    } catch (error) {
-      console.error(`Error fetching events for ${artist}:`, error);
+  if (cachedData) {
+    const { timestamp, events }: CachedEvents = JSON.parse(cachedData);
+    if (Date.now() - timestamp < CACHE_EXPIRATION) {
+      console.log('Returning cached events');
+      return events;
     }
   }
 
-  allEvents = Array.from(eventsByArtist.values());
+  let allEvents: Event[] = [];
+
+  // Search for favorite artists
+  for (const artist of artists) {
+    const artistUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&keyword=${encodeURIComponent(artist)}&size=10&page=${pageNumber}&classificationName=music`;
+    try {
+      const response = await fetch(artistUrl);
+      const data = await response.json();
+      if (data._embedded?.events) {
+        allEvents = [...allEvents, ...data._embedded.events.map((event: Event) => ({ ...event, relevanceScore: 2 }))];
+      }
+    } catch (error) {
+      console.error(`Error fetching events for artist ${artist}:`, error);
+    }
+  }
+
+  // General search if needed
+  if (allEvents.length < 50) {
+    const genreIds = new Set(Array.from(genres).map(genre => genreMapping[genre]).filter(Boolean));
+    const genreQuery = genreIds.size > 0 ? `&genreId=${Array.from(genreIds).join(',')}` : '';
+    const locationQuery = location && location !== 'Everywhere' ? `&city=${encodeURIComponent(location)}` : '';
+    const keywordQuery = query ? `&keyword=${encodeURIComponent(query)}` : '';
+    
+    const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}${keywordQuery}${genreQuery}${locationQuery}&size=${50 - allEvents.length}&page=${pageNumber}&classificationName=music`;
+    
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data._embedded?.events) {
+        allEvents = [...allEvents, ...data._embedded.events.map((event: Event) => ({ ...event, relevanceScore: 0 }))];
+      }
+    } catch (error) {
+      console.error('Error fetching additional events:', error);
+    }
+  }
+
+  // Cache the results
+  await AsyncStorage.setItem(cacheKey, JSON.stringify({
+    timestamp: Date.now(),
+    events: allEvents
+  }));
+
   return allEvents;
 };
 
@@ -314,16 +333,17 @@ const SearchEvents = () => {
   });
 
   // Fetch user's genre preferences from Firestore
-  const fetchUserGenres = useCallback(async (): Promise<{ genres: Set<string>; location: string }> => {
+  const fetchUserGenres = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        return { 
-          genres: new Set<string>(userData?.musicPreference || []), 
-          location: userData?.location || '' 
-        };
+        const genres = new Set(userData.musicPreference || []);
+        const userLocation = userData.location || '';
+        console.log('Fetched user genres:', genres);
+        console.log('Fetched user location:', userLocation);
+        return { genres, location: userLocation };
       } else {
         console.log('User document does not exist');
       }
@@ -333,7 +353,62 @@ const SearchEvents = () => {
     return { genres: new Set(), location: '' };
   }, []);
 
- 
+  // Effect to fetch user preferences and initial events
+  useEffect(() => {
+    const fetchUserPreferencesAndEvents = async () => {
+      try {
+        const preferences = await getUserPreferences();
+        console.log('User preferences:', JSON.stringify(preferences, null, 2));
+        setUserPreferences(preferences || {});
+        
+        if (preferences) {
+          // Combine user's direct preferences with similar/recommended items
+          const allGenres = new Set([
+            ...(preferences.musicPreference || []),
+            ...((preferences as any).similarGenres || [])
+          ]);
+          const favoriteArtists = preferences.favoriteArtists?.map((artist: { name: string }) => artist.name) ?? [];
+          const similarArtists = (preferences as any).similarArtists ?? [];
+          const allArtists = [...favoriteArtists, ...similarArtists];
+          
+          // Log fetched preferences for debugging
+          console.log('Genres:', Array.from(allGenres));
+          console.log('Favorite artists:', favoriteArtists);
+          console.log('Similar artists:', similarArtists);
+          console.log('Location:', preferences.location);
+          
+          // Update active search criteria with fetched preferences
+          setActiveSearchCriteria({
+            query: '',
+            genres: allGenres,
+            location: preferences.location || '',
+            artists: allArtists
+          });
+          
+          // Fetch initial events based on preferences
+          const initialEvents = await searchEvents(
+            '',
+            allGenres,
+            preferences.location || '',
+            favoriteArtists,
+            0
+          );
+          
+          // Filter and sort the fetched events
+          const filteredAndSortedResults = filterAndSortEvents(initialEvents, preferences, userLocation);
+          setEvents(filteredAndSortedResults);
+        }
+      } catch (error) {
+        console.error('Error fetching user preferences:', error);
+        setUserPreferences({});
+        setEvents([]);
+      } finally {
+        setIsInitialLoad(false);
+        setLoading(false);
+      }
+    };
+    fetchUserPreferencesAndEvents();
+  }, [userLocation]);
 
   /**
    * Filters and sorts events based on user preferences and location
@@ -519,25 +594,17 @@ const SearchEvents = () => {
   }) => {
     setLoading(true);
     setError(null);
+    setPage(0);
+    setHasMore(true);
     try {
-      // If no specific criteria, use default search
-      if (!criteria.query && criteria.genres.size === 0 && !criteria.location && criteria.artists.length === 0) {
-        const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&classificationName=music&size=50`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data._embedded?.events) {
-          setEvents(data._embedded.events);
-          return;
-        }
-      }
-      
       const { query, genres, location, artists } = criteria;
       const searchResults = await searchEvents(query, genres, location, artists, 0);
       const filteredAndSortedResults = filterAndSortEvents(searchResults, { location }, userLocation);
       setEvents(filteredAndSortedResults);
     } catch (error) {
-      console.error('Error in searchEventsWithCriteria:', error);
-      setError('Error searching events');
+      console.error('Error searching events:', error);
+      setError('Error searching events. Please try again.');
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -734,34 +801,6 @@ const SearchEvents = () => {
     fetchThemePreference();
   }, []);
   // END of Mariann Grace Dizon Contribution
-
-  useEffect(() => {
-    const initializeSearch = async () => {
-      setIsInitialLoad(true);
-      try {
-        const { genres, location } = await fetchUserGenres();
-        setTempGenres(genres);
-        setLocation(location);
-        
-        const initialCriteria = {
-          query: '',
-          genres: genres,
-          location: location,
-          artists: []
-        };
-        
-        setActiveSearchCriteria(initialCriteria);
-        await searchEventsWithCriteria(initialCriteria);
-      } catch (error) {
-        console.error('Error in initial search:', error);
-        setError('Error loading events');
-      } finally {
-        setIsInitialLoad(false);
-      }
-    };
-
-    initializeSearch();
-  }, []);
 
   // Render main component UI
   return (
