@@ -658,18 +658,55 @@ const Settings = () => {
   // END of Mariann Grace Dizon Contribution
 
   // START of Maxwell Guillermo Contribution - Language Functions
-  const handleLanguageChange = (language: string) => {
+  const handleLanguageChange = async (language: string) => {
     try {
-      i18n.changeLanguage(language).then(() => {
-        setCurrentLanguage(language);
-        setShowLanguageModal(false);
-      }).catch((error) => {
-        console.error('Error changing language:', error);
-      });
+      // Show loading state or disable interaction while changing
+      setShowLanguageModal(false); // Close modal first to prevent UI freeze
+
+      // Change language
+      await i18n.changeLanguage(language);
+      setCurrentLanguage(language);
+
+      // Save language preference to user's document if needed
+      if (auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          languagePreference: language
+        });
+      }
+
     } catch (error) {
-      console.error('Error in handleLanguageChange:', error);
+      console.error('Error changing language:', error);
+      Alert.alert(
+        'Error',
+        'Failed to change language. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
+
+  // Add this useEffect to handle initial language setup
+  useEffect(() => {
+    const loadLanguagePreference = async () => {
+      if (auth.currentUser) {
+        try {
+          const userDocRef = doc(db, 'users', auth.currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.languagePreference && userData.languagePreference !== i18n.language) {
+              await i18n.changeLanguage(userData.languagePreference);
+              setCurrentLanguage(userData.languagePreference);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading language preference:', error);
+        }
+      }
+    };
+
+    loadLanguagePreference();
+  }, []);
 
   const languageNames = {
     en: 'English',
@@ -1813,4 +1850,5 @@ const styles = StyleSheet.create({
 
 
 export default Settings;
+
 
