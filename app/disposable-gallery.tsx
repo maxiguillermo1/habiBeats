@@ -3,8 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { useRouter } from "expo-router";
 import { storage } from '../firebaseConfig.js';
 import { ref, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
@@ -12,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig.js';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { RouteProp } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { auth } from '../firebaseConfig.js';
 
 // Define the type for the navigation stack parameters
@@ -29,18 +28,14 @@ type PhotoItem = {
   timestamp: number;
 };
 
-// Define the type for the route prop specific to this component
-type DisposableGalleryRouteProp = RouteProp<RootStackParamList, 'disposable-gallery'>;
-
 export default function DisposableGallery() {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  const route = useRoute<DisposableGalleryRouteProp>();
-  const selectMode = route.params?.selectMode;
+  const { selectMode } = useLocalSearchParams<{ selectMode?: string }>();
 
   useEffect(() => {
     const fetchThemePreference = async () => {
@@ -109,14 +104,6 @@ export default function DisposableGallery() {
     loadPhotos();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadPhotos();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
   // Render each photo item in the FlatList
   const renderPhoto = ({ item }: { item: PhotoItem }) => (
     <TouchableOpacity 
@@ -179,7 +166,7 @@ export default function DisposableGallery() {
       });
 
       // Navigate back to the profile screen
-      navigation.navigate('profile');
+      router.push('/profile');
     } catch (error) {
       console.error('Error selecting photo:', error);
       Alert.alert('Error', 'Failed to select photo');
@@ -195,7 +182,7 @@ export default function DisposableGallery() {
       if (!currentUser) throw new Error('User not authenticated');
       
       // Navigate back to edit profile with the selected photo URI
-      navigation.navigate('editprofile', { photoUri: photo.url });
+      router.push(`/editprofile?photoUri=${encodeURIComponent(photo.url)}`);
     } catch (error) {
       console.error('Error selecting photo:', error);
       Alert.alert('Error', 'Failed to select photo');
@@ -217,7 +204,7 @@ export default function DisposableGallery() {
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#1c1c1c' : '#fff8f0' }]}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
         >
           <Ionicons name="chevron-back-outline" size={24} color={isDarkMode ? '#ffffff' : '#fba904'} />
         </TouchableOpacity>

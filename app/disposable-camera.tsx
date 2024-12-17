@@ -5,8 +5,7 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useContext, useEffect } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '../firebaseConfig.js';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -16,19 +15,13 @@ import { ThemeContext } from '../context/ThemeContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig.js';
 
-// Define the types for the navigation stack
-type RootStackParamList = {
-  'disposable-camera': undefined;
-  'disposable-gallery': undefined;
-};
-
 export default function DisposableCamera() {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [type, setType] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [camera, setCamera] = useState<CameraView | null>(null);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Single useEffect to handle theme
@@ -93,7 +86,7 @@ export default function DisposableCamera() {
             color={isDarkMode ? '#37bdd5' : '#37bdd5'}
           />
           <Button 
-            onPress={() => navigation.goBack()} 
+            onPress={() => router.back()} 
             title="Don't Allow" 
             color={isDarkMode ? '#fc6c85' : '#fc6c85'}
           />
@@ -194,7 +187,7 @@ export default function DisposableCamera() {
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={styles.galleryButton}
-            onPress={() => navigation.navigate('disposable-gallery')}
+            onPress={() => router.push('/disposable-gallery')}
           >
             <Ionicons name="images" size={40} color={isDarkMode ? '#37bdd5' : '#37bdd5'} />
           </TouchableOpacity>
