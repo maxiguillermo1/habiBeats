@@ -7,13 +7,11 @@ import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollVi
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../firebaseConfig';
-import { doc, onSnapshot, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import BottomNavBar from '../components/BottomNavBar';
-import { hasUnreadNotifications, addNotification } from '../scripts/notificationHandler';
+import { hasUnreadNotifications } from '../scripts/notificationHandler';
 import { registerForPushNotifications } from '../scripts/pushNotification';
-import { useNavigation } from '@react-navigation/native';
 import { ThemeContext, ThemeProvider } from '../context/ThemeContext';
-import { Colors } from '../constants/Colors';
 
 // Define interfaces for data structures
 interface Song {
@@ -193,11 +191,25 @@ export default function Profile() {
             // Parse and set tune of the month
             if (userData.tuneOfMonth) {
               try {
-                const parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
-                setTuneOfMonth(parsedTuneOfMonth);
+                let parsedTuneOfMonth;
+                // Handle both string and object formats
+                if (typeof userData.tuneOfMonth === 'string') {
+                  parsedTuneOfMonth = JSON.parse(userData.tuneOfMonth);
+                } else {
+                  parsedTuneOfMonth = userData.tuneOfMonth;
+                }
+
+                // Make sure we're accessing the artist property correctly
+                const artist = parsedTuneOfMonth.artists?.[0]?.name || parsedTuneOfMonth.artist;
+                
+                setTuneOfMonth({
+                  id: parsedTuneOfMonth.id || '',
+                  name: parsedTuneOfMonth.name || 'Unknown Title',
+                  artist: artist || 'Unknown Artist',
+                  albumArt: parsedTuneOfMonth.albumArt || parsedTuneOfMonth.images?.[0]?.url || '',
+                });
                 setTuneOfMonthLoaded(true);
-              } catch (error) {
-                console.error('Error parsing tuneOfMonth:', error);
+              } catch {
                 setTuneOfMonth(null);
               }
             } else {
@@ -679,16 +691,24 @@ export default function Profile() {
                 backgroundColor: isDarkMode ? '#2d3235' : '#FFFFFF'
               }]}>
                 <Text style={[styles.inputLabel, { color: isDarkMode ? '#fff' : '#333' }]}>Tune of the Month</Text>
-                {tuneOfMonthLoaded && tuneOfMonth && tuneOfMonth.albumArt ? (
+                {tuneOfMonthLoaded && tuneOfMonth ? (
                   <View style={styles.songContainer}>
-                    <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
+                    {tuneOfMonth.albumArt && (
+                      <Image source={{ uri: tuneOfMonth.albumArt }} style={styles.albumArt} />
+                    )}
                     <View style={styles.songInfo}>
-                      <Text style={[styles.songTitle, { color: isDarkMode ? '#fff' : '#333' }]}>{tuneOfMonth.name}</Text>
-                      <Text style={[styles.songArtist, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>{tuneOfMonth.artist}</Text>
+                      <Text style={[styles.songTitle, { color: isDarkMode ? '#fff' : '#333' }]}>
+                        {tuneOfMonth.name || 'No title'}
+                      </Text>
+                      <Text style={[styles.songArtist, { color: isDarkMode ? '#9BA1A6' : '#666' }]}>
+                        {tuneOfMonth.artist || 'Unknown artist'}
+                      </Text>
                     </View>
                   </View>
                 ) : (
-                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>No tune of the month set</Text>
+                  <Text style={[styles.inputText, { color: isDarkMode ? '#9BA1A6' : '#333' }]}>
+                    No tune of the month set
+                  </Text>
                 )}
                 <View style={styles.iconContainer}>
                   <TouchableOpacity style={styles.iconButton} onPress={() => handleShowNames(tuneOfMonthLikesNames)}>
@@ -997,9 +1017,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   songArtist: {
-    marginTop: 1,
-    fontSize: 11,
-    color: '#333',
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
   songInfo: {
     flex: 1,
