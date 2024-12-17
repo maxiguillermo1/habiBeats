@@ -148,10 +148,12 @@ const DirectMessageScreen = () => {
             });
         }
 
-        // Get recipient's user document
-        const recipientDoc = await getDoc(doc(db, 'users', recipientId as string));
+        // Get recipient's user document with a fresh snapshot
+        const recipientRef = doc(db, 'users', recipientId as string);
+        const recipientDoc = await getDoc(recipientRef);
         const recipientData = recipientDoc.data();
         const recipientToken = recipientData?.expoPushToken;
+        const isOnline = recipientData?.isOnline === true; // Explicit check
 
         // Add notification to recipient's notifications collection
         await addNotification(
@@ -167,9 +169,9 @@ const DirectMessageScreen = () => {
                 messageText: message.substring(0, 50)
             }
         );
-        console.log(`Inside directmessage.tsx: ${auth.currentUser?.displayName || 'Someone'} sent you a message`);
 
-        if (recipientToken) {
+        // Only send push notification if user is offline
+        if (recipientToken && !isOnline) {
             try {
                 await sendPushNotification(
                     recipientToken,
@@ -179,7 +181,7 @@ const DirectMessageScreen = () => {
                         screen: 'directmessage',
                         recipientId: recipientId,
                         senderId: auth.currentUser?.uid,
-                        messageText: message.substring(0, 100) // First 100 chars of message
+                        messageText: message.substring(0, 100)
                     }
                 );
             } catch (error) {

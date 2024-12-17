@@ -73,11 +73,12 @@ export async function sendPushNotification(expoPushToken: string, title: string,
   const recipientDoc = await getDoc(doc(db, 'users', data.recipientId));
   const recipientData = recipientDoc.data();
   console.log("Recipient Data:", recipientData);
+  console.log("Recipient is online: ", recipientData?.isOnline)
 
-  if (recipientData?.isOnline || recipientData?.paused || Platform.OS !== 'android') {
-    console.log('Recipient is online, paused, or current device is not android, skipping push notification.');
-    return;
-  }
+  // if (recipientData?.isOnline) {
+  //   console.log('Recipient is online, skipping push notification.');
+  //   return;
+  // }
 
   console.log("Sending Push Notification to:", expoPushToken);
 

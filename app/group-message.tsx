@@ -24,6 +24,12 @@ interface GroupMember {
     profileImageUrl: string;
 }
 
+interface User {
+    uid: string;
+    displayName: string;
+    profileImageUrl: string;
+}
+
 const GroupMessageScreen = () => {
     const { groupId, groupName } = useLocalSearchParams();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -38,6 +44,10 @@ const GroupMessageScreen = () => {
     const [userHiddenWords, setUserHiddenWords] = useState<string[]>([]);
     const [isGroupInfoVisible, setIsGroupInfoVisible] = useState(false);
     const [isGroupCreator, setIsGroupCreator] = useState(false);
+    const [isAddingMembers, setIsAddingMembers] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<User[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
 
     // START of Mariann Grace Dizon Contribution
     // Use theme context
@@ -102,6 +112,7 @@ const GroupMessageScreen = () => {
         return () => unsubscribe();
     }, [groupId]);
 
+    // Effect to check if the current user is the group creator
     useEffect(() => {
         if (!auth.currentUser || !groupId) return;
         
@@ -113,7 +124,7 @@ const GroupMessageScreen = () => {
         });
     }, [groupId]);
 
-    // Fetch hidden words
+    // Effect to fetch user's hidden words from Firestore
     useEffect(() => {
         const fetchHiddenWords = async () => {
             if (!auth.currentUser) return;
@@ -130,6 +141,7 @@ const GroupMessageScreen = () => {
         fetchHiddenWords();
     }, []);
 
+    // Function to send a new message to the group
     const sendMessage = async () => {
         if (newMessage.trim() === '' || !auth.currentUser) return;
 
@@ -141,6 +153,7 @@ const GroupMessageScreen = () => {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         const senderName = userDoc.data()?.displayName || 'Unknown User';
 
+        // Create new message object with sender info and timestamp
         const newMessageObj = {
             message: message,
             senderId: currentUser.uid,
@@ -148,11 +161,13 @@ const GroupMessageScreen = () => {
             timestamp: Timestamp.now()
         };
 
+        // Update the group document with the new message
         await updateDoc(groupRef, {
             messages: arrayUnion(newMessageObj)
         });
     };
 
+    // Handler for long-pressing a message (enables deletion for own messages)
     const handleLongPress = (message: Message) => {
         if (message.senderId === auth.currentUser?.uid) {
             setSelectedMessage(message);
@@ -160,6 +175,7 @@ const GroupMessageScreen = () => {
         }
     };
 
+    // Function to delete a selected message
     const handleDeleteMessage = async () => {
         if (!selectedMessage || !auth.currentUser) return;
 
@@ -171,6 +187,7 @@ const GroupMessageScreen = () => {
                 throw new Error("Group not found");
             }
 
+            // Find and remove the selected message from the messages array
             const currentMessages = groupDoc.data().messages || [];
             const messageIndex = currentMessages.findIndex(
                 (msg: Message) => 
@@ -185,6 +202,7 @@ const GroupMessageScreen = () => {
             currentMessages.splice(messageIndex, 1);
             await updateDoc(groupRef, { messages: currentMessages });
 
+            // Update local state and reset selection
             setMessages(currentMessages);
             setIsDeleteModalVisible(false);
             setSelectedMessage(null);
@@ -194,6 +212,7 @@ const GroupMessageScreen = () => {
         }
     };
 
+    // Function to remove a member from the group (group creator only)
     const handleRemoveMember = async (memberUid: string) => {
         if (!isGroupCreator || !auth.currentUser || !groupId) return;
 
@@ -207,7 +226,7 @@ const GroupMessageScreen = () => {
             const updatedMembers = groupDoc.data().members.filter((uid: string) => uid !== memberUid);
             await updateDoc(groupRef, { members: updatedMembers });
 
-            // Remove group from member's groupList
+            // Remove group from member's groupList in their user document
             const memberRef = doc(db, 'users', memberUid);
             const memberDoc = await getDoc(memberRef);
             
@@ -222,6 +241,104 @@ const GroupMessageScreen = () => {
         } catch (error) {
             console.error('Error removing member:', error);
             Alert.alert('Error', 'Failed to remove member');
+        }
+    };
+
+    const searchUsers = async (searchQuery: string) => {
+        if (!searchQuery.trim() || !auth.currentUser) return;
+
+        try {
+            // First get current user's matches
+            const currentUserRef = doc(db, 'users', auth.currentUser.uid);
+            const currentUserDoc = await getDoc(currentUserRef);
+            const currentUserData = currentUserDoc.data();
+            const currentUserMatches = currentUserData?.matches || {};
+
+            // Get UIDs of users that the current user has liked
+            const likedUserIds = Object.entries(currentUserMatches)
+                .filter(([_, status]) => status === 'liked')
+                .map(([uid]) => uid);
+
+            if (likedUserIds.length === 0) {
+                setSearchResults([]);
+                return;
+            }
+
+            const usersRef = collection(db, 'users');
+            const q = query(
+                usersRef, 
+                where('displayName', '>=', searchQuery), 
+                where('displayName', '<=', searchQuery + '\uf8ff')
+            );
+
+            const querySnapshot = await getDocs(q);
+            const usersData: User[] = [];
+
+            // Check for mutual likes and existing members
+            for (const doc of querySnapshot.docs) {
+                const userData = doc.data() as User & { matches?: Record<string, string> };
+                const userMatches = userData.matches || {};
+
+                // Only include user if:
+                // 1. They are not the current user
+                // 2. Current user has liked them
+                // 3. They have liked the current user back
+                // 4. They are not already in the group
+                if (
+                    userData.uid !== auth.currentUser.uid && 
+                    likedUserIds.includes(userData.uid) && 
+                    userMatches[auth.currentUser.uid] === 'liked' &&
+                    !groupMembers.some(member => member.uid === userData.uid)
+                ) {
+                    usersData.push({
+                        uid: userData.uid,
+                        displayName: userData.displayName,
+                        profileImageUrl: userData.profileImageUrl,
+                    });
+                }
+            }
+
+            setSearchResults(usersData);
+        } catch (error) {
+            console.error('Error searching users:', error);
+            Alert.alert('Error', 'Failed to search users');
+        }
+    };
+
+    const handleAddMembers = async () => {
+        if (selectedUsers.length === 0) return;
+
+        try {
+            const groupRef = doc(db, 'groups', groupId as string);
+            
+            // Add new members to the group
+            await updateDoc(groupRef, {
+                members: arrayUnion(...selectedUsers.map(user => user.uid))
+            });
+
+            // Add group to each new member's groupList
+            const updatePromises = selectedUsers.map(async (user) => {
+                const userRef = doc(db, 'users', user.uid);
+                await updateDoc(userRef, {
+                    groupList: arrayUnion({
+                        groupId: groupId,
+                        groupName: groupName,
+                        groupOwner: auth.currentUser?.uid,
+                        timestamp: new Date()
+                    })
+                });
+            });
+
+            await Promise.all(updatePromises);
+
+            // Reset states and close modal
+            setSelectedUsers([]);
+            setSearchQuery('');
+            setIsAddingMembers(false);
+            Alert.alert('Success', 'New members added to the group');
+        } catch (error) {
+            console.error('Error adding members:', error);
+            Alert.alert('Error', 'Failed to add members');
         }
     };
 
@@ -380,6 +497,80 @@ const GroupMessageScreen = () => {
                                     </View>
                                 )}
                             />
+                            {isGroupCreator && (
+                                <>
+                                    <TouchableOpacity
+                                        style={styles.addMembersButton}
+                                        onPress={() => setIsAddingMembers(true)}
+                                    >
+                                        <Text style={styles.addMembersButtonText}>Add Members</Text>
+                                    </TouchableOpacity>
+
+                                    <Modal
+                                        transparent={true}
+                                        visible={isAddingMembers}
+                                        onRequestClose={() => setIsAddingMembers(false)}
+                                    >
+                                        <View style={styles.modalContainer}>
+                                            <View style={[styles.modalContent, styles.addMembersModal]}>
+                                                <Text style={styles.modalTitle}>Add New Members</Text>
+                                                
+                                                <TextInput
+                                                    style={styles.searchInput}
+                                                    placeholder="Search users..."
+                                                    value={searchQuery}
+                                                    onChangeText={(text) => {
+                                                        setSearchQuery(text);
+                                                        searchUsers(text);
+                                                    }}
+                                                />
+
+                                                <FlatList
+                                                    data={searchResults}
+                                                    keyExtractor={(item) => item.uid}
+                                                    renderItem={({ item }) => (
+                                                        <TouchableOpacity
+                                                            style={styles.userItem}
+                                                            onPress={() => {
+                                                                if (selectedUsers.some(u => u.uid === item.uid)) {
+                                                                    setSelectedUsers(selectedUsers.filter(u => u.uid !== item.uid));
+                                                                } else {
+                                                                    setSelectedUsers([...selectedUsers, item]);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Image source={{ uri: item.profileImageUrl }} style={styles.userAvatar} />
+                                                            <Text style={styles.userName}>{item.displayName}</Text>
+                                                            {selectedUsers.some(u => u.uid === item.uid) && (
+                                                                <Ionicons name="checkmark-circle" size={24} color="#fba904" />
+                                                            )}
+                                                        </TouchableOpacity>
+                                                    )}
+                                                />
+
+                                                <View style={styles.modalButtons}>
+                                                    <TouchableOpacity
+                                                        style={[styles.modalButton, styles.cancelButton]}
+                                                        onPress={() => {
+                                                            setIsAddingMembers(false);
+                                                            setSelectedUsers([]);
+                                                            setSearchQuery('');
+                                                        }}
+                                                    >
+                                                        <Text style={styles.buttonText}>Cancel</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.modalButton, styles.addButton]}
+                                                        onPress={handleAddMembers}
+                                                    >
+                                                        <Text style={styles.buttonText}>Add Selected</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        </View>
+                                    </Modal>
+                                </>
+                            )}
                         </View>
                     </View>
                 </Modal>
@@ -646,6 +837,55 @@ const styles = StyleSheet.create({
     },
     removeMemberButton: {
         padding: 5,
+    },
+    addMembersButton: {
+        backgroundColor: '#fba904',
+        padding: 10,
+        borderRadius: 8,
+        marginTop: 10,
+        alignItems: 'center',
+    },
+    addMembersButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    addMembersModal: {
+        height: '70%',
+        width: '90%',
+        padding: 20,
+    },
+    searchInput: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        padding: 10,
+        marginVertical: 10,
+        width: 200
+    },
+    userItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        width: 210,
+    },
+    userAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    userName: {
+        flex: 1,
+        fontSize: 16,
+    },
+    addButton: {
+        backgroundColor: '#fba904',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });
 

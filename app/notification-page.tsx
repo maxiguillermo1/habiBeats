@@ -88,6 +88,7 @@ const NotificationPage = () => {
 
   // Clear all notifications
   const clearAllNotifications = async () => {
+    console.log("Helllllo")
     Alert.alert(
       "Clear All Notifications",
       "Are you sure you want to delete all notifications?",
@@ -232,7 +233,12 @@ const NotificationPage = () => {
         options={{ 
           title: 'Notifications',
           headerRight: () => (
-            <TouchableOpacity onPress={clearAllNotifications} style={styles.clearButton}>
+            <TouchableOpacity 
+              onPress={clearAllNotifications}
+              style={styles.clearButton}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Text style={styles.clearButtonText}>Clear All</Text>
             </TouchableOpacity>
           )

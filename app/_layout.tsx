@@ -31,20 +31,27 @@ export type RootStackParamList = {
 // Define the RootLayout component
 export default function RootLayout() {
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | undefined;
+    let cleanupUserStatusService: (() => void) | undefined;
+
     // Check if the user is logged in
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => { 
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user); // Track current user state
+      
       if (user) {
         console.log('User is logged in', user.uid);
-        const cleanupUserStatusService = initUserStatusService();
+        cleanupUserStatusService = initUserStatusService();
+        
         // Get the notifications collection for the user
         const notificationsRef = collection(db, 'users', user.uid, 'notifications');
         // Get the notifications that have not been seen
         const q = query(notificationsRef, where('seen', '==', false));
 
         // Listen for changes to the notifications
-        const unsubscribeFirestore = onSnapshot(q, (querySnapshot) => {
+        unsubscribeFirestore = onSnapshot(q, (querySnapshot) => {
           querySnapshot.forEach((doc) => {
             const data = doc.data();
             setNotification({
@@ -59,22 +66,41 @@ export default function RootLayout() {
             updateDoc(doc.ref, { seen: true });
           });
         });
-
-        return () => {
+      } else {
+        // User is logged out
+        console.log('User is logged out');
+        // Clear any existing notifications
+        setNotification(null);
+        
+        // Clean up Firestore listener if it exists
+        if (unsubscribeFirestore) {
           unsubscribeFirestore();
+        }
+        
+        // Clean up user status service if it exists
+        if (cleanupUserStatusService) {
           cleanupUserStatusService();
-        };
+        }
       }
     });
 
-    return () => unsubscribeAuth();
-  }, []);
+    // Cleanup function
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+      if (cleanupUserStatusService) {
+        cleanupUserStatusService();
+      }
+    };
+  }, []); // Empty dependency array since we want this to run once on mount
 
   const handleCloseNotification = () => {
     setNotification(null);
   };
 
-  // Return the Stack navigation layout
+  // Only show notifications if there's a logged-in user
   return (
     <NavigationContainer>
       <Stack>
@@ -130,7 +156,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings/safety-resources/help-center" options={{ headerShown: false }} />
         
       </Stack>
-      {notification && (
+      {currentUser && notification && (
         <InAppNotification
           message={notification.message}
           type={notification.type}
