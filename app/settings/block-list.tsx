@@ -217,7 +217,7 @@ const BlockList = () => {
     headerTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: isDarkMode ? '#ffffff' : '#000000',
+      color: isDarkMode ? '#fff8f0' : '#fff8f0',
     },
     headerRight: {
       width: 24,
@@ -309,7 +309,6 @@ const BlockList = () => {
         <TouchableOpacity onPress={handleBackPress}>
           <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#FFFFFF' : '#000000'} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Block List</Text>
         <View style={styles.headerRight} />
       </View>
 
