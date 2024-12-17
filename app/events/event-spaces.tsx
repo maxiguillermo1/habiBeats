@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     paddingHorizontal: 40,
-    paddingTop: 40,
+    paddingTop: 100,
     paddingBottom: 15,
   },
   headerTextContainer: {
