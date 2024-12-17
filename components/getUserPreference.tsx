@@ -36,28 +36,6 @@ async function getSpotifyAccessToken() {
   }
 }
 
-async function getSimilarArtistsAndGenres(accessToken: string, artistIds: string[]) {
-  const similarArtists = new Set<string>();
-  const similarGenres = new Set<string>();
-
-  for (const artistId of artistIds) {
-    try {
-      const response = await axios.get(`${SPOTIFY_API_BASE}/artists/${artistId}/related-artists`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      response.data.artists.forEach((artist: { name: string; genres: string[] }) => {
-        similarArtists.add(artist.name);
-        artist.genres.forEach((genre: string) => similarGenres.add(genre));
-      });
-    } catch (error) {
-      console.error(`Error fetching similar artists for ${artistId}:`, error);
-    }
-  }
-
-  return { similarArtists: Array.from(similarArtists), similarGenres: Array.from(similarGenres) };
-}
-
 async function searchTicketmasterEvents(artists: string[], genres: string[], location: string) {
   const artistQuery = artists.join(' OR ');
   const genreQuery = genres.join(' OR ');
@@ -83,17 +61,13 @@ async function searchTicketmasterEvents(artists: string[], genres: string[], loc
 
 export default async function getUserPreferences() {
     const currentUser = auth.currentUser;
-    // Check if the user is authenticated
     if (!currentUser) throw new Error('User not authenticated');
 
-    // Get the user's document from the database
     const userDocRef = doc(db, 'users', currentUser.uid);
     const userDoc = await getDoc(userDocRef);
 
-    // Check if the user document exists
     if (!userDoc.exists()) return;
 
-    // Get the user's data
     const userData = userDoc.data();
     const userPreferences = {
         musicPreference: userData.musicPreference || [],
@@ -105,19 +79,14 @@ export default async function getUserPreferences() {
     };
 
     try {
-        const spotifyAccessToken = await getSpotifyAccessToken();
-        const artistIds = userPreferences.favoriteArtists.map((artist: { id: string }) => artist.id);
-        const { similarArtists, similarGenres } = await getSimilarArtistsAndGenres(spotifyAccessToken, artistIds);
-
-        const allGenres = [...new Set([...userPreferences.musicPreference, ...similarGenres])];
-        const allArtists = [...new Set([...userPreferences.favoriteArtists.map((artist: { name: string }) => artist.name), ...similarArtists])];
-
-        const suggestedEvents = await searchTicketmasterEvents(allArtists, allGenres, userPreferences.location);
+        const suggestedEvents = await searchTicketmasterEvents(
+            userPreferences.favoriteArtists.map((artist: { name: string }) => artist.name),
+            userPreferences.musicPreference,
+            userPreferences.location
+        );
 
         return {
             ...userPreferences,
-            similarArtists,
-            similarGenres,
             suggestedEvents
         };
     } catch (error) {
