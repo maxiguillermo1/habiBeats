@@ -9,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } fro
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios'; 
 import Icon from 'react-native-ico-mingcute-tiny-bold-filled';
-import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getSpotifyRelatedArtists, getAlbumTracks } from '../api/spotify-api';
+import { searchSpotifyArtists, searchSpotifyAlbums, searchSpotifyTracks, getAlbumTracks } from '../api/spotify-api';
 import { useRouter } from 'expo-router';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
@@ -71,10 +71,8 @@ const Chatbot = () => {
 
     // button animations
     const weatherButtonOpacity = useSharedValue(0);
-    const planMyDayButtonOpacity = useSharedValue(0);
     const planMyOutfitButtonOpacity = useSharedValue(0);
     const weatherButtonTranslateY = useSharedValue(100);
-    const planMyDayButtonTranslateY = useSharedValue(100);
     const planMyOutfitButtonTranslateY = useSharedValue(100);
     const spotifyButtonScale = useSharedValue(0);
 
@@ -117,9 +115,6 @@ const Chatbot = () => {
         weatherButtonOpacity.value = withSpring(1);
         weatherButtonTranslateY.value = withSpring(20);
 
-        planMyDayButtonOpacity.value = withSpring(1);
-        planMyDayButtonTranslateY.value = withSpring(20);
-
         planMyOutfitButtonOpacity.value = withSpring(1);
         planMyOutfitButtonTranslateY.value = withSpring(20);
     }, []);
@@ -136,8 +131,8 @@ const Chatbot = () => {
 
     const animatedButtonStyle = useAnimatedStyle(() => {
         return {
-            opacity: weatherButtonOpacity.value && planMyDayButtonOpacity.value && planMyOutfitButtonOpacity.value,
-            transform: [{ translateY: weatherButtonTranslateY.value && planMyDayButtonTranslateY.value && planMyOutfitButtonTranslateY.value }],
+            opacity: weatherButtonOpacity.value && planMyOutfitButtonOpacity.value,
+            transform: [{ translateY: weatherButtonTranslateY.value && planMyOutfitButtonTranslateY.value }],
         };
     });
 
@@ -146,11 +141,6 @@ const Chatbot = () => {
     // "what's the weather at event" button
     const handleAlbumButtonPressed = () => {
         setActiveButton(activeButton === 'album' ? null : 'album');
-    };
-
-    // "plan my day" button
-    const handleSimilarArtistsButtonPressed = () => {
-        setActiveButton(activeButton === 'similarArtists' ? null : 'similarArtists');
     };
 
     // "plan my outfit" button
@@ -163,8 +153,6 @@ const Chatbot = () => {
         switch (activeButton) {
             case 'album':
                 return "tell me about this album...";
-            case 'similarArtists':
-                return "find similar artists to...";
             case 'lyrics':
                 return "analyze these lyrics...";
             default:
@@ -220,9 +208,8 @@ const Chatbot = () => {
                     const mainArtist = artists[0];
                     
                     // Get albums and related artists
-                    const [albums, relatedArtists] = await Promise.all([
+                    const [albums] = await Promise.all([
                         searchSpotifyAlbums(`artist:${mainArtist.name}`),
-                        getSpotifyRelatedArtists(mainArtist.id)
                     ]);
 
                     if (albums.length === 0) {
@@ -246,56 +233,6 @@ const Chatbot = () => {
                 } catch (error) {
                     console.error('Error fetching Spotify data:', error);
                     setResponse('Sorry, I encountered an error while fetching music information. Please try again.');
-                    setIsLoading(false);
-                    return;
-                }
-                break;
-                
-            case 'similarArtists':
-                try {
-                    // Search for the artist
-                    const artists = await searchSpotifyArtists(userInput);
-                    
-                    if (artists.length === 0) {
-                        setResponse('Sorry, I couldn\'t find that artist. Please try another name.');
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    const mainArtist = artists[0];
-                    
-                    // Get related artists
-                    const relatedArtists = await getSpotifyRelatedArtists(mainArtist.id);
-
-                    if (relatedArtists.length === 0) {
-                        setResponse('No similar artists found.');
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // Get top 3 related artists
-                    const top3Artists = relatedArtists.slice(0, 3);
-                    
-                    // Get top tracks for each artist
-                    const artistsWithTracks = await Promise.all(
-                        top3Artists.map(async (artist: any) => {
-                            const tracks = await searchSpotifyTracks(`artist:${artist.name}`);
-                            return {
-                                name: artist.name,
-                                tracks: tracks.slice(0, 3).map((track: any) => track.name)
-                            };
-                        })
-                    );
-                    
-                    prompt = `Here are 3 similar artists to ${mainArtist.name}:\n\n` +
-                            artistsWithTracks.map((artist, index) => 
-                                `${index + 1}. ${artist.name}\n` +
-                                `   Popular tracks:\n` +
-                                artist.tracks.map((track: any) => `   - ${track}`).join('\n')
-                            ).join('\n\n');
-                } catch (error) {
-                    console.error('Error fetching Spotify data:', error);
-                    setResponse('Sorry, I encountered an error while fetching similar artists. Please try again.');
                     setIsLoading(false);
                     return;
                 }
@@ -419,11 +356,6 @@ const Chatbot = () => {
             "what was Rihanna's first album",
             "tell me about Charli XCX's album"
         ],
-        similarArtists: [
-            "find similar artists to Olivia Rodrigo",
-            "who sounds like Frank Ocean",
-            "artists similar to Bad Bunny"
-        ],
         lyrics: [
             "analyze lyrics for Diva by Beyonce",
             "Umbrella by Rihanna"
@@ -471,9 +403,9 @@ const Chatbot = () => {
                     <Animated.View style={[styles.spotifyButton, animatedSpotifyButtonStyle]}>
                         <TouchableOpacity 
                             onPress={() => Linking.openURL(spotifyUrl)}
-                            style={[styles.spotifyButtonContent, { backgroundColor: isDarkMode ? '#2d2d2d' : '#fff' }]}
+                            style={[styles.spotifyButtonContent, { backgroundColor: isDarkMode ? '#1ED760' : '#1ED760' }]}
                         >
-                            <Icon name="spotify" size={24} />
+                            <Text style={styles.spotifyButtonText}>play on spotify</Text>
                         </TouchableOpacity>
                     </Animated.View>
                 )}
@@ -489,19 +421,6 @@ const Chatbot = () => {
                             name="musical-notes-outline" 
                             size={30} 
                             color={activeButton === 'album' ? 'rgba(252,108,133,1)' : isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'}
-                        />
-                    </TouchableOpacity>
-
-                    {/* similar artists button */}
-                    <TouchableOpacity 
-                        onPress={handleSimilarArtistsButtonPressed}
-                        style={styles.iconButton}
-                        activeOpacity={1}
-                    >
-                        <Ionicons 
-                            name="heart-outline" 
-                            size={27} 
-                            color={activeButton === 'similarArtists' ? 'rgba(252,108,133,1)' : isDarkMode ? '#37bdd5' : 'rgba(55,189,213,0.6)'}
                         />
                     </TouchableOpacity>
 
@@ -539,7 +458,6 @@ const Chatbot = () => {
                                     <Ionicons 
                                         name={
                                             chat.buttonType === 'album' ? 'musical-notes-outline' :
-                                            chat.buttonType === 'similarArtists' ? 'heart-outline' :
                                             chat.buttonType === 'lyrics' ? 'volume-medium-outline' : 'help-circle'
                                         }
                                         size={16}
@@ -605,13 +523,6 @@ const Chatbot = () => {
                                     <Text style={[styles.querySectionTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Album</Text>
                                 </View>
                                 <Text style={[styles.queryText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{exampleQueries.album.join('\n')}</Text>
-                            </View>
-                            <View style={styles.querySection}>
-                                <View style={styles.queryHeader}>
-                                    <Ionicons name="heart-outline" size={20} color="rgba(252,108,133,1)" />
-                                    <Text style={[styles.querySectionTitle, { color: isDarkMode ? '#fff' : '#0e1514' }]}>Similar Artists</Text>
-                                </View>
-                                <Text style={[styles.queryText, { color: isDarkMode ? '#fff' : '#0e1514' }]}>{exampleQueries.similarArtists.join('\n')}</Text>
                             </View>
                             <View style={styles.querySection}>
                                 <View style={styles.queryHeader}>
@@ -797,8 +708,7 @@ const styles = StyleSheet.create({
     spotifyButtonText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#1ED760',
-        marginLeft: 5,
+        color: '#FFFFFF',
     },
     spotifyButtonContent: {
         padding: 10,
