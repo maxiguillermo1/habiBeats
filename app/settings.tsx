@@ -1363,37 +1363,7 @@ const Settings = () => {
         </View>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
-        <View style={[styles.sectionContainer, styles.sectionSpacing]}>
-          <Text style={[styles.sectionTitle, { 
-            color: getThemeColors(isDarkMode).subText 
-          }]}>
-            {t('settings.notifications.title')}
-          </Text>
-        </View>
-        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/settings/push-notifications')}
-        >
-          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
-            {t('settings.notifications.push_notifications')}
-          </Text>
-          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
-        </TouchableOpacity>
-        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/settings/email-notifications')}
-        >
-          <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
-            {t('settings.notifications.email_notifications')}
-          </Text>
-          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
-        </TouchableOpacity>
-        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
-
+        {/* Remove the notifications section and directly show the Safety section */}
         <View style={[styles.sectionContainer, styles.sectionSpacing]}>
           <Text style={[styles.sectionTitle, { 
             color: getThemeColors(isDarkMode).subText 
@@ -1531,7 +1501,10 @@ const Settings = () => {
 
         <View style={styles.accountActionsContainer}>
           <TouchableOpacity style={styles.accountActionButton} onPress={handleLogout}>
-            <Text style={[styles.accountActionText, { color: getThemeColors(isDarkMode).text }]}>
+            <Text style={[styles.accountActionText, { 
+              color: getThemeColors(isDarkMode).text,
+              fontWeight: 'bold'
+            }]}>
               {t('common.logout')}
             </Text>
           </TouchableOpacity>
@@ -1540,7 +1513,10 @@ const Settings = () => {
             style={styles.accountActionButton} 
             onPress={handleChangePassword}
           >
-            <Text style={[styles.accountActionText, { color: getThemeColors(isDarkMode).text }]}>
+            <Text style={[styles.accountActionText, { 
+              color: getThemeColors(isDarkMode).text,
+              fontWeight: 'bold'
+            }]}>
               {t('settings.account.change_password')}
             </Text>
           </TouchableOpacity>
@@ -1549,7 +1525,10 @@ const Settings = () => {
             style={[styles.accountActionButton, styles.deleteButton]} 
             onPress={handleDeleteAccount}
           >
-            <Text style={[styles.accountActionText, styles.deleteText, { color: getThemeColors(isDarkMode).text }]}>
+            <Text style={[styles.accountActionText, styles.deleteText, { 
+              color: '#ff0000',
+              fontWeight: 'bold'
+            }]}>
               {t('settings.account.delete_account')}
             </Text>
           </TouchableOpacity>
@@ -1810,7 +1789,8 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   deleteText: {
-    color: '#ff0000', // matching red color for delete text
+    color: '#ff0000',
+    fontWeight: 'bold'
   },
   button: {
     backgroundColor: '#fba904',
@@ -1833,3 +1813,4 @@ const styles = StyleSheet.create({
 
 
 export default Settings;
+
