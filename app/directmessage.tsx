@@ -120,8 +120,9 @@ const DirectMessageScreen = () => {
         const conversationId = [auth.currentUser.uid, recipientId].sort().join('-');
         const conversationRef = doc(db, 'conversations', conversationId);
 
-        // Create the new message object
+        // Create the new message object with a unique ID
         const newMessageObj = {
+            id: `${auth.currentUser.uid}-${Date.now()}`, // Add unique ID
             message: message,
             senderId: auth.currentUser.uid,
             recipientId: recipientId,
@@ -337,7 +338,7 @@ const DirectMessageScreen = () => {
                 <FlatList
                     ref={flatListRef}
                     data={messages}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item, index) => `${item.senderId}-${item.timestamp}-${index}`}
                     renderItem={({ item }) => (
                         <TouchableOpacity onLongPress={() => handleLongPress(item)}>
                             <View style={[
