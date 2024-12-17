@@ -154,6 +154,7 @@ export default function RootLayout() {
         <Stack.Screen name="events/event-spaces" options={{ headerShown: false }} /> 
         {/* Define the help center screen with no header */}
         <Stack.Screen name="settings/safety-resources/help-center" options={{ headerShown: false }} />
+          
         
       </Stack>
       {currentUser && notification && (

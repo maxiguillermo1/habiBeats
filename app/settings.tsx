@@ -1294,17 +1294,21 @@ const Settings = () => {
         </View>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
-        <View style={styles.settingItem}>
+        {/* Pause Account */}
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/settings/pause-new-interaction')}
+        >
           <View style={styles.settingContent}>
             <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
-              {t('settings.activity.last_active')}
+              {t('settings.safety.pause_account')}
             </Text>
             <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
-              {t('settings.activity.last_active_description')}
+              {t('settings.safety.pause_account_description')}
             </Text>
           </View>
-          <Switch />
-        </View>
+          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
+        </TouchableOpacity>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         {/* Matches Section */}
@@ -1397,22 +1401,6 @@ const Settings = () => {
             {t('settings.safety.title')}
           </Text>
         </View>
-        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
-        
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/settings/pause-new-interaction')}
-        >
-          <View style={styles.settingContent}>
-            <Text style={[styles.settingTitle, { color: getThemeColors(isDarkMode).text }]}>
-              {t('settings.safety.pause_account')}
-            </Text>
-            <Text style={[styles.settingDescription, { color: getThemeColors(isDarkMode).subText }]}>
-              {t('settings.safety.pause_account_description')}
-            </Text>
-          </View>
-          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
-        </TouchableOpacity>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
@@ -1523,22 +1511,6 @@ const Settings = () => {
             {t('settings.data_privacy.explore_safety')}
           </Text>
         </View>
-        <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          //onPress={() => router.push('/settings/crisis-hotlines')}
-        >
-          <View style={styles.settingContent}>
-            <View style={styles.settingTitleContainer}>
-              <Ionicons name="call-outline" size={24} color={getThemeColors(isDarkMode).text} />
-              <Text style={[styles.settingTitle, { marginLeft: 10, color: getThemeColors(isDarkMode).text }]}>
-                {t('settings.data_privacy.crisis_hotlines')}
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.chevron, { color: getThemeColors(isDarkMode).subText }]}>›</Text>
-        </TouchableOpacity>
         <View style={[styles.divider, { backgroundColor: getThemeColors(isDarkMode).divider }]} />
 
         <TouchableOpacity 
