@@ -567,7 +567,7 @@ export default function Profile() {
                 }}
               >
                 <Ionicons name="heart-circle-outline" size={22} color={isDarkMode ? '#fff' : '#333'} />
-                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>HabiBI AI</Text>
+                <Text style={[styles.menuText, { color: isDarkMode ? '#fff' : '#333' }]}>Habibi AI</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
