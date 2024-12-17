@@ -64,17 +64,9 @@ export default function Landing() {
     router.push('/login-signup');
   };
 
-  // TEMPORARY: for index navigation purposes
-  const handleBackPress = () => {
-    router.push('/');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Text style={styles.backButtonText}>back</Text>
-      </TouchableOpacity>
       <View style={styles.content}>
         <Animated.View style={[styles.logoContainer, animatedLogoStyle]}>
           <Image 
@@ -148,16 +140,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 15,
     fontWeight: '600',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 80,
-    left: 30,
-    zIndex: 1,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#fba904',
-    fontWeight: 'bold',
   },
 });
